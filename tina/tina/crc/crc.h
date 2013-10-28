@@ -16,8 +16,8 @@ extern "C" {
 // add definitions below this comment
 // ---------------------------------------------- 
 
-#include <util/types.h>
-#include <util/makros.h>
+#include <tina/types.h>
+#include <tina/bytes.h>
 
 
 
