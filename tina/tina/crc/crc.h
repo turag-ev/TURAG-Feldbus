@@ -66,10 +66,10 @@ static inline uint16_t crc_ccitt_calculate(void* data, unsigned size, uint16_t s
 	
 	uint8_t i;
 	for (i=0; i < size; ++i) {
-		data_byte = ((uint8_t*)data)[i] ^ lowbyte(chksum);
+		data_byte = ((uint8_t*)data)[i] ^ turag_lowbyte(chksum);
 		data_byte ^= data_byte << 4;
 		
-		chksum = (((uint16_t)data_byte << 8) | highbyte(chksum)) ^
+		chksum = (((uint16_t)data_byte << 8) | turag_highbyte(chksum)) ^
 					(uint8_t)(data_byte >> 4) ^
 					((uint16_t)data_byte << 3);
 	}
