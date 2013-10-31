@@ -16,7 +16,7 @@ extern "C" {
 // add definitions below this comment
 // ---------------------------------------------- 
 
-#include <tina/types.h>
+#include <tina/tina.h>
 #include <tina/bytes.h>
 
 
