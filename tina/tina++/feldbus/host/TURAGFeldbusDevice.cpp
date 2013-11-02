@@ -10,7 +10,7 @@
 
 #include "TURAGFeldbusDevice.h"
 #include <tina++/time.h>
-#include <tina/crc/crc.h>
+#include <tina/crc/xor_checksum.h>
 #include <tina/debug.h>
 #include <tina/rs485.h>
 

@@ -8,7 +8,7 @@
 
 
 #include "TURAGFeldbusAktor.h"
-#include <tina/crc/crc.h>
+#include <tina/crc/xor_checksum.h>
 #include <tina/debug.h>
 
 namespace TURAG {
