@@ -7,7 +7,7 @@
  */
 
 
-#include "TURAGFeldbusFarbsensor.h"
+#include "farbsensor.h"
 #include <tina/feldbus/protocol/turag_feldbus_fuer_lokalisierungssensoren.h>
 #include <tina/crc/xor_checksum.h>
 #include <tina++/thread.h>

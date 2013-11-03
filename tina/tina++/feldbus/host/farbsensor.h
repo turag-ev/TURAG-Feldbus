@@ -1,6 +1,6 @@
 /**
  *  @brief		TURAG feldbus color sensor
- *  @file		TURAGFeldbusFarbsensor.h
+ *  @file		farbsensor.h
  *  @date		24.03.2013
  *  @author		Martin Oemus
  * 
@@ -10,7 +10,7 @@
 #ifndef TURAGFELDBUSFARBSENSOR_H_
 #define TURAGFELDBUSFARBSENSOR_H_
 
-#include "TURAGFeldbusSensor.h"
+#include "sensor.h"
 #include <tina++/tina.h>
 
 namespace TURAG {

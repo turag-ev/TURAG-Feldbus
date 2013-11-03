@@ -1,6 +1,6 @@
 /**
  *  @brief		TURAG feldbus DC motor class
- *  @file		TURAGFeldbusDCMotor.h
+ *  @file		dcmotor.h
  *  @date		22.03.2013
  *  @author		Martin Oemus
  * 
@@ -10,7 +10,7 @@
 #ifndef TURAGFELDBUSDCMOTOR_H_
 #define TURAGFELDBUSDCMOTOR_H_
 
-#include "TURAGFeldbusAktor.h"
+#include "aktor.h"
 
 namespace TURAG {
 namespace Feldbus {

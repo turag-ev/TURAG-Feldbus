@@ -1,6 +1,6 @@
 /**
  *  @brief		Base class for all TURAG feldbus devices
- *  @file		TURAGFeldbusDevice.h
+ *  @file		device.h
  *  @date		22.03.2013
  *  @author		Martin Oemus
  * 

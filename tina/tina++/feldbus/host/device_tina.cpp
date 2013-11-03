@@ -8,7 +8,7 @@
 
 #define LOG_SOURCE "B"
 
-#include "TURAGFeldbusDevice.h"
+#include "device.h"
 #include <tina++/time.h>
 #include <tina/crc/xor_checksum.h>
 #include <tina/debug.h>

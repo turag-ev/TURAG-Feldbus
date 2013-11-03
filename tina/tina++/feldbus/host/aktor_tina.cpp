@@ -7,7 +7,7 @@
  */
 
 
-#include "TURAGFeldbusAktor.h"
+#include "aktor.h"
 #include <tina/crc/xor_checksum.h>
 #include <tina/debug.h>
 
