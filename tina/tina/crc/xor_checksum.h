@@ -27,11 +27,11 @@ extern "C" {
  * @return		checksum
  *
  */
-static _always_inline uint8_t xor_checksum_calculate(void* data, unsigned size) {
+static _always_inline uint8_t xor_checksum_calculate(const void* data, unsigned size) {
 	uint8_t checksum = 0;
 
 	uint8_t i;
-	for (i=0; i < size; ++i) checksum ^= ((uint8_t*)data)[i];
+	for (i=0; i < size; ++i) checksum ^= ((const uint8_t*)data)[i];
 
 	return checksum;
 }
@@ -43,7 +43,7 @@ static _always_inline uint8_t xor_checksum_calculate(void* data, unsigned size) 
  * @return		true on data correct, otherwise false
  *
  */
-static _always_inline  bool xor_checksum_check(void* data, unsigned size, uint8_t chksum) {
+static _always_inline  bool xor_checksum_check(const void* data, unsigned size, uint8_t chksum) {
 	if (chksum == xor_checksum_calculate(data, size)) {
 		return true;
 	} else {

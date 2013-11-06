@@ -10,8 +10,8 @@
 
 #include "device.h"
 #include <tina++/time.h>
-#include <tina/crc/xor_checksum.h>
-#include <tina/crc/crc8_icode/crc8_icode.h>
+#include <tina++/crc/xor.h>
+#include <tina++/crc/crc8.h>
 #include <tina/debug.h>
 #include <tina/rs485.h>
 
@@ -36,11 +36,11 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 
 		switch (myChecksumType) {
 		case ChecksumType::xor_based:
-			transmit[transmit_length - 1] = xor_checksum_calculate(transmit, transmit_length - 1);
+			transmit[transmit_length - 1] = XOR::calculate(transmit, transmit_length - 1);
 			break;
 
 		case ChecksumType::crc8_icode:
-			transmit[transmit_length - 1] = turag_crc8_calculate(transmit, transmit_length - 1);
+			transmit[transmit_length - 1] = CRC8::calculate(transmit, transmit_length - 1);
 			break;
 		}
 
@@ -75,11 +75,11 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 					// transmission seems fine, lets look at the checksum
 					switch (myChecksumType) {
 					case ChecksumType::xor_based:
-						checksum_correct = xor_checksum_check(receive, receive_length-1, receive[receive_length-1]);
+						checksum_correct = XOR::check(receive, receive_length-1, receive[receive_length-1]);
 						break;
 
 					case ChecksumType::crc8_icode:
-						checksum_correct = turag_crc8_check(receive, receive_length-1, receive[receive_length-1]);
+						checksum_correct = CRC8::check(receive, receive_length-1, receive[receive_length-1]);
 						break;
 					}
 				}
