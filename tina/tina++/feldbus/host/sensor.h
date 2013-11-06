@@ -1,6 +1,6 @@
 /**
  *  @brief		TURAG feldbus sensor base class
- *  @file		TURAGFeldbusSensor.h
+ *  @file		sensor.h
  *  @date		22.03.2013
  *  @author		Martin Oemus
  * 
@@ -10,7 +10,7 @@
 #ifndef TURAGFELDBUSSENSOR_H_
 #define TURAGFELDBUSSENSOR_H_
 
-#include "TURAGFeldbusDevice.h"
+#include "device.h"
 
 namespace TURAG {
 namespace Feldbus {

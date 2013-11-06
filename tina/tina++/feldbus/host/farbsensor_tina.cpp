@@ -7,9 +7,8 @@
  */
 
 
-#include "TURAGFeldbusFarbsensor.h"
+#include "farbsensor.h"
 #include <tina/feldbus/protocol/turag_feldbus_fuer_lokalisierungssensoren.h>
-#include <tina/crc/xor_checksum.h>
 #include <tina++/thread.h>
 #include <tina/debug.h>
 
@@ -85,7 +84,6 @@ void Farbsensor::setColorThresholds(Color color_index, uint16_t h_min, uint16_t 
 bool Farbsensor::initiateMeassurement() {
 	uint8_t msg[2];
 	msg[0] = TURAG_FELDBUS_BROADCAST_ADDR;
-	msg[1] = xor_checksum_calculate(msg, 1);
 
 	return transceive(msg, sizeof(msg), 0, 0);
 }
@@ -101,7 +99,6 @@ bool Farbsensor::getRGB(rgb_t* rgb) {
 	unsigned char msg[3];
 	msg[0] = myAddress;
 	msg[1] = CMD_CLR_RGB;
-	msg[2] = xor_checksum_calculate(msg, 2);
 
 	rgbMsg_t rgbMsg;
 	bool success = transceive(msg, sizeof(msg), (unsigned char*) &rgbMsg, sizeof(rgbMsg_t));
@@ -127,7 +124,6 @@ bool Farbsensor::getHSV(hsv_t* hsv) {
 	unsigned char msg[3];
 	msg[0] = myAddress;
 	msg[1] = CMD_CLR_HSV;
-	msg[2] = xor_checksum_calculate(msg, 2);
 
 	hsvMsg_t hsvMsg;
 	bool success = transceive(msg, sizeof(msg), (unsigned char*) &hsvMsg, sizeof(hsvMsg_t));

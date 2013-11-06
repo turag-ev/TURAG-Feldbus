@@ -1,6 +1,6 @@
 /**
  *  @brief		TURAG feldbus servo class
- *  @file		TURAGFeldbusServo.h
+ *  @file		servo.h
  *  @date		22.03.2013
  *  @author		Martin Oemus
  * 
@@ -10,7 +10,7 @@
 #ifndef TURAGFELDBUSSERVO_H_
 #define TURAGFELDBUSSERVO_H_
 
-#include "TURAGFeldbusAktor.h"
+#include "aktor.h"
 
 namespace TURAG {
 namespace Feldbus {

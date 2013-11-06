@@ -7,8 +7,7 @@
  */
 
 
-#include "TURAGFeldbusAktor.h"
-#include <tina/crc/xor_checksum.h>
+#include "aktor.h"
 #include <tina/debug.h>
 
 namespace TURAG {
@@ -22,7 +21,6 @@ bool Aktor::aktorGet(uint8_t key, uint16_t* value) {
 
 	msg[0] = myAddress;
 	msg[1] = key;
-	msg[2] = xor_checksum_calculate(msg, 2);
 
 	bool success = transceive(msg, sizeof(msg), data_package_receive, sizeof(data_package_receive));
 
@@ -42,7 +40,6 @@ bool Aktor::aktorSet(uint8_t key, uint16_t value) {
 	msg[1] = key;
 	msg[2] = (uint8_t) value;
 	msg[3] = (uint8_t) (value >> 8);
-	msg[4] = xor_checksum_calculate(msg, 4);
 
 
 	bool success = transceive(msg, sizeof(msg), data_package_receive, sizeof(data_package_receive));

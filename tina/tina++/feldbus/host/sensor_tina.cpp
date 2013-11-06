@@ -7,7 +7,7 @@
  */
 
 
-#include "TURAGFeldbusSensor.h"
+#include "sensor.h"
 
 namespace TURAG {
 namespace Feldbus {

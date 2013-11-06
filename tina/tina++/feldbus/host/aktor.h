@@ -1,6 +1,6 @@
 /**
  *  @brief		TURAG feldbus actor base class
- *  @file		TURAGFeldbusAktor.h
+ *  @file		aktor.h
  *  @date		22.03.2013
  *  @author		Martin Oemus
  * 
@@ -10,7 +10,7 @@
 #ifndef TURAGFELDBUSAKTOR_H_
 #define TURAGFELDBUSAKTOR_H_
 
-#include "TURAGFeldbusDevice.h"
+#include "device.h"
 #include <tina++/tina.h>
 #include <tina/feldbus/protocol/turag_feldbus_fuer_stellantriebe.h>
 
