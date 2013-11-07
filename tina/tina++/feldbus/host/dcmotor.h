@@ -45,7 +45,7 @@ public:
 			if (!setMaxTorque(maxTorque)) return false;
 			return true;
 		}
-	bool getSwitchStatus(uint16_t* status) { return aktorGet(RS485_MOTOR_COM_INDEX_SWITCH_STATUS, status); }
+	bool getSwitchStatus(uint16_t* status) { return getValue(RS485_MOTOR_COM_INDEX_SWITCH_STATUS, status); }
 };
 
 

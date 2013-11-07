@@ -3,12 +3,14 @@
  *  @file		device.h
  *  @date		22.03.2013
  *  @author		Martin Oemus
- * 
+ *
  */
 
 
 #ifndef TURAGFELDBUSDEVICE_H_
 #define TURAGFELDBUSDEVICE_H_
+
+#include <memory>
 
 #include <tina++/tina.h>
 #include <tina++/thread.h>
@@ -35,6 +37,49 @@
 namespace TURAG {
 namespace Feldbus {
 
+template<typename T = void>
+struct Broadcast {
+	uint8_t address; // must be 0
+	uint8_t id;
+	T data;
+	uint8_t checksum;
+} _packed;
+
+template<typename T = void>
+struct Request {
+	uint8_t address;
+	T data;
+	uint8_t checksum;
+} _packed;
+
+template<typename T = void>
+struct Response {
+	uint8_t address;
+	T data;
+	uint8_t checksum;
+} _packed;
+
+/// for zero size requests/responces
+
+template<>
+struct Broadcast<void> {
+	uint8_t address; // must be 0
+	uint8_t id;
+	uint8_t checksum;
+} _packed;
+
+template<>
+struct Request<void> {
+	uint8_t address;
+	uint8_t checksum;
+} _packed;
+
+template<>
+struct Response<void> {
+	uint8_t address;
+	uint8_t checksum;
+} _packed;
+
 /*
  *
  */
@@ -60,15 +105,7 @@ protected:
 	const unsigned int myAddress;
 	bool hasCheckedAvailabilityYet;
 
-	Device(const char* name_, unsigned int address) :
-		maxTransmissionAttempts(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS),
-		maxTransmissionErrors(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS),
-		myChecksumType(TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE),
-		myTransmissionErrorCounter(0),
-		myAddress(address),
-		hasCheckedAvailabilityYet(false),
-		name(name_) { }
-	Device(const char* name_, unsigned int address, ChecksumType type) :
+	Device(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
 		maxTransmissionAttempts(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS),
 		maxTransmissionErrors(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS),
 		myChecksumType(type),
@@ -76,13 +113,37 @@ protected:
 		myAddress(address),
 		hasCheckedAvailabilityYet(false),
 		name(name_) { }
+
 	virtual ~Device() {}
+
+	template<typename T, typename U> _always_inline
+	bool transceive(Request<T>& transmit, Response<U>* receive) {
+	transmit.address = myAddress;
+	return transceive(static_cast<uint8_t*>(static_cast<void*>(std::addressof(transmit))),
+										sizeof(Request<T>),
+										static_cast<uint8_t*>(static_cast<void*>(receive)),
+										sizeof(Response<U>));
+	}
+
+	template<typename T> _always_inline
+	bool transceive(Request<T>& transmit, std::nullptr_t) {
+		transmit.address = myAddress;
+		return transceive(static_cast<uint8_t*>(static_cast<void*>(std::addressof(transmit))),
+											sizeof(Request<T>), nullptr, 0);
+	}
+
+  template<typename T, typename U> _always_inline
+	bool transceive(Broadcast<T>& transmit) {
+		transmit.address = 0;
+		return transceive(static_cast<uint8_t*>(static_cast<void*>(std::addressof(transmit))),
+											sizeof(Broadcast<T>), nullptr, 0);
+	}
 
 	// this funtion will always overwrite the last byte with the checksum of the preceeding ones
 	// so take care of the right buffer size!
 	bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 
-	bool hasReachedTransmissionErrorLimit(void) const { if (myTransmissionErrorCounter > maxTransmissionErrors) return true; else return false; }
+	bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter > maxTransmissionErrors; }
 	void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
 
 public:

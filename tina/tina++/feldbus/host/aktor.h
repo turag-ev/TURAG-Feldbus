@@ -3,7 +3,7 @@
  *  @file		aktor.h
  *  @date		22.03.2013
  *  @author		Martin Oemus
- * 
+ *
  */
 
 
@@ -42,11 +42,12 @@ protected:
 				myMaxTorque(0xffffffff),
 				myMaxAngle(0x7fffffff),
 				myMinAngle(0x80000000)
-				{ }
+	{ }
+
 	virtual ~Aktor() {}
 
-	bool aktorGet(uint8_t key, uint16_t* value);
-	bool aktorSet(uint8_t key, uint16_t value);
+	bool getValue(uint8_t key, uint16_t* value);
+	bool setValue(uint8_t key, uint16_t value);
 
 	virtual int convertAngle(unsigned short from) const = 0;
 	virtual unsigned short convertAngle(int from) const = 0;

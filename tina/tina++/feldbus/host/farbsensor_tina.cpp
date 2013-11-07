@@ -15,19 +15,19 @@
 namespace TURAG {
 namespace Feldbus {
 
-typedef struct{
-	unsigned char address;
-	unsigned char h;
-	unsigned char s;
-	unsigned char v;
-	unsigned char chksum;
-}__attribute__((packed))hsvMsg_t;
+struct hsvMsg_t {
+	uint8_t address;
+	uint8_t h;
+	uint8_t s;
+	uint8_t v;
+	uint8_t chksum;
+} _packed;
 
-typedef struct{
-	unsigned char ID;
-	unsigned char r,g,b;
-	unsigned char chksum;
-}__attribute__((packed))rgbMsg_t;
+struct rgbMsg_t {
+	uint8_t ID;
+	uint8_t r,g,b;
+	uint8_t chksum;
+} _packed;
 
 
 #define WITHIN_BOUNDARIES(value, bottom, top) (((value >= bottom) && (value <= top)) ? true : false)

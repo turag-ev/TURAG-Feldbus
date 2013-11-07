@@ -3,7 +3,7 @@
  *  @file		TURAGFeldbusDevice.cpp
  *  @date		04.04.2013
  *  @author		Martin Oemus
- * 
+ *
  */
 
 #define LOG_SOURCE "B"
@@ -24,10 +24,10 @@ SystemTime Device::lastTransmission;
 unsigned int Device::globalTransmissionErrorCounter = 0;
 
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
-    if (hasReachedTransmissionErrorLimit()) {
-            errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
-            return false;
-    } else {
+		if (hasReachedTransmissionErrorLimit()) {
+						errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
+						return false;
+		} else {
 //		infof("%s: transceive tx [", name);
 //		for (int i = 0; i < input_length; ++i) {
 //			infof("%.2x", input[i]);
@@ -116,13 +116,12 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 
 bool Device::isAvailable(void) {
 	if (!hasCheckedAvailabilityYet) {
-		unsigned char msg[2];
-		unsigned char recv_buffer[2];
-		msg[0] = myAddress;
+		Request<> request;
 
-		while (!hasCheckedAvailabilityYet && !hasReachedTransmissionErrorLimit()) {
-			if (transceive(msg, sizeof(msg), recv_buffer, sizeof(recv_buffer))) {
+		while (!hasReachedTransmissionErrorLimit()) {
+			if (transceive(request, nullptr)) {
 				hasCheckedAvailabilityYet = true;
+				return true;
 			}
 		}
 	}
