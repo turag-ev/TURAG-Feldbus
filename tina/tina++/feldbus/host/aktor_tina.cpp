@@ -15,7 +15,7 @@ namespace TURAG {
 namespace Feldbus {
 
 struct AktorGetData {
-	uint8_t ___; // FIXME: was steht hier?
+	uint8_t key;
 	uint16_t value;
 } _packed;
 
