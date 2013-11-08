@@ -54,11 +54,6 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 		// we try to transmit until the transmission succeeds and the checksum is correct
 		// or the number of transmission attempts is exceeded.
 		while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
-//			if (attempt>0) warningf("%s: %d failed transceive attempts", name, attempt);
-
-			success = false;
-			checksum_correct = false;
-
 			// introduce smallest possible delay
 //#warning transmission rate of rs485-bus artificially reduced to avoid errors
 //			while(lastTransmission > get_current_tick() - ms_to_ticks(1));

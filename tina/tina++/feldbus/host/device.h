@@ -134,7 +134,7 @@ protected:
 
   template<typename T, typename U> _always_inline
 	bool transceive(Broadcast<T>& transmit) {
-		transmit.address = 0;
+		transmit.address = TURAG_FELDBUS_BROADCAST_ADDR;
 		return transceive(static_cast<uint8_t*>(static_cast<void*>(std::addressof(transmit))),
 											sizeof(Broadcast<T>), nullptr, 0);
 	}
