@@ -26,7 +26,7 @@ bool Aktor::getValue(uint8_t key, uint16_t* value) {
 
 	bool success = transceive(request, &receive);
 	if (success) {
-	  if (value) *value = receive.data.value;
+		if (value) *value = receive.data.value;
 		return true;
 	} else {
 		return false;
@@ -40,9 +40,11 @@ struct AktorSetData {
 
 bool Aktor::setValue(uint8_t key, uint16_t value) {
 	Request<AktorSetData> request;
+	Response<> response;
+	
 	request.data.key = key;
 	request.data.value = value;
-	return transceive(request, nullptr);
+	return transceive(request, &response);
 }
 
 bool Aktor::hasAngleReached() {
