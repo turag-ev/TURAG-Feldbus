@@ -3,7 +3,8 @@
  *  @file		feldbus.h
  *  @date		06.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
- * 
+ *
+ * @section TURAG Feldbus base support
  */
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_H_
@@ -12,8 +13,11 @@
 #include <feldbus_config.h>
 
 
+
+#define TURAG_FELDBUS_PROTOCOL_VERSION TURAG_FELDBUS_PROTOCOL_VERSION_1_1
+
 // ---------------------------------------------------
-// hardware interfaceing functions that are used by this module
+// hardware interfacing functions that are used by this module
 // and need to be defined for the target platform
 // ---------------------------------------------------
 
@@ -75,8 +79,8 @@ extern void turag_feldbus_slave_process_broadcast(uint8_t* message, uint8_t mess
 // and the device protocol implementation
 // is supposed to make use of
 // ---------------------------------------------------
-/**
- * Initialize TURAG Feldbus support
+/**Initialize TURAG Feldbus support
+ *
  * Call this function after initializing the UART peripheral
  * with the correct baudrate and after enabling transmitter and receiver.
  *
@@ -91,6 +95,7 @@ void turag_feldbus_slave_init();
 // ---------------------------------------------------
 /**
  * Receive-Complete-Interrupt Interface.
+ *
  * Call this function from the Receive-Complete-Interrupt on your system.
  * @param byte Received byte
  */
@@ -98,18 +103,20 @@ void turag_feldbus_slave_byte_received(uint8_t byte);
 
 /**
  * Data-Register-Empty-Interrupt-Interface.
+ *
  * Call this function from the Data-Register-Empty-Interrupt on your system.
  */
 void turag_feldbus_slave_ready_to_transmit();
 
 /**
  * Transmit-Complete-Interrupt-Interface.
+ *
  * Call this function from the Transmit-Complete-Interrupt on your system.
  */
 void turag_feldbus_slave_transmission_complete();
 
-/**
- * Timeout occured.
+/** Timeout occured.
+ *
  * Call this fucntion when the receive timeout has occured.
  */
 void turag_feldbus_slave_receive_timeout_occured();
@@ -117,7 +124,11 @@ void turag_feldbus_slave_receive_timeout_occured();
 
 
 // debugging functions
-#ifdef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+#ifdef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED || DOXYGEN
+/** @name Debug-Functions
+ *  Only available if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED is defined.
+ */
+///@{
 	void print_text(const char*);	// print some text
 	void print_char(uint8_t);			// print one byte in hexadecimal format
 	void print_short(uint16_t);		// print two-byte value in hexadecimal format
@@ -127,6 +138,7 @@ void turag_feldbus_slave_receive_timeout_occured();
 	void print_slong(int32_t);
 	void print_sshort_nn(int16_t x);
 	void print_short_nn(uint16_t x);
+///@}
 #else
 # 	define print_text(x)
 # 	define print_char(x)

@@ -10,6 +10,9 @@
 #include <tina/crc/xor.h>
 #include <tina/crc/crc8.h>
 
+#ifndef TURAG_FELDBUS_PROTOCOL_VERSION
+# error TURAG_FELDBUS_PROTOCOL_VERSION must be defined
+#endif
 #ifndef MY_ADDR
 # error MY_ADDR must be defined
 #endif
@@ -18,6 +21,19 @@
 #endif
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
 # error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
+#else
+# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 7
+#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 7 and needs to be bigger.
+# endif
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
+# error TURAG_FELDBUS_DEVICE_PROTOCOL must be defined
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_PROTOCOL_VERSION
+# error TURAG_FELDBUS_DEVICE_PROTOCOL_VERSION must be defined
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
+# error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
 #endif
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 # error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
@@ -93,9 +109,15 @@ void turag_feldbus_slave_receive_timeout_occured() {
 		if (uart.index == 2) {
 			// we received a ping request -> respond with empty packet (address + checksum)
 			uart.length = 1;
-		} else if (uart.rxbuf[1] == 0) {
+		} else if (uart.rxbuf[1] == 0 && uart.index == 3) {
 			// received a debug packet
-			// TODO
+			uart.txbuf[1] = TURAG_FELDBUS_PROTOCOL_VERSION;
+			uart.txbuf[2] = TURAG_FELDBUS_DEVICE_PROTOCOL;
+			uart.txbuf[3] = TURAG_FELDBUS_DEVICE_PROTOCOL_VERSION;
+			uart.txbuf[4] = TURAG_FELDBUS_DEVICE_TYPE_ID;
+			uart.txbuf[5] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
+			uart.txbuf[6] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
+			uart.length = 7;
 		} else {
 			// received some other packet --> let somebody else process it
 			uart.length = turag_feldbus_slave_process_package(uart.rxbuf + 1, uart.index - 2, uart.txbuf + 1) + 1;
@@ -111,8 +133,11 @@ void turag_feldbus_slave_receive_timeout_occured() {
 		uart.chksum_required = 1;
 #endif
 		start_transmission();
+	// not every device protocol requires broadcasts, so we can save a few bytes here
+#if (TURAG_FELDBUS_DEVICE_PROTOCOL == TURAG_FELDBUS_DEVICE_PROTOCOL_LOKALISIERUNGSSENSOREN)
 	} else if (uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR) {
 		turag_feldbus_slave_process_broadcast(uart.rxbuf + 1, uart.index - 2);
+#endif
 	}
 
 
