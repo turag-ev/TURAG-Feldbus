@@ -13,10 +13,6 @@
 #define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_SERVO		0x02
 
 
-// protocol versions
-#define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_PROTOCOL_VERSION_1_0 		0x01
-
-
 // command keys
 #define RS485_MOTOR_COM_NOT_IMPLEMENTED		(0)		// slaves should return this after reception of an unsupported get command
 
