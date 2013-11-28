@@ -20,11 +20,11 @@
 #define TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
 
 #include <tina/tina.h>
+#include "feldbus.h"
+#include <feldbus_config.h>
 
 
-#define TURAG_FELDBUS_DEVICE_PROTOCOL TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE
-#define TURAG_FELDBUS_DEVICE_PROTOCOL_VERSION TURAG_FELDBUS_STELLANTRIEBE_DEVICE_PROTOCOL_VERSION_1_0
-
+#if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(DOXYGEN)
 
 typedef struct {
 	/// holds the set request that was received
@@ -43,7 +43,7 @@ extern feldbus_stellantriebe_command_t feldbus_stellantriebe_commmand_buffer;
  * This function calls turag_feldbus_slave_init(),
  * so you should not do this again.
  */
-void turag_feldbus_stellantriebe_init();
+void turag_feldbus_stellantriebe_init(void);
 
 /** Reads value from the device.
  *
@@ -56,5 +56,6 @@ void turag_feldbus_stellantriebe_init();
  */
 extern uint8_t turag_feldbus_stellantriebe_get_value(uint8_t key, uint16_t* output);
 
+#endif
 
 #endif /* TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_ */

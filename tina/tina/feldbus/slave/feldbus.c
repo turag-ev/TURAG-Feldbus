@@ -7,12 +7,11 @@
  */
 
 #include "feldbus.h"
-#include <tina/crc/xor.h>
-#include <tina/crc/crc8.h>
+#include <feldbus_config.h>
+#include <tina/crc/xor_checksum.h>
+#include <tina/crc/crc8_icode/crc8_icode.h>
+#include <stdlib.h>
 
-#ifndef TURAG_FELDBUS_PROTOCOL_VERSION
-# error TURAG_FELDBUS_PROTOCOL_VERSION must be defined
-#endif
 #ifndef MY_ADDR
 # error MY_ADDR must be defined
 #endif
@@ -22,15 +21,12 @@
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
 # error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
 #else
-# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 7
-#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 7 and needs to be bigger.
+# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 5
+#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 5 and needs to be bigger.
 # endif
 #endif
 #ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
 # error TURAG_FELDBUS_DEVICE_PROTOCOL must be defined
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_PROTOCOL_VERSION
-# error TURAG_FELDBUS_DEVICE_PROTOCOL_VERSION must be defined
 #endif
 #ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
 # error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
@@ -39,7 +35,7 @@
 # error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
 #else
 # if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
 #  if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 13
 #   error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 13 and needs to be bigger.
 #  endif
@@ -47,7 +43,7 @@
 #endif
 
 
-static void start_transmission();
+static void start_transmission(void);
 
 
 static struct {
@@ -70,11 +66,13 @@ void turag_feldbus_slave_init() {
 	uart.index = 0;
 	uart.overflow = 0;
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-	uint8_t transmission_active = 0;
+	uart.transmission_active = 0;
 #endif
 
 	turag_feldbus_slave_rts_off();
 	turag_feldbus_slave_activate_rx_interrupt();
+	turag_feldbus_slave_deactivate_dre_interrupt();
+	turag_feldbus_slave_deactivate_tx_interrupt();
 
 }
 
@@ -98,9 +96,9 @@ void turag_feldbus_slave_receive_timeout_occured() {
 
 	// calculate checksum
 #if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
-	if (!xor_checksum_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index]))
+	if (!xor_checksum_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index - 1]))
 #elif TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
-	if (!turag_crc8_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index]))
+	if (!turag_crc8_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index - 1]))
 #endif
 		goto CLEANUP;
 
@@ -111,13 +109,11 @@ void turag_feldbus_slave_receive_timeout_occured() {
 			uart.length = 1;
 		} else if (uart.rxbuf[1] == 0 && uart.index == 3) {
 			// received a debug packet
-			uart.txbuf[1] = TURAG_FELDBUS_PROTOCOL_VERSION;
-			uart.txbuf[2] = TURAG_FELDBUS_DEVICE_PROTOCOL;
-			uart.txbuf[3] = TURAG_FELDBUS_DEVICE_PROTOCOL_VERSION;
-			uart.txbuf[4] = TURAG_FELDBUS_DEVICE_TYPE_ID;
-			uart.txbuf[5] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
-			uart.txbuf[6] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
-			uart.length = 7;
+			uart.txbuf[1] = TURAG_FELDBUS_DEVICE_PROTOCOL;
+			uart.txbuf[2] = TURAG_FELDBUS_DEVICE_TYPE_ID;
+			uart.txbuf[3] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
+			uart.txbuf[4] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
+			uart.length = 5;
 		} else {
 			// received some other packet --> let somebody else process it
 			uart.length = turag_feldbus_slave_process_package(uart.rxbuf + 1, uart.index - 2, uart.txbuf + 1) + 1;
@@ -147,7 +143,7 @@ CLEANUP:
 }
 
 
-static void start_transmission() {
+static void start_transmission(void) {
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 		uart.transmission_active = 1;
 #endif
@@ -187,7 +183,7 @@ void turag_feldbus_slave_transmission_complete() {
 }
 
 
-
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 static uint8_t digit_to_hex(uint8_t dig) {
 	dig &= 0xF;
 	dig += '0';
@@ -368,3 +364,4 @@ void print_slong(int32_t x) {
 	uart.chksum_required = 0;
 	start_transmission();
 }
+#endif

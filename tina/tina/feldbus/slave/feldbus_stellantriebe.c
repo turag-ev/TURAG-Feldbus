@@ -9,7 +9,10 @@
 #include <tina/tina.h>
 #include "feldbus_stellantriebe.h"
 #include "feldbus.h"
-#include <tina/feldbus/protocol/turag_feldbus_bus_fuer_stellantriebe.h>
+#include <feldbus_config.h>
+
+
+#if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(DOXYGEN)
 
 feldbus_stellantriebe_command_t feldbus_stellantriebe_commmand_buffer;
 
@@ -27,7 +30,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		feldbus_stellantriebe_commmand_buffer.data[0] = message[0];
 		feldbus_stellantriebe_commmand_buffer.data[1] = message[1];
 		feldbus_stellantriebe_commmand_buffer.data[2] = message[2];
-		feldbus_stellantriebe_commmand_buffer.newData = 1;
+		feldbus_stellantriebe_commmand_buffer.new_data = 1;
 
 		// dont return data
 		return 0;
@@ -51,4 +54,4 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 	}
 }
 
-
+#endif
