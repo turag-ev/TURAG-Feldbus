@@ -71,6 +71,8 @@ void turag_feldbus_slave_init() {
 
 	turag_feldbus_slave_rts_off();
 	turag_feldbus_slave_activate_rx_interrupt();
+	turag_feldbus_slave_deactivate_dre_interrupt();
+	turag_feldbus_slave_deactivate_tx_interrupt();
 
 }
 
@@ -94,9 +96,9 @@ void turag_feldbus_slave_receive_timeout_occured() {
 
 	// calculate checksum
 #if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
-	if (!xor_checksum_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index]))
+	if (!xor_checksum_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index - 1]))
 #elif TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
-	if (!turag_crc8_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index]))
+	if (!turag_crc8_check(uart.rxbuf, uart.index - 1, uart.rxbuf[uart.index - 1]))
 #endif
 		goto CLEANUP;
 
