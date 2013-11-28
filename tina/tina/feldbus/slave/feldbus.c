@@ -10,6 +10,7 @@
 #include <feldbus_config.h>
 #include <tina/crc/xor_checksum.h>
 #include <tina/crc/crc8_icode/crc8_icode.h>
+#include <stdlib.h>
 
 #ifndef MY_ADDR
 # error MY_ADDR must be defined
@@ -34,7 +35,7 @@
 # error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
 #else
 # if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
 #  if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 13
 #   error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 13 and needs to be bigger.
 #  endif
@@ -65,7 +66,7 @@ void turag_feldbus_slave_init() {
 	uart.index = 0;
 	uart.overflow = 0;
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-	uint8_t transmission_active = 0;
+	uart.transmission_active = 0;
 #endif
 
 	turag_feldbus_slave_rts_off();
