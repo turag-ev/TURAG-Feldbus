@@ -81,8 +81,9 @@ extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t mes
  *
  * @param message			Buffer holding the received data
  * @param message_length	Size of received data
+ * @param protocol_id		protocol ID to determine for which devices the broadcast was meant
  */
-extern void turag_feldbus_slave_process_broadcast(uint8_t* message, uint8_t message_length);
+extern void turag_feldbus_slave_process_broadcast(uint8_t* message, uint8_t message_length, uint8_t protocol_id);
 ///@}
 
 

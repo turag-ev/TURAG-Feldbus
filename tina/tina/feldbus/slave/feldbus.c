@@ -132,7 +132,13 @@ void turag_feldbus_slave_receive_timeout_occured() {
 	// not every device protocol requires broadcasts, so we can save a few bytes here
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL == TURAG_FELDBUS_DEVICE_PROTOCOL_LOKALISIERUNGSSENSOREN)
 	} else if (uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR) {
-		turag_feldbus_slave_process_broadcast(uart.rxbuf + 1, uart.index - 2);
+		if (uart.index == 2) {
+			// compatibility mode to support deprecated Broadcasts without protocol-ID
+			turag_feldbus_slave_process_broadcast(0, 0, TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES);
+		} else if (uart.rbuf[1] == TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES || uart.rbuf[1] == TURAG_FELDBUS_DEVICE_PROTOCOL) {
+			// otherwise process only the correct broadcasts
+			turag_feldbus_slave_process_broadcast(uart.rxbuf + 2, uart.index - 3, uart.rxbuf[2]);
+		}
 #endif
 	}
 
