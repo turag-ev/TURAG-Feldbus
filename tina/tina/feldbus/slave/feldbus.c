@@ -134,8 +134,8 @@ void turag_feldbus_slave_receive_timeout_occured() {
 	} else if (uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR) {
 		if (uart.index == 2) {
 			// compatibility mode to support deprecated Broadcasts without protocol-ID
-			turag_feldbus_slave_process_broadcast(0, 0, TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES);
-		} else if (uart.rbuf[1] == TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES || uart.rbuf[1] == TURAG_FELDBUS_DEVICE_PROTOCOL) {
+			turag_feldbus_slave_process_broadcast(0, 0, TURAG_FELDBUS_DEVICE_PROTOCOL_LOKALISIERUNGSSENSOREN);
+		} else if (uart.rxbuf[1] == TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES || uart.rxbuf[1] == TURAG_FELDBUS_DEVICE_PROTOCOL) {
 			// otherwise process only the correct broadcasts
 			turag_feldbus_slave_process_broadcast(uart.rxbuf + 2, uart.index - 3, uart.rxbuf[2]);
 		}
