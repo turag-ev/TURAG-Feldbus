@@ -35,7 +35,7 @@ protected:
 	Aktor(const char* name_, unsigned int address) :
 				Device(name_, address),
 				myControlType(RS485_MOTOR_CONTROL_TYPE_NONE),
-				myHomecomingRequested(0),
+				myHomecomingRequested(false),
 				myMaxVelocity(0xffffffff),
 				myMaxCurrent(0xffffffff),
 				myMaxPWM(0xffffffff),
