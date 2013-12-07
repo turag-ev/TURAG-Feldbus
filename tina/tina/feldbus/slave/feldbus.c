@@ -119,14 +119,15 @@ void turag_feldbus_slave_receive_timeout_occured() {
 			uart.length = turag_feldbus_slave_process_package(uart.rxbuf + 1, uart.index - 2, uart.txbuf + 1) + 1;
 		}
 
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+		uart.chksum_required = 1;
+		uart.txbuf[0] = TURAG_FELDBUS_MASTER_ADDR|MY_ADDR;
+#endif
 		// calculate correct checksum and initiate transmission
 #if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
 		uart.chksum = xor_checksum_calculate(uart.txbuf, uart.length);
 #elif TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
 		uart.chksum = turag_crc8_calculate(uart.txbuf, uart.length);
-#endif
-#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-		uart.chksum_required = 1;
 #endif
 		start_transmission();
 	// not every device protocol requires broadcasts, so we can save a few bytes here
