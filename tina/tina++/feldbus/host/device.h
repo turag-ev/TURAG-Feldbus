@@ -115,9 +115,11 @@ protected:
     DeviceInfo myDeviceInfo;
 
 public:
-	Device(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-		maxTransmissionAttempts(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS),
-		maxTransmissionErrors(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS),
+    Device(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+           unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
+           unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
+        maxTransmissionAttempts(max_transmission_attempts),
+        maxTransmissionErrors(max_transmission_errors),
 		myChecksumType(type),
 		myTransmissionErrorCounter(0),
 		myAddress(address),
@@ -147,7 +149,7 @@ protected:
 	// so take care of the right buffer size!
 	bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 
-	bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter > maxTransmissionErrors; }
+    bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
 	void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
 
 public:
