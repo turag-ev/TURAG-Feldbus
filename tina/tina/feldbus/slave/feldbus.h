@@ -149,7 +149,7 @@ void turag_feldbus_slave_receive_timeout_occured(void);
 ///@}
 
 // debugging functions
-#if defined(TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED) || defined(DOXYGEN)
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED || defined(DOXYGEN)
 /** @name Debug-Functions
  *  Only available if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED is defined.
  *
