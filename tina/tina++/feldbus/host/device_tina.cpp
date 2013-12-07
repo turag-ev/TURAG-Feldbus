@@ -126,6 +126,31 @@ bool Device::isAvailable(void) {
 	return !hasReachedTransmissionErrorLimit();
 }
 
+bool Device::getDeviceInfo(DeviceInfo* device_info) {
+    if (myDeviceInfo.bufferSize == 0) {
+        Request<uint8_t> request;
+        Response<DeviceInfo> response;
+
+        request.data = 0;
+
+        if (!transceive(request, &response)) {
+            return false;
+        }
+        myDeviceInfo = response.data;
+    }
+    if (device_info) *device_info = myDeviceInfo;
+    return true;
+}
+
+//bool Device::getDeviceRealName(char* out_real_name) {
+//    if (myDeviceInfo.bufferSize == 0) {
+//        if (!getDeviceInfo(nullptr)) {
+//            return false;
+//        }
+//    }
+//    Request<uint16_t> request;
+//}
+
 } // namespace Feldbus
 } // namespace TURAG
 

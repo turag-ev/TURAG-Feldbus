@@ -80,6 +80,14 @@ struct Response<void> {
 	uint8_t checksum;
 } _packed;
 
+typedef struct {
+    uint8_t deviceProtocolId;
+    uint8_t deviceTypeId;
+    uint8_t crcType;
+    uint8_t bufferSize;
+    uint8_t nameLength;
+} _packed DeviceInfo;
+
 /*
  *
  */
@@ -87,7 +95,7 @@ class Device {
 public:
 	enum class ChecksumType {
 		xor_based = TURAG_FELDBUS_CHECKSUM_XOR,
-		crc8_icode = TURAG_FELDBUS_CHECKSUM_CRC8_ICODE,
+        crc8_icode = TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
 	};
 
 private:
@@ -104,7 +112,9 @@ private:
 protected:
 	const unsigned int myAddress;
 	bool hasCheckedAvailabilityYet;
+    DeviceInfo myDeviceInfo;
 
+public:
 	Device(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
 		maxTransmissionAttempts(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS),
 		maxTransmissionErrors(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS),
@@ -116,6 +126,7 @@ protected:
 
 	virtual ~Device() {}
 
+protected:
 	template<typename T, typename U> _always_inline
 	bool transceive(Request<T>& transmit, Response<U>* receive) {
 	transmit.address = myAddress;
@@ -144,6 +155,8 @@ public:
 
 	unsigned int getAddress(void) const { return myAddress; }
 	virtual bool isAvailable(void);
+    bool getDeviceInfo(DeviceInfo* device_info);
+    bool getDeviceRealName(char* out_real_name);
 };
 
 } // namespace Feldbus
