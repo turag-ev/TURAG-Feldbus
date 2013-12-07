@@ -11,6 +11,7 @@
 #include <tina/crc/xor_checksum.h>
 #include <tina/crc/crc8_icode/crc8_icode.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef MY_ADDR
 # error MY_ADDR must be defined
@@ -21,8 +22,8 @@
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
 # error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
 #else
-# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 5
-#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 5 and needs to be bigger.
+# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 6
+#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 6 and needs to be bigger.
 # endif
 #endif
 #ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
@@ -30,6 +31,9 @@
 #endif
 #ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
 # error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_NAME
+# define TURAG_FELDBUS_DEVICE_NAME "unnamed device"
 #endif
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 # error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
@@ -44,6 +48,8 @@
 
 
 static void start_transmission(void);
+static uint8_t turag_feldbus_slave_name_length = 0;
+static char* turag_feldbus_slave_name = TURAG_FELDBUS_DEVICE_NAME;
 
 
 static struct {
@@ -68,6 +74,7 @@ void turag_feldbus_slave_init() {
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 	uart.transmission_active = 0;
 #endif
+	turag_feldbus_slave_name_length = strlen(turag_feldbus_slave_name);
 
 	turag_feldbus_slave_rts_off();
 	turag_feldbus_slave_activate_rx_interrupt();
@@ -113,21 +120,24 @@ void turag_feldbus_slave_receive_timeout_occured() {
 			uart.txbuf[2] = TURAG_FELDBUS_DEVICE_TYPE_ID;
 			uart.txbuf[3] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
 			uart.txbuf[4] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
-			uart.length = 5;
+			uart.txbuf[5] = turag_feldbus_slave_name_length;
+			uart.length = 6;
+		} else if (uart.rxbuf[1] == 0 && uart.rxbuf[2] == 0 && uart.index == 4) {
+			memcpy(uart.txbuf + 1, turag_feldbus_slave_name, turag_feldbus_slave_name_length);
+			uart.length = turag_feldbus_slave_name_length + 1;
 		} else {
 			// received some other packet --> let somebody else process it
 			uart.length = turag_feldbus_slave_process_package(uart.rxbuf + 1, uart.index - 2, uart.txbuf + 1) + 1;
 		}
 
-#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-		uart.chksum_required = 1;
-		uart.txbuf[0] = TURAG_FELDBUS_MASTER_ADDR|MY_ADDR;
-#endif
 		// calculate correct checksum and initiate transmission
 #if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
 		uart.chksum = xor_checksum_calculate(uart.txbuf, uart.length);
 #elif TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
 		uart.chksum = turag_crc8_calculate(uart.txbuf, uart.length);
+#endif
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+		uart.chksum_required = 1;
 #endif
 		start_transmission();
 	// not every device protocol requires broadcasts, so we can save a few bytes here
