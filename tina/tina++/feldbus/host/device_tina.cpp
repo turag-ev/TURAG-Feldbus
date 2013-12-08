@@ -142,14 +142,30 @@ bool Device::getDeviceInfo(DeviceInfo* device_info) {
     return true;
 }
 
-//bool Device::getDeviceRealName(char* out_real_name) {
-//    if (myDeviceInfo.bufferSize == 0) {
-//        if (!getDeviceInfo(nullptr)) {
-//            return false;
-//        }
-//    }
-//    Request<uint16_t> request;
-//}
+bool Device::receiveDeviceRealName(char* out_real_name) {
+    if (myDeviceInfo.bufferSize == 0) {
+        if (!getDeviceInfo(nullptr)) {
+            return false;
+        }
+    }
+    Request<uint16_t> request;
+    request.address = myAddress;
+    request.data = 0;
+
+    if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+                      sizeof(request),
+                      reinterpret_cast<uint8_t*>(out_real_name),
+                      myDeviceInfo.nameLength + 2)) {
+        return false;
+    }
+
+    for (int i = 0; i < myDeviceInfo.nameLength; ++i) {
+        out_real_name[i] = out_real_name[i+1];
+    }
+    out_real_name[myDeviceInfo.nameLength] = 0;
+
+    return true;
+}
 
 } // namespace Feldbus
 } // namespace TURAG

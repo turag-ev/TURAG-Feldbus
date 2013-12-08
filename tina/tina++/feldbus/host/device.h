@@ -124,7 +124,9 @@ public:
 		myTransmissionErrorCounter(0),
 		myAddress(address),
 		hasCheckedAvailabilityYet(false),
-		name(name_) { }
+        name(name_) {
+        myDeviceInfo.bufferSize = 0;
+    }
 
 	virtual ~Device() {}
 
@@ -145,8 +147,8 @@ protected:
 											sizeof(Broadcast<T>), nullptr, 0);
 	}
 
-	// this funtion will always overwrite the last byte with the checksum of the preceeding ones
-	// so take care of the right buffer size!
+    // this funtion will always overwrite the last byte in transmit with the checksum of the preceeding bytes
+    // so take care of the right buffer size and supply one byte less!
 	bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 
     bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
@@ -158,7 +160,7 @@ public:
 	unsigned int getAddress(void) const { return myAddress; }
 	virtual bool isAvailable(void);
     bool getDeviceInfo(DeviceInfo* device_info);
-    bool getDeviceRealName(char* out_real_name);
+    bool receiveDeviceRealName(char* out_real_name);
 };
 
 } // namespace Feldbus

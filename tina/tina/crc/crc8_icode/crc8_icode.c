@@ -39,6 +39,8 @@ static const uint8_t crc8_table[256] = {
     0x7f, 0x62, 0x45, 0x58, 0x0b, 0x16, 0x31, 0x2c, 0x97, 0x8a, 0xad, 0xb0, 0xe3, 0xfe, 0xd9, 0xc4
 };
 
+// just to silence compiler warnings
+uint8_t turag_crc8_calculate(const void* data, size_t length);
 
 uint8_t turag_crc8_calculate(const void* data, size_t length) {
     uint8_t crc = 0xfd;

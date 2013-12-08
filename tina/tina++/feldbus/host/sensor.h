@@ -20,7 +20,7 @@ namespace Feldbus {
  */
 class Sensor : public TURAG::Feldbus::Device {
 public:
-	Sensor(const char* name_, unsigned int address) : Device(name_, address) {}
+    Sensor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) : Device(name_, address, type) {}
 };
 
 } // namespace Feldbus
