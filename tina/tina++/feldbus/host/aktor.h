@@ -32,10 +32,10 @@ private:
 	int myMinAngle;
 
 protected:
-	Aktor(const char* name_, unsigned int address) :
-				Device(name_, address),
+    Aktor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+                Device(name_, address, type),
 				myControlType(RS485_MOTOR_CONTROL_TYPE_NONE),
-				myHomecomingRequested(0),
+				myHomecomingRequested(false),
 				myMaxVelocity(0xffffffff),
 				myMaxCurrent(0xffffffff),
 				myMaxPWM(0xffffffff),

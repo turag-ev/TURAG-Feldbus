@@ -35,7 +35,7 @@ protected:
 
 public:
 
-	DCMotor(const char* name_, int address) : Aktor(name_, address) {}
+    DCMotor(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) : Aktor(name_, address, type) {}
 	virtual bool setMinAngle(int angle) { (void)angle; return false; }
 	virtual bool setMaxAngle(int angle) { (void)angle; return false; }
 	virtual bool initThresholds(unsigned int maxVelocity, unsigned int maxCurrent, unsigned int maxPWM, unsigned int maxTorque) {

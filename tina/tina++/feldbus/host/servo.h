@@ -33,7 +33,7 @@ protected:
 	virtual inline int convertVoltage(unsigned short from) const { return (int)((short)from); }
 	virtual inline unsigned short convertVoltage(int from) const { return (unsigned short)from; }
 public:
-	Servo(const char* name_, int address) : Aktor(name_, address) {}
+    Servo(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) : Aktor(name_, address, type) {}
 	virtual bool getTorque(int* torque) {(void)torque; return false; }
 	virtual bool setTorque(int torque) {(void)torque; return false; }
 	virtual bool initThresholds(unsigned int maxVelocity, unsigned int maxCurrent, unsigned int maxPWM, int minAngle, int maxAngle) {

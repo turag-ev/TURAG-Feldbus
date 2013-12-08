@@ -60,8 +60,8 @@ protected:
 	bool initiateMeassurement(void);
 
 public:
-	Farbsensor(const char* name_, unsigned int address) :
-			Sensor(name_, address), lastKnownColor(Color::Error) {
+    Farbsensor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+            Sensor(name_, address, type), lastKnownColor(Color::Error) {
 		for (int i = 0; i < myNumberOfColors; i++)
 			myColorIndexTable[i].initialized = false;
 	}
