@@ -148,9 +148,16 @@ bool Device::receiveDeviceRealName(char* out_real_name) {
             return false;
         }
     }
-    Request<uint16_t> request;
+
+    struct cmd {
+        uint8_t a;
+        uint8_t b;
+    };
+
+    Request<cmd> request;
     request.address = myAddress;
-    request.data = 0;
+    request.data.a = 0;
+    request.data.b = 0;
 
     if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
                       sizeof(request),
