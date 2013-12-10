@@ -100,6 +100,7 @@ void turag_feldbus_slave_byte_received(uint8_t data) {
 
 void turag_feldbus_slave_receive_timeout_occured() {
 	if (uart.overflow) goto CLEANUP;
+	if (uart.index == 1) goto CLEANUP;  // this package is invalid within the protocol specification
 
 	// calculate checksum
 #if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
