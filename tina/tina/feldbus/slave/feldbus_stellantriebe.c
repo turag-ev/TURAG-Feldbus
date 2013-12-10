@@ -24,7 +24,7 @@ void turag_feldbus_stellantriebe_init() {
 
 
 uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response) {
-
+// the feldbus base implementation guarantees message_length to be >= 1 so we don't need to check that
 	if (message[0] & RS485_MOTOR_SET_COMMAND_MASK) {
 		// we received a set command, so copy command data
 		feldbus_stellantriebe_commmand_buffer.data[0] = message[0];
