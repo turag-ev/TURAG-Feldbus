@@ -106,7 +106,6 @@ private:
 	unsigned int myTransmissionErrorCounter;
 
 	static unsigned int globalTransmissionErrorCounter;
-	static Mutex rs485_mutex;
 	static SystemTime lastTransmission;
 
 protected:

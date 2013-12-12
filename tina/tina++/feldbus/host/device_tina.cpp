@@ -19,7 +19,6 @@
 namespace TURAG {
 namespace Feldbus {
 
-Mutex Device::rs485_mutex;
 SystemTime Device::lastTransmission;
 unsigned int Device::globalTransmissionErrorCounter = 0;
 
@@ -44,9 +43,6 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         // 		infof("%.2x", transmit[i]);
         // 	}
         // 	info("]\n");
-
-        // mutex lock
-        Mutex::Lock lock( rs485_mutex );
 
 
         bool success = false, checksum_correct = false;
