@@ -1,4 +1,4 @@
-#include <tina/turag_dxl_hal.h>
+#include "dxl_hal.h"
 #include "dynamixel.h"
 
 
@@ -45,8 +45,8 @@ void turag_dxl_txrx_packet(void);
 #define TURAG_DXL_PARAMETER				(5)
 #define TURAG_DXL_DEFAULT_BAUDNUMBER			(1)
 
-static unsigned char gbInstructionPacket[MAXNUM_TXPARAM+10] = {0};
-static unsigned char gbStatusPacket[MAXNUM_RXPARAM+10] = {0};
+static unsigned char gbInstructionPacket[TURAG_DXL_MAXNUM_TXPARAM+10] = {0};
+static unsigned char gbStatusPacket[TURAG_DXL_MAXNUM_RXPARAM+10] = {0};
 static unsigned char gbRxPacketLength = 0;
 static unsigned char gbRxGetLength = 0;
 static int gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
@@ -188,7 +188,7 @@ void turag_dxl_rx_packet(void)
 	}
 
 	// Check id pairing
-	if( gbInstructionPacket[TURAG_DXL_ID] != gbStatusPacket[ID])
+    if( gbInstructionPacket[TURAG_DXL_ID] != gbStatusPacket[TURAG_DXL_ID])
 	{
 		gbCommStatus = TURAG_DXL_COMM_RXCORRUPT;
 		giBusUsing = 0;
