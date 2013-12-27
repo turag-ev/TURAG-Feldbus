@@ -15,12 +15,11 @@
  * - TURAG_FELDBUS_DEVICE_TYPE_ID
  * - TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
  * - TURAG_FELDBUS_DEVICE_PROTOCOL
- * It should also include a device protocol header.
- *
- * This header should not be included directly but rather by the implementation of the desired device protocol.
+ * It should also include a device protocol header unless the device works directly on top of the base protocol. 
+ * In this case this header should not be included directly but rather by the implementation of the desired device protocol.
  *
  * To be able make use of this module you need to make sure that every required function is present - required hardware functions
- * you need to define yourself while the device protocol should in most cased implement all required functionality.
+ * you need to define yourself while the device protocol should in most cases implement all required functionality.
  */
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_H_
@@ -33,21 +32,59 @@
  *  and need to be defined for the target platform
  */
 ///@{
-
+/**
+ * This function should implement all logic that is required to disable the rs485 line driver thus releasing the bus.
+ */
 extern void turag_feldbus_slave_rts_off(void);
+/**
+ * This function should implement all logic that is required to enable the rs485 line driver thus claiming 
+ * the bus for active driving.
+ */
 extern void turag_feldbus_slave_rts_on(void);
 
+/**
+ * This function should implement all logic that is required to 
+ * activate the data register empty interrupt of the UART peripheral.
+ */
 extern void turag_feldbus_slave_activate_dre_interrupt(void);
+
+/**
+ * This function should implement all logic that is required to 
+ * deactivate the data register empty interrupt of the UART peripheral.
+ */
 extern void turag_feldbus_slave_deactivate_dre_interrupt(void);
+
+/**
+ * This function should implement all logic that is required to 
+ * activate the receive interrupt of the UART peripheral.
+ */
 extern void turag_feldbus_slave_activate_rx_interrupt(void);
+
+/**
+ * This function should implement all logic that is required to 
+ * deactivate the receive interrupt of the UART peripheral.
+ */
 extern void turag_feldbus_slave_deactivate_rx_interrupt(void);
+
+/**
+ * This function should implement all logic that is required to 
+ * activate the transmission complete interrupt of the UART peripheral.
+ */
 extern void turag_feldbus_slave_activate_tx_interrupt(void);
+
+/**
+ * This function should implement all logic that is required to 
+ * deactivate the transmission complete interrupt of the UART peripheral.
+ */
 extern void turag_feldbus_slave_deactivate_tx_interrupt(void);
 
 /**
- * Starts some component that is able to call turag_feldbus_slave_receive_timeout_occured.
+ * This function should start some component that is able to call turag_feldbus_slave_receive_timeout_occured.
  * The timeout is specified in the protocol definition. Whenever the function is called
  * it is required that the timer starts counting from the start regardless of its previous state.
+ * 
+ * After being enabled it should trigger the call of turag_feldbus_slave_receive_timeout_occured only once
+ * and deactivate itself afterwards.
  */
 extern void turag_feldbus_slave_start_receive_timeout(void);
 
@@ -67,7 +104,16 @@ extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
 
 /**
  * This function gets called when the device received a package.
- * The response should be made as soon as possible.
+ * The response should be made as soon as possible. 
+ * 
+ * The length of the response package is controlled by the return
+ * value. It is possible not to reply to a package at all by returning TURAG_FELDBUS_IGNORE_PACKAGE. 
+ * If you return 0, an empty response package consisting only of address and
+ * checksum will be generated.
+ * 
+ * The data held in the message buffer contain the received package
+ * stripped of address and checksum. message_length is guaranteed to be >= 1 as a consequence 
+ * ping-requests (empty package) being handled by this implementation.
  *
  * @param message			Buffer holding the received data
  * @param message_length	Size of received data
@@ -78,6 +124,9 @@ extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t mes
 
 /**
  * This function gets called when the device received a broadcast package.
+ * 
+ * As broadcasts can never generate a response package this function does neither have a return type
+ * nor pointer-type arguments to generate any kind of feedback.
  *
  * @param message			Buffer holding the received data
  * @param message_length	Size of received data

@@ -22,8 +22,8 @@
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
 # error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
 #else
-# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 6
-#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 6 and needs to be bigger.
+# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 20
+#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 20 and needs to be bigger.
 # endif
 #endif
 #ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
@@ -40,9 +40,6 @@
 #else
 # if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 #  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
-#  if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 13
-#   error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 13 and needs to be bigger.
-#  endif
 # endif
 #endif
 
@@ -115,20 +112,32 @@ void turag_feldbus_slave_receive_timeout_occured() {
 		if (uart.index == 2) {
 			// we received a ping request -> respond with empty packet (address + checksum)
 			uart.length = 1;
-		} else if (uart.rxbuf[1] == 0 && uart.index == 3) {
-			// received a debug packet
-			uart.txbuf[1] = TURAG_FELDBUS_DEVICE_PROTOCOL;
-			uart.txbuf[2] = TURAG_FELDBUS_DEVICE_TYPE_ID;
-			uart.txbuf[3] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
-			uart.txbuf[4] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
-			uart.txbuf[5] = turag_feldbus_slave_name_length;
-			uart.length = 6;
-		} else if (uart.rxbuf[1] == 0 && uart.rxbuf[2] == 0 && uart.index == 4) {
-			memcpy(uart.txbuf + 1, turag_feldbus_slave_name, turag_feldbus_slave_name_length);
-			uart.length = turag_feldbus_slave_name_length + 1;
+		} else if (uart.rxbuf[1] == 0) {
+		    // first data byte is zero -> reserved packet
+			if (uart.index == 3) {
+				// received a debug packet
+				uart.txbuf[1] = TURAG_FELDBUS_DEVICE_PROTOCOL;
+				uart.txbuf[2] = TURAG_FELDBUS_DEVICE_TYPE_ID;
+				uart.txbuf[3] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
+				uart.txbuf[4] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
+				uart.txbuf[5] = turag_feldbus_slave_name_length;
+				uart.length = 6;
+			} else if (uart.rxbuf[2] == 0 && uart.index == 4) {
+			    // return device name
+				memcpy(uart.txbuf + 1, turag_feldbus_slave_name, turag_feldbus_slave_name_length);
+				uart.length = turag_feldbus_slave_name_length + 1;    
+			} else {
+			    // unhandled reserved packet
+			    goto CLEANUP;
+			}
 		} else {
 			// received some other packet --> let somebody else process it
 			uart.length = turag_feldbus_slave_process_package(uart.rxbuf + 1, uart.index - 2, uart.txbuf + 1) + 1;
+		}
+		
+		// this happens if the device protocol or the user code returned TURAG_FELDBUS_IGNORE_PACKAGE.
+		if (uart.length == 0) {
+		    goto CLEANUP;
 		}
 
 		// calculate correct checksum and initiate transmission
