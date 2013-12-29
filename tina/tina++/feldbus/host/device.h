@@ -128,7 +128,7 @@ public:
         myDeviceInfo.bufferSize = 0;
     }
 
-	virtual ~Device() {}
+	~Device() {}
 
 protected:
 	template<typename T, typename U> _always_inline
@@ -149,17 +149,19 @@ protected:
 
     // this funtion will always overwrite the last byte in transmit with the checksum of the preceeding bytes
     // so take care of the right buffer size and supply one byte less!
-	bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
+    bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 
     bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
-	void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
+    void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
 
 public:
-	const char* name;
+    const char* name;
 
-	unsigned int getAddress(void) const { return myAddress; }
-	virtual bool isAvailable(void);
+    unsigned int getAddress(void) const { return myAddress; }
+    bool isAvailable(void);
     bool getDeviceInfo(DeviceInfo* device_info);
+    
+    // out_real_name MUST contain space for the name +2 byte!
     bool receiveDeviceRealName(char* out_real_name);
 };
 
