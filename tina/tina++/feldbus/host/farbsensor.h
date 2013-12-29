@@ -71,7 +71,6 @@ public:
 	bool getRGB(rgb_t* rgb);
 	bool getHSV(hsv_t* hsv);
 	void setColorThresholds(Color color, uint16_t h_min, uint16_t h_max, uint16_t s_min, uint16_t s_max, uint8_t v_min, uint8_t v_max);
-	virtual bool isAvailable(void);
 
 	static const char* getColorString(Color color)  { return myColorStrings[(int)color]; }
 

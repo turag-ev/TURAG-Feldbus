@@ -4,16 +4,30 @@
  *  @date		17.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
  *
- * This module implements support for the TURAG Feldbus für Stellantriebe device protocol.
+ * This module implements support for the TURAG Feldbus für Stellantriebe device protocol. 
+ * This device protocol was designed to meet the communication requirements of 
+ * usual mechanical actors. 
+ * 
+ * As a main feature it is possible to define a table
+ * of values within the device's firmware which is called command set. 
+ * This table is used by the protocol implementation to enable 
+ * read and or write access to these values. For each entry of the command set
+ * you can adjust the length, write access and a factor which needs to be applied to 
+ * the returned raw value to get a value of the correct physical dimension.
+ * This is useful to avoid expensive floating point operations in potentially 
+ * slow devices. The different possible configuration options are defined in the protocol
+ * specification header. The actual location in memory of an entry of the command
+ * set is given with a void pointer to the corresponding address.
+ * 
+ * Additionally it is possible to supply a human-understandable description
+ * for each value which needs to be supplied in a separate array of strings.
  *
- * If you want to use it, you have to call turag_feldbus_stellantriebe_init() once.
- * Whenever there is a get request, turag_feldbus_stellantriebe_get_value() will be called.
- * You have to supply this function yourself.
- *
- * When there is a set request to be handled, the command data is copied into feldbus_stellantriebe_commmand_buffer.data
- * and feldbus_stellantriebe_commmand_buffer.new data is set to one. The devices main loop should periodically check
- * whether new_data changed. While extracting the required data from feldbus_stellantriebe_commmand_buffer.data you should
- * disable all interrupts to avoid any pitfalls.
+ * You should be aware of the fact that communication-caused access to the values
+ * of the command set does always happen within interrupt context. This has 2 implications:
+ *  - for read-only values you need to protect every write access that happens within the device's 
+ *    firmware in main context to this value by disabling all interrupts before the actual write.
+ *    if your device runs on an architecture whose register size is smaller than the value in question.
+ *  - for writable values you additionally need to declare the variable as volatile.
  *
  */
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
@@ -27,34 +41,53 @@
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(DOXYGEN)
 
 typedef struct {
-	/// holds the set request that was received
-	volatile uint8_t data[3];
-	/// this is 1 if the data array was updated
-	volatile uint8_t new_data;
-
+    void* value;
+    uint8_t write_access;
+    uint8_t length;
+    float factor;
 } feldbus_stellantriebe_command_t;
 
-
-extern feldbus_stellantriebe_command_t feldbus_stellantriebe_commmand_buffer;
 
 /**
  * Sets up this module.
  *
  * This function calls turag_feldbus_slave_init(),
  * so you should not do this again.
+ * 
+ * @param command_set pointer to array containing the command set definition of the device
+ * @param command_names pointer to array of strings describing the command set
+ * @param command_set_length length of the command set
  */
-void turag_feldbus_stellantriebe_init(void);
+void turag_feldbus_stellantriebe_init(
+    feldbus_stellantriebe_command_t* command_set, 
+    char** command_names, 
+    uint8_t command_set_length);
 
-/** Reads value from the device.
- *
- * This function needs to be implemented by the specific device code.
- * It is called by this module to handle get requests from the bus master.
- *
- * @param key		specifies which data to get
- * @param output 	pointer holding the requested data
- * @return 			1 on success, 0 if the requested key could not be returned.
+/** 
+ * This function is called when the value that belongs to this key
+ * was externally changed.
+ * 
+ * You can use this function to start additional actions that are connected
+ * to a change of a certain value. 
+ * 
+ * At the time this function is called the value is already updated. As of now 
+ * there is no way to access the former value unless any form of buffering is done
+ * manually.
+ * 
+ * If you don't nedd this functionality you can simply leave the function body empty.
+ * 
+ * @param key		
  */
-extern uint8_t turag_feldbus_stellantriebe_get_value(uint8_t key, uint16_t* output);
+extern void turag_feldbus_stellantriebe_value_changed(uint8_t key);
+
+
+/**
+ * This function is called upon the receiption of packages that are not handled by the 
+ * Stellantriebe protocol.
+ * 
+ * If you don't nedd this functionality you can simply leave the function body empty.
+ */
+extern uint8_t turag_feldbus_stellantriebe_process_package(uint8_t* message, uint8_t message_length, uint8_t* response);
 
 #endif
 

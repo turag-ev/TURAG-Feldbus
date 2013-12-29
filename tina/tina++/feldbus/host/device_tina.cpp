@@ -139,6 +139,10 @@ bool Device::getDeviceInfo(DeviceInfo* device_info) {
 }
 
 bool Device::receiveDeviceRealName(char* out_real_name) {
+    if (!out_real_name) {
+	return false;
+    }
+    
     if (myDeviceInfo.bufferSize == 0) {
         if (!getDeviceInfo(nullptr)) {
             return false;

@@ -11,332 +11,385 @@
 #include <tina++/tina.h>
 #include <tina/debug.h>
 
+#include <cstring>
+
+
 namespace TURAG {
 namespace Feldbus {
 
-struct AktorGetData {
-	uint8_t key;
-	uint16_t value;
+struct AktorGetShort {
+	int16_t value;
 } _packed;
 
-bool Aktor::getValue(uint8_t key, uint16_t* value) {
-	Request<uint8_t> request;
-	Response<AktorGetData> receive;
-	request.data = key;
-
-	bool success = transceive(request, &receive);
-	if (success) {
-		if (value) *value = receive.data.value;
-		return true;
-	} else {
-		return false;
-	}
-}
-
-struct AktorSetData {
-	uint8_t key;
-	uint16_t value;
+struct AktorGetLong {
+	int32_t value;
 } _packed;
 
-bool Aktor::setValue(uint8_t key, uint16_t value) {
-	Request<AktorSetData> request;
-	Response<> response;
+struct AktorSetShort {
+	uint8_t key;
+	int16_t value;
+} _packed;
+
+struct AktorSetLong {
+	uint8_t key;
+	int32_t value;
+} _packed;
+
+struct AktorGetCommandInfo {
+	uint8_t key;
+	uint8_t cmd0;
+	uint8_t cmd1;
+	uint8_t cmd2;
+} _packed;
+
+struct AktorGetCommandInfoResponse {
+	AktorCommandWriteAccess writeAccess;
+	AktorCommandLength length;
+	float factor;
+} _packed;
+
+struct AktorGetStructuredOutputControl {
+    uint8_t key;
+    uint8_t cmd;
+};
+
+
+unsigned int Aktor::getCommandsetLength(void) {
+    if (commandSetPopulated) {
+	return commandSetLength;
+    } else {
+	Request<AktorGetCommandInfo> request;
+	request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE;
+	request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE;
+	request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE;
 	
-	request.data.key = key;
-	request.data.value = value;
-	return transceive(request, &response);
-}
-
-bool Aktor::hasAngleReached() {
-	uint16_t status;
-
-	bool success = getValue(RS485_MOTOR_COM_INDEX_STATUS, &status);
-	if (success && static_cast<uint8_t>(status) == RS485_MOTOR_STATUS_ANGLE_REACHED)
-		return true;
-	else
-		return false;
-}
-
-bool Aktor::hasVelocityReached() {
-	uint16_t status;
-
-	bool success = getValue(RS485_MOTOR_COM_INDEX_STATUS, &status);
-
-	if (success && static_cast<uint8_t>(status) == RS485_MOTOR_STATUS_VELOCITY_REACHED)
-		return true;
-	else
-		return false;
-}
-
-bool Aktor::hasCurrentReached() {
-	uint16_t status;
-
-	bool success = getValue(RS485_MOTOR_COM_INDEX_STATUS, &status);
-
-	if (success && static_cast<uint8_t>(status) == RS485_MOTOR_STATUS_CURRENT_REACHED)
-		return true;
-	else
-		return false;
-}
-
-bool Aktor::hasErrorDetected() {
-	uint16_t status = RS485_MOTOR_STATUS_NONE;
-
-	bool success = getValue(RS485_MOTOR_COM_INDEX_STATUS, &status);
-
-	if (success && static_cast<uint8_t>(status) == RS485_MOTOR_STATUS_ERROR)
-		return true;
-	else
-		return false;
-}
-
-bool Aktor::enableControl() {
-	if (!setValue(RS485_MOTOR_COM_INDEX_CTRL_TYPE, myControlType) ||
-			!setValue(RS485_MOTOR_COM_INDEX_CTRL_STATE, RS485_MOTOR_CONTROL_STATE_ENABLE))
-		return false;
-
-	if (myHomecomingRequested) {
-		myControlType = RS485_MOTOR_CONTROL_TYPE_POS;
-		myHomecomingRequested = false;
+	Response<uint8_t> response;
+	if !(transceive(request, &response)) {
+	    return 0;
 	}
-
-	return true;
+	return response.data;
+    }
 }
-
-bool Aktor::disableControl() {
-	if (!setValue(RS485_MOTOR_COM_INDEX_CTRL_STATE, RS485_MOTOR_CONTROL_STATE_DISABLE))
-		return false;
-
-	// we set the internal control type regardless of what happens on the bus. It's better to reactivate once to often but to
-	// have it disabled without knowing it.
-	myControlType = RS485_MOTOR_CONTROL_TYPE_NONE;
-	return setValue(RS485_MOTOR_COM_INDEX_CTRL_STATE, RS485_MOTOR_CONTROL_TYPE_NONE);
-}
-
-bool Aktor::setAngle(int angle) {
-	if (angle < 0) angle = 0;
-
-	if (!setValue(RS485_MOTOR_COM_INDEX_DES_ANGLE, convertAngle(angle)))
-		return false;
-
-	if (myControlType != RS485_MOTOR_CONTROL_TYPE_POS) {
-		if (!setValue(RS485_MOTOR_COM_INDEX_CTRL_TYPE, RS485_MOTOR_CONTROL_TYPE_POS))
-			return false;
-
-		myControlType = RS485_MOTOR_CONTROL_TYPE_POS;
+    
+bool Aktor::populateCommandSet(AktorCommand_t* commandSet_, unsigned int commandSetLength_) {
+    if (!commandSet_) return false;
+    
+    unsigned int deviceCommandSetLength = getCommandsetLength();
+    if (deviceCommandSetLength == 0) return false;
+    
+    if (deviceCommandSetLength > commandSetLength_) {
+	commandSetLength = commandSetLength_;
+    } else {
+	commandSetLength = deviceCommandSetLength;
+    }
+    commandSet = commandSet_;
+    
+    Request<AktorGetCommandInfo> request;
+    request.data.key = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET;
+    request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET;
+    request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET;
+    request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET;
+    Response<AktorGetCommandInfoResponse> response;
+    
+    for (int i = 0; i < commandSetLength; ++i) {
+	request.data.key = i + 1;
+    
+	if !(transceive(request, &response)) {
+	    return false;
 	}
-	return true;
+	commandSet[i].write_access = static_cast<AktorCommandWriteAccess>(response.data.writeAccess);
+	commandSet[i].length = static_cast<AktorCommandLength>(response.data.length);
+	commandSet[i].factor = response.data.factor;
+	
+    }
+    commandSetPopulated = true;
+    return true;
 }
-
-bool Aktor::setVelocity(int velocity) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_DES_VEL, convertVelocity(velocity)))
+    
+bool Aktor::getValue(uint8_t key, float* value) {
+    if (!commandSetPopulated) {
+	errorf("%s: commandSet not populated", name);
+	return false;
+    }
+    if (key > commandSetLength || key == 0) {
+	errorf("%s: key not within commandSetLength", name);	
+	return false;
+    }
+        
+    AktorCommand_t* command = &commandSet[key-1];
+    
+    if (command->length == AktorCommandLength::none) {
+	errorf("%s: key not supported", name);	
+	return false;
+    }
+    
+    if (!command->bufferValid) {
+	Request<uint8_t> request;
+	request.data = key;
+	
+	if (command->length == AktorCommandLength::length_char) {
+	    Response<int8_t> response;
+	    if (!transceive(request, &response)) {
 		return false;
-
-	if (myControlType != RS485_MOTOR_CONTROL_TYPE_VEL) {
-		if (!setValue(RS485_MOTOR_COM_INDEX_CTRL_TYPE, RS485_MOTOR_CONTROL_TYPE_VEL))
-			return false;
-
-		myControlType = RS485_MOTOR_CONTROL_TYPE_VEL;
+	    }
+	    command->bufferedValue = static_cast<float>(response.data.value) * command->factor;
+	} else if (command->length == AktorCommandLength::length_short) {
+	    Response<AktorGetShort> response;
+	    if (!transceive(request, &response)) {
+		return false;
+	    }
+	    command->bufferedValue = static_cast<float>(response.data.value) * command->factor;
+	} else {
+	    Response<AktorGetLong> response;
+	    if (!transceive(request, &response)) {
+		return false;
+	    }
+	    command->bufferedValue = static_cast<float>(response.data.value) * command->factor;
 	}
-	return true;
-}
-
-bool Aktor::setCurrent(int current) {
-	infof("%s: setCurrent to %d mA", name, current);
-
-	if (!setValue(RS485_MOTOR_COM_INDEX_DES_CUR, convertCurrent(current)))
-		return false;
-
-	if (myControlType != RS485_MOTOR_CONTROL_TYPE_CUR) {
-		if (!setValue(RS485_MOTOR_COM_INDEX_CTRL_TYPE, RS485_MOTOR_CONTROL_TYPE_CUR))
-			return false;
-
-		myControlType = RS485_MOTOR_CONTROL_TYPE_CUR;
+	
+	// protocol definition: writable values are bufferable
+	if (command->writeAccess == AktorCommandWriteAccess::write) {
+	    command->bufferValid = true;
 	}
-	return true;
+	
+    }
+    *value = command->bufferedValue;
+    return true;
+
 }
 
-bool Aktor::setTorque(int torque) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_DES_TOR, convertTorque(torque)))
-		return false;
+bool Aktor::setValue(uint8_t key, float value) {
+    if (!commandSetPopulated) {
+	errorf("%s: commandSet not populated", name);
+	return false;
+    }
+    if (key > commandSetLength || key == 0) {
+	errorf("%s: key not within commandSetLength", name);
+	return false;	
+    }
 
-	if (myControlType != RS485_MOTOR_CONTROL_TYPE_CUR) {
-		if (!setValue(RS485_MOTOR_COM_INDEX_CTRL_TYPE, RS485_MOTOR_CONTROL_TYPE_CUR))
-			return false;
+    AktorCommand_t* command = &commandSet[key-1];
 
-		myControlType = RS485_MOTOR_CONTROL_TYPE_CUR;
+    if (command->length == AktorCommandLength::none) {
+	errorf("%s: key not supported", name);	
+	return false;
+    }
+    if (command->writeAccess != AktorCommandWriteAccess::write) {
+	errorf("%s: key not writable", name);	
+	return false;
+    }
+    
+    command->bufferValid = false;
+    Response<> response;
+ 
+    if (command->length == AktorCommandLength::length_char) {
+	Request<int8_t> request;
+	request.data = static_cast<int8_t>(value / command->factor);
+	
+	if (!transceive(request, &response)) {
+	    return false;
 	}
-	return true;
-}
-
-bool Aktor::getAngle(int* angle) {
-	uint16_t temp;
-
-	if (!getValue(RS485_MOTOR_COM_INDEX_CURRENT_ANGLE, &temp))
-		return false;
-
-	if (angle)
-		*angle = convertAngle(temp);
-
-	return true;
-}
-
-bool Aktor::getVelocity(int* velocity) {
-	uint16_t temp;
-
-	if (!getValue(RS485_MOTOR_COM_INDEX_CURRENT_VEL, &temp))
-		return false;
-
-	if (velocity)
-		*velocity = convertVelocity(temp);
-
-	return true;
-}
-
-bool Aktor::getCurrent(int* current) {
-	uint16_t temp;
-
-	if (!getValue(RS485_MOTOR_COM_INDEX_CURRENT_CUR, &temp))
-		return false;
-
-	if (current)
-		*current = convertCurrent(temp);
-
-	return true;
-}
-
-bool Aktor::getTorque(int* torque) {
-	uint16_t temp;
-
-	if (!getValue(RS485_MOTOR_COM_INDEX_CURRENT_TORQUE, &temp))
-		return false;
-
-	if (torque)
-		*torque = convertTorque(temp);
-
-	return true;
-}
-
-bool Aktor::getDirection(int* direction) {
-	uint16_t temp;
-
-	if (!getValue(RS485_MOTOR_COM_INDEX_CURRENT_DIR, &temp))
-		return false;
-
-	if (direction)
-		*direction = static_cast<short>(temp);
-
-	return true;
-}
-
-bool Aktor::getVoltage(int* voltage) {
-	uint16_t temp;
-
-	if (!getValue(RS485_MOTOR_COM_INDEX_CURRENT_VBAT, &temp))
-		return false;
-
-	if (voltage)
-		*voltage = convertVoltage(temp);
-
-	return true;
-}
-
-bool Aktor::getPWM(int* pwm) {
-	uint16_t temp;
-
-	if (!getValue(RS485_MOTOR_COM_INDEX_CURRENT_PWM, &temp))
-		return false;
-
-	if (pwm)
-		*pwm = convertPWM(temp);
-
-	return true;
-}
-
-bool Aktor::setMaxVelocity(int maxVelocity) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_MAX_VEL, convertVelocity(maxVelocity)))
-		return false;
-
-	myMaxVelocity = maxVelocity;
-
-	return true;
-}
-
-bool Aktor::setMaxCurrent(int maxCurrent) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_MAX_CUR, convertCurrent(maxCurrent)))
-		return false;
-
-	myMaxCurrent = maxCurrent;
-
-	return true;
-}
-
-bool Aktor::setMaxPWM(int maxPWM) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_MAX_PWM, convertPWM(maxPWM)))
-		return false;
-
-	myMaxPWM = maxPWM;
-
-	return true;
-}
-
-bool Aktor::setMaxTorque(int maxTorque) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_MAX_TOR, convertTorque(maxTorque)))
-		return false;
-
-	myMaxTorque = maxTorque;
-
-	return true;
-}
-
-bool Aktor::isAvailable(void) {
-	if (!hasCheckedAvailabilityYet) {
-
-		while (!getValue(RS485_MOTOR_COM_INDEX_STATUS, nullptr) &&
-					 !hasReachedTransmissionErrorLimit())
-		{ }
-
-		hasCheckedAvailabilityYet = true;
+    } else if (command->length == AktorCommandLength::length_short) {
+	Request<AktorSetShort> request;
+	request.data.value = static_cast<int16_t>(value / command->factor);
+	
+	if (!transceive(request, &response)) {
+	    return false;
 	}
-
-	return !hasReachedTransmissionErrorLimit();
+    } else {
+	Request<AktorSetLong> request;
+	request.data.value = static_cast<int32_t>(value / command->factor);
+	
+	if (!transceive(request, &response)) {
+	    return false;
+	}
+    }
+    return true;
 }
 
-bool Aktor::setMaxAngle(int angle) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_MAX_ANGLE, convertAngle(angle)))
+bool Aktor::getCommandName(uint8_t key, char* out_name) {
+    if (!out_name) {
+	return false;
+    }
+    if (!commandSetPopulated) {
+	errorf("%s: commandSet not populated", out_name);
+	return false;
+    }
+    if (key > commandSetLength || key == 0) {
+	errorf("%s: key not within commandSetLength", out_name);
+	return false;	
+    }
+
+    AktorCommand_t* command = &commandSet[key-1];
+
+    if (command->length == AktorCommandLength::none) {
+	errorf("%s: key not supported", out_name);	
+	return false;
+    }
+    
+    Request<AktorGetCommandInfo> request;
+    request.data.key = key
+    request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
+    request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
+    request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
+    
+    Response<uint8_t> response;
+    
+    if (!transceive(request, &response)) {
+	return false;
+    }
+
+    int name_length = response.data;
+    
+    request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+    request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+    request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+    
+    if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+                      sizeof(request),
+		      reinterpret_cast<uint8_t*>(out_name),
+                      name_length + 2)) {
+	return false;
+    }
+   		
+    for (int i = 0; i < name_length; ++i) {
+        out_name[i] = out_name[i+1];
+    }
+    out_name[name_length] = 0;
+
+    return true;
+   
+}
+
+#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+
+unsigned int Aktor::getStructuredOutputTableLength(void) {
+    if (structuredOutputTableLength != 0) {
+	return structuredOutputTableLength;
+    } else {
+	Request<AktorGetStructuredOutputControl> request;
+	request.data.key = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
+	request.data.cmd = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET_BUFFER_SIZE;
+	
+	Response<uint8_t> response;
+	
+	if !(transceive(request, &response)) {
+	    return 0;
+	}
+	structuredOutputTableLength = response.data;
+	return structuredOutputTableLength;
+    }
+}
+
+
+bool Aktor::setStructuredOutputTable(const vector<uint8_t>& keys) {
+    if (keys.size() > getStructuredOutputTableLength()) {
+	errorf("%s: output table in device too small for number of provided keys", name);	
+	return false;
+    }
+    if (!commandSetPopulated) {
+	errorf("%s: commandSet not populated", name);
+	return false;
+    }
+    
+    for (int i = 0; i < keys.size(); ++i) {
+	if (keys[i] > getCommandsetLength() || commandset[keys[i] - 1].length == AktorCommandLength::none) {
+	    errorf("%s: requested keys invalid", name);
+	    return false;
+	}
+    }
+    
+    uint8_t* request = new uint8_t[keys.size() + 4];
+    request[0] = myAddress;
+    request[1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
+    request[2] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
+    memcpy(request + 3, keys.data(), keys.size());
+    
+    Response<uint8_t> response;
+    
+    if (transceive(request, keys.size() + 4, 
+	    reinterpret_cast<uint8_t*>(std::addressof(response)), sizeof(response))) {
+	if (response.data == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
+	    structuredOutputTable = keys;
+	    delete[] request;
+	    return true;	
+	}
+    }
+    
+    delete[] request;
+    return false;	
+}
+
+
+bool Aktor::getStructuredOutput(vector<StructuredDataPair_t>* values) {
+    if (structuredOutputTable.size() == 0) {
+	errorf("%s: structured output mapping empty", name);
+	return false;	
+    }
+    if (!commandSetPopulated) {
+	errorf("%s: commandSet not populated", name);
+	return false;
+    }
+    
+    int data_size = 0;
+    for (int i = 0; i < structuredOutputTable.size(); ++i) {
+	switch (commandSet[structuredOutputTable[i] - 1].length) {
+	case AktorCommandLength::length_char:
+	    data_size += 1;
+	    break;
+	case AktorCommandLength::length_short:
+	    data_size += 2;
+	    break;
+	case AktorCommandLength::length_long:
+	    data_size += 4;
+	    break;
+	default:
+	    return false;
+    }
+    
+    Request<uint8_t> request;
+    request.data = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
+    
+    uint8_t* response = new uint8_t[data_size + 2];
+    
+    if (transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+		sizeof(request),
+		response,
+		data_size + 2)) {
+	for (int i = 0; i < structuredOutputTable.size(); ++i) {
+	    float device_value;
+	    uint8_t* pValue = response + 1;
+	    
+	    switch (commandSet[structuredOutputTable[i] - 1].length) {
+	    case AktorCommandLength::length_char:
+		device_value = *(reinterpret_cast<int8_t*>(pValue));
+		pValue += 1;
+		break;
+	    case AktorCommandLength::length_short:
+		device_value = *(reinterpret_cast<int16_t*>(pValue));
+		pValue += 2;
+		break;
+	    case AktorCommandLength::length_long:
+		device_value = *(reinterpret_cast<int32_t*>(pValue));
+		pValue += 4;
+		break;
+	    default:
 		return false;
-
-	myMaxAngle = angle;
-
+	    }
+	    
+	    device_value *= commandSet[structuredOutputTable[i] - 1].factor;
+	    
+	    values->push_back(StructuredDataPair_t(structuredOutputTable[i], device_value));
+	}
+	delete[] response;
 	return true;
+    }
+		   
+    delete[] response;
+    return false;
 }
 
-bool Aktor::setMinAngle(int angle) {
-	if (!setValue(RS485_MOTOR_COM_INDEX_MIN_ANGLE, convertAngle(angle)))
-		return false;
-
-	myMinAngle = angle;
-
-	return true;
-}
-
-bool Aktor::driveHome(int velocity) {
-	if (!setValue(RS485_MOTOR_COM_RETURN_TO_HOME, convertVelocity(velocity)))
-		return false;
-
-	myControlType = RS485_MOTOR_CONTROL_TYPE_VEL;
-	myHomecomingRequested = true;
-
-	return true;
-}
-
-bool Aktor::setHold(void) {
-	int angle = 0;
-
-	if (!getAngle(&angle)) return false;
-
-	return setAngle(angle);
-}
+#endif // TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
 
 } // namespace Feldbus
 } // namespace TURAG

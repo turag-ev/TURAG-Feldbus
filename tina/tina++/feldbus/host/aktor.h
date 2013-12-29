@@ -14,109 +14,83 @@
 #include <tina++/tina.h>
 #include <tina/feldbus/protocol/turag_feldbus_fuer_stellantriebe.h>
 
+#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+# include <vector>
+#endif
+
 namespace TURAG {
 namespace Feldbus {
 
+enum class AktorCommandWriteAccess : uint8_t {
+    no_write = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_ACCESS_NO_WRITE_ACCESS,
+    write = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_ACCESS_WRITE_ACCESS
+};
+    
+enum class AktorCommandLength : uint8_t {
+    none = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE,
+    length_char = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_CHAR,
+    length_short = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_SHORT,
+    length_long = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG
+};
+
+
+struct AktorCommand_t {
+    float factor;
+    float bufferedValue;
+    AktorCommandWriteAccess writeAccess;
+    AktorCommandLength length;
+    bool bufferValid;
+    
+    AktorCommand_t() : 
+	factor(1), 
+	bufferedValue(0), 
+	writeAccess(AktorCommandWriteAccess::no_write),
+	length(AktorCommandLength::length_char),
+	bufferValid(false) {}
+};
+
+#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+struct StructuredDataPair_t {
+    uint8_t key;
+    float value;
+    
+    StructuredDataPair_t(uint8_t key_, float value_) :
+	key(key_),
+	value(value_) {}
+};
+#endif
+    
 /*
  *
  */
 class Aktor : public TURAG::Feldbus::Device {
-private:
-	unsigned int myControlType;
-	bool myHomecomingRequested;
-	unsigned int myMaxVelocity;
-	unsigned int myMaxCurrent;
-	unsigned int myMaxPWM;
-	unsigned int myMaxTorque;
-	int myMaxAngle;
-	int myMinAngle;
-
 protected:
-    Aktor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-                Device(name_, address, type),
-				myControlType(RS485_MOTOR_CONTROL_TYPE_NONE),
-				myHomecomingRequested(false),
-				myMaxVelocity(0xffffffff),
-				myMaxCurrent(0xffffffff),
-				myMaxPWM(0xffffffff),
-				myMaxTorque(0xffffffff),
-				myMaxAngle(0x7fffffff),
-				myMinAngle(0x80000000)
-	{ }
+    unsigned int commandSetLength;
+    AktorCommand_t* commandSet;
+    bool commandSetPopulated;
+    unsigned int structuredOutputTableLength;
+    
+#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+    const vector<uint8_t> structuredOutputTable;
+#endif    
 
-	virtual ~Aktor() {}
-
-	bool getValue(uint8_t key, uint16_t* value);
-	bool setValue(uint8_t key, uint16_t value);
-
-	virtual int convertAngle(unsigned short from) const = 0;
-	virtual unsigned short convertAngle(int from) const = 0;
-	virtual int convertVelocity(unsigned short from) const = 0;
-	virtual unsigned short convertVelocity(int from) const = 0;
-	virtual int convertCurrent(unsigned short from) const = 0;
-	virtual unsigned short convertCurrent(int from) const = 0;
-	virtual int convertPWM(unsigned short from) const = 0;
-	virtual unsigned short convertPWM(int from) const = 0;
-	virtual int convertTorque(unsigned short from) const = 0;
-	virtual unsigned short convertTorque(int from) const = 0;
-	virtual int convertVoltage(unsigned short from) const = 0;
-	virtual unsigned short convertVoltage(int from) const = 0;
-
+    
 public:
-	virtual bool isAvailable(void);
+    Aktor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+                Device(name_, address, type), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false),
+                structuredOutputTableLength(0)  { }
+                
+    bool getValue(uint8_t key, float* value);
+    bool setValue(uint8_t key, float value);
+    bool populateCommandSet(AktorCommand_t* commandSet_, unsigned int commandSetLength_);
+    unsigned int getCommandsetLength(void);
+    bool getCommandName(uint8_t key, char* name);
 
-	/** Status request
-	 * @return		True if angle reached, otherwise false.
-	 */
-	virtual bool hasAngleReached();
-
-	/** Status request
-	 * @return		True if velocity reached, otherwise false.
-	 */
-	virtual bool hasVelocityReached();
-
-	/** Status request
-	 * @return		True if current reached, otherwise false.
-	 */
-	virtual bool hasCurrentReached();
-
-	/** Status request
-	 * @return		True if error detected, otherwise false.
-	 */
-	virtual bool hasErrorDetected();
-
-	virtual bool enableControl();
-	virtual bool disableControl();
-	virtual bool driveHome(int velocity);
-
-	virtual bool getAngle(int* angle);
-	virtual bool getVelocity(int* velocity);
-	virtual bool getCurrent(int* current);
-	virtual bool getTorque(int* torque);
-	virtual bool getDirection(int* direction);
-	virtual bool getVoltage(int* voltage);
-	virtual bool getPWM(int* pwm);
-
-	virtual bool setAngle(int angle);
-	virtual bool setVelocity(int velocity);
-	virtual bool setCurrent(int current);
-	virtual bool setTorque(int torque);
-
-	virtual bool setMaxVelocity(int maxVelocity);
-	virtual bool setMaxCurrent(int maxCurrent);
-	virtual bool setMaxPWM(int maxPWM);
-	virtual bool setMaxTorque(int maxTorque);
-	virtual bool setMinAngle(int angle);
-	virtual bool setMaxAngle(int angle);
-
-	virtual int getMaxVelocity() const 	{ return myMaxVelocity; }
-	virtual int getMaxCurrent() const	{ return myMaxCurrent; }
-	virtual int getMaxPWM() const 		{ return myMaxPWM; }
-	virtual int getMaxTorque() const 	{ return myMaxTorque; }
-	virtual int getMinAngle() const 	{ return myMinAngle; }
-	virtual int getMaxAngle() const 	{ return myMaxAngle; }
-
-	virtual bool setHold(void);
+#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+    unsigned int getStructuredOutputTableLength(void);
+    bool setStructuredOutputTable(const vector<uint8_t>& keys);
+    bool getStructuredOutput(vector<StructuredDataPair_t>* values);
+#endif
 
 };
 

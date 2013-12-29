@@ -138,17 +138,6 @@ bool Farbsensor::getHSV(hsv_t* hsv) {
 	}
 }
 
-bool Farbsensor::isAvailable(void) {
-	rgb_t dummy __attribute__((unused));
-
-	if (!hasCheckedAvailabilityYet) {
-		while (!getRGB(&dummy) && !hasReachedTransmissionErrorLimit());
-		hasCheckedAvailabilityYet = true;
-	}
-
-	return !hasReachedTransmissionErrorLimit();
-}
-
 } // namespace Feldbus
 } // ns TURAG
 
