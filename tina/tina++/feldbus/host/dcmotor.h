@@ -10,7 +10,7 @@
 #ifndef TURAGFELDBUSDCMOTOR_H_
 #define TURAGFELDBUSDCMOTOR_H_
 
-#include "aktor.h"
+#include "servo.h"
 
 namespace TURAG {
 namespace Feldbus {
@@ -18,36 +18,31 @@ namespace Feldbus {
 /*
  *
  */
-class DCMotor : public TURAG::Feldbus::Aktor {
+class DCMotorBase : public TURAG::Feldbus::ServoBase {
 protected:
-	virtual inline int convertAngle(unsigned short from) const { return (int)10 * (short)from; }
-	virtual inline unsigned short convertAngle(int from) const { return (unsigned short)((from + 5) / 10); }
-	virtual inline int convertVelocity(unsigned short from) const { return (int)2 * (short)from; }
-	virtual inline unsigned short convertVelocity(int from) const { return (unsigned short)((from + 1) / 2); }
-	virtual inline int convertCurrent(unsigned short from) const { return (int)((short)from); }
-	virtual inline unsigned short convertCurrent(int from) const { return (unsigned short)from; }
-	virtual inline int convertPWM(unsigned short from) const { return (100 * (int)from + 391/2) / 391; }
-	virtual inline unsigned short convertPWM(int from) const { return (unsigned short)((391 * from + 100/2) / 100); }
-	virtual inline int convertTorque(unsigned short from) const { return (int)((short)from); }
-	virtual inline unsigned short convertTorque(int from) const { return (unsigned short)from; }
-	virtual inline int convertVoltage(unsigned short from) const { return (int)((short)from); }
-	virtual inline unsigned short convertVoltage(int from) const { return (unsigned short)from; }
+    bool myHomecomingRequested;
 
 public:
 
-    DCMotor(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) : Aktor(name_, address, type) {}
-	virtual bool setMinAngle(int angle) { (void)angle; return false; }
-	virtual bool setMaxAngle(int angle) { (void)angle; return false; }
-	virtual bool initThresholds(unsigned int maxVelocity, unsigned int maxCurrent, unsigned int maxPWM, unsigned int maxTorque) {
-			if (!setMaxVelocity(maxVelocity)) return false;
-			if (!setMaxCurrent(maxCurrent)) return false;
-			if (!setMaxPWM(maxPWM)) return false;
-			if (!setMaxTorque(maxTorque)) return false;
-			return true;
-		}
-	bool getSwitchStatus(uint16_t* status) { return getValue(RS485_MOTOR_COM_INDEX_SWITCH_STATUS, status); }
+    DCMotorBase(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+        ServoBase(name_, address, type), myHomecomingRequested(false) {}
+
+    virtual bool driveHome(float velocity);
+    virtual bool enableControl();
+
 };
 
+
+class DCMotor : public DCMotorBase {
+protected:
+    AktorCommand_t command_set[19];
+
+public:
+    DCMotor(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+        DCMotorBase(name_, address, type) {}
+
+    bool initialize(void) { return populateCommandSet(command_set, 19); }
+};
 
 } // namespace Feldbus
 } // namespace TURAG

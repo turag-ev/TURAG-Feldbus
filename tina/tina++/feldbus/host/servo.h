@@ -18,36 +18,89 @@ namespace Feldbus {
 /*
  *
  */
-class Servo : public TURAG::Feldbus::Aktor {
+class ServoBase : public TURAG::Feldbus::Aktor {
 protected:
-	virtual inline int convertAngle(unsigned short from) const { return (int)((unsigned short)from); }
-	virtual inline unsigned short convertAngle(int from) const { return (unsigned short)from; }
-	virtual inline int convertVelocity(unsigned short from) const { return (int)((short)from); }
-	virtual inline unsigned short convertVelocity(int from) const { return (unsigned short)from; }
-	virtual inline int convertCurrent(unsigned short from) const { return (int)((short)from); }
-	virtual inline unsigned short convertCurrent(int from) const { return (unsigned short)from; }
-	virtual inline int convertPWM(unsigned short from) const { return (100 * (int)from + 255/2) / 255; }
-	virtual inline unsigned short convertPWM(int from) const { return (unsigned short)((255 * from + 100/2) / 100); }
-	virtual inline int convertTorque(unsigned short from) const {(void)from; return 0; }
-	virtual inline unsigned short convertTorque(int from) const {(void)from; return 0; }
-	virtual inline int convertVoltage(unsigned short from) const { return (int)((short)from); }
-	virtual inline unsigned short convertVoltage(int from) const { return (unsigned short)from; }
+    unsigned int myControlType;
+
 public:
-    Servo(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) : Aktor(name_, address, type) {}
-	virtual bool getTorque(int* torque) {(void)torque; return false; }
-	virtual bool setTorque(int torque) {(void)torque; return false; }
-	virtual bool initThresholds(unsigned int maxVelocity, unsigned int maxCurrent, unsigned int maxPWM, int minAngle, int maxAngle) {
-			if (!setMaxVelocity(maxVelocity)) return false;
-			if (!setMaxCurrent(maxCurrent)) return false;
-			if (!setMaxPWM(maxPWM)) return false;
-			if (!setMinAngle(minAngle)) return false;
-			if (!setMaxAngle(maxAngle)) return false;
-			return true;
-		}
-	virtual bool setMaxTorque(int maxTorque) {(void)maxTorque; return false; }
+    ServoBase(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+        Aktor(name_, address, type),
+        myControlType(RS485_STELLANTRIEBE_CONTROL_TYPE_NONE) {}
+
+    bool getCurrentAngle(float* angle) { return getValue(RS485_STELLANTRIEBE_KEY_CURRENT_ANGLE, angle); }
+
+    bool getDesiredAngle(float* angle) { return getValue(RS485_STELLANTRIEBE_KEY_DESIRED_ANGLE, angle); }
+    virtual bool setDesiredAngle(float angle);
+
+    bool getMaxAngle(float* angle) { return getValue(RS485_STELLANTRIEBE_KEY_MAX_ANGLE, angle); }
+    bool setMaxAngle(float angle) { return setValue(RS485_STELLANTRIEBE_KEY_MAX_ANGLE, angle); }
+
+    bool getMinAngle(float* angle) { return getValue(RS485_STELLANTRIEBE_KEY_MIN_ANGLE, angle); }
+    bool setMinAngle(float angle) { return setValue(RS485_STELLANTRIEBE_KEY_MIN_ANGLE, angle); }
+
+    bool getCurrentVelocity(float* velocity) { return getValue(RS485_STELLANTRIEBE_KEY_CURRENT_VELOCITY, velocity); }
+
+    bool getDesiredVelocity(float* velocity) { return getValue(RS485_STELLANTRIEBE_KEY_DESIRED_VELOCITY, velocity); }
+    virtual bool setDesiredVelocity(float velocity);
+
+    bool getMaxVelocity(float* velocity) { return getValue(RS485_STELLANTRIEBE_KEY_MAX_VELOCITY, velocity); }
+    bool setMaxVelocity(float velocity) { return setValue(RS485_STELLANTRIEBE_KEY_MAX_VELOCITY, velocity); }
+
+    bool getCurrentCurrent(float* current) { return getValue(RS485_STELLANTRIEBE_KEY_CURRENT_CURRENT, current); }
+
+    bool getDesiredCurrent(float* current) { return getValue(RS485_STELLANTRIEBE_KEY_DESIRED_CURRENT, current); }
+    virtual bool setDesiredCurrent(float current);
+
+    bool getMaxCurrent(float* current) { return getValue(RS485_STELLANTRIEBE_KEY_MAX_CURRENT, current); }
+    bool setMaxCurrent(float current) { return setValue(RS485_STELLANTRIEBE_KEY_MAX_CURRENT, current); }
+
+    bool getCurrentPwm(float* pwm) { return getValue(RS485_STELLANTRIEBE_KEY_CURRENT_PWM, pwm); }
+
+    bool getDesiredPwm(float* pwm) { return getValue(RS485_STELLANTRIEBE_KEY_DESIRED_PWM, pwm); }
+    bool setDesiredPwm(float pwm) { return setValue(RS485_STELLANTRIEBE_KEY_DESIRED_PWM, pwm); }
+
+    bool getMaxPwm(float* pwm) { return getValue(RS485_STELLANTRIEBE_KEY_MAX_PWM, pwm); }
+    bool setMaxPwm(float pwm) { return setValue(RS485_STELLANTRIEBE_KEY_MAX_PWM, pwm); }
+
+    bool getVoltage(float* voltage) { return getValue(RS485_STELLANTRIEBE_KEY_VOLTAGE, voltage); }
+
+    virtual bool enableControl();
+    virtual bool disableControl();
+
+    virtual bool setHold(void);
+
+    /** Status request
+     * @return		True if angle reached, otherwise false.
+     */
+    virtual bool hasAngleReached();
+
+    /** Status request
+     * @return		True if velocity reached, otherwise false.
+     */
+    virtual bool hasVelocityReached();
+
+    /** Status request
+     * @return		True if current reached, otherwise false.
+     */
+    virtual bool hasCurrentReached();
+
+    /** Status request
+     * @return		True if error detected, otherwise false.
+     */
+    virtual bool hasErrorDetected();
 };
 
 
+class Servo : public ServoBase {
+protected:
+    AktorCommand_t command_set[17];
+
+public:
+    Servo(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+        ServoBase(name_, address, type) {}
+
+    bool initialize(void) { return populateCommandSet(command_set, 17); }
+};
 
 } // namespace Feldbus
 } // namespace TURAG

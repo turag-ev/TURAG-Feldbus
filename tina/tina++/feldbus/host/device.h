@@ -30,7 +30,7 @@
 // before defining the device as dysfunctional
 #define TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS			35
 
-#define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::Device::ChecksumType::xor_based
+#define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::Device::ChecksumType::crc8_icode
 
 
 
@@ -127,7 +127,7 @@ public:
         myDeviceInfo.bufferSize = 0;
     }
 
-	~Device() {}
+    virtual ~Device() {}
 
 protected:
 	template<typename T, typename U> _always_inline
@@ -157,7 +157,7 @@ public:
     const char* name;
 
     unsigned int getAddress(void) const { return myAddress; }
-    bool isAvailable(void);
+    virtual bool isAvailable(void);
     bool getDeviceInfo(DeviceInfo* device_info);
     
     // out_real_name MUST contain space for the name +2 byte!

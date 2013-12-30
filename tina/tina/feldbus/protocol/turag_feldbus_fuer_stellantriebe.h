@@ -12,6 +12,8 @@
 #define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_DC		0x01
 #define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_SERVO		0x02
 
+// special values for command factors
+#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE  	0.0f
 
 // command access types
 #define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_ACCESS_NO_WRITE_ACCESS	0x00
@@ -43,62 +45,57 @@
 
 
 // ----------------------------------------------
-// general commands keys
+// command keys for servo device
 // ----------------------------------------------
-#define RS485_STELLANTRIEB_KEY_CURRENT_ANGLE		(0x01)	// current angle
-#define RS485_STELLANTRIEB_KEY_DESIRED_ANGLE		(0x02)
-#define RS485_STELLANTRIEB_KEY_MAX_ANGLE		(0x03)
-#define RS485_STELLANTRIEB_KEY_MIN_ANGLE		(0x04)
-#define RS485_STELLANTRIEB_KEY_CURRENT_VELOCITY		(0x05)	// current velocity
-#define RS485_STELLANTRIEB_KEY_DESIRED_VELOCITY		(0x06)	// current velocity
-#define RS485_STELLANTRIEB_KEY_MAX_VELOCITY		(0x07)	// current velocity
-#define RS485_STELLANTRIEB_KEY_CURRENT_CURRENT		(0x08)	// current motor current
-#define RS485_STELLANTRIEB_KEY_DESIRED_CURRENT		(0x09)	// current motor current
-#define RS485_STELLANTRIEB_KEY_MAX_CURRENT		(0x0A)	// current motor current
-#define RS485_STELLANTRIEB_KEY_CURRENT_PWM		(0x0B)	// current PWM ratio
-#define RS485_STELLANTRIEB_KEY_DESIRED_PWM		(0x0C)	// current PWM ratio
-#define RS485_STELLANTRIEB_KEY_MAX_PWM			(0x0D)	// current PWM ratio
-#define RS485_STELLANTRIEB_KEY_DIRECTION		(0x0E)	// current direction
-#define RS485_STELLANTRIEB_KEY_VOLTAGE			(0x0F)	// current supply voltage
-#define RS485_STELLANTRIEB_KEY_STATUS			(0x10)	// current status, see details below
-#define RS485_STELLANTRIEB_KEY_CONTROL_STATE		(0x11)	// control state
-#define RS485_STELLANTRIEB_KEY_CONTROL_TYPE		(0x12)	// control type
+#define RS485_STELLANTRIEBE_KEY_CURRENT_ANGLE		(0x01)	// current angle
+#define RS485_STELLANTRIEBE_KEY_DESIRED_ANGLE		(0x02)
+#define RS485_STELLANTRIEBE_KEY_MAX_ANGLE		(0x03)
+#define RS485_STELLANTRIEBE_KEY_MIN_ANGLE		(0x04)
+#define RS485_STELLANTRIEBE_KEY_CURRENT_VELOCITY		(0x05)	// current velocity
+#define RS485_STELLANTRIEBE_KEY_DESIRED_VELOCITY		(0x06)	// current velocity
+#define RS485_STELLANTRIEBE_KEY_MAX_VELOCITY		(0x07)	// current velocity
+#define RS485_STELLANTRIEBE_KEY_CURRENT_CURRENT		(0x08)	// current motor current
+#define RS485_STELLANTRIEBE_KEY_DESIRED_CURRENT		(0x09)	// current motor current
+#define RS485_STELLANTRIEBE_KEY_MAX_CURRENT		(0x0A)	// current motor current
+#define RS485_STELLANTRIEBE_KEY_CURRENT_PWM		(0x0B)	// current PWM ratio
+#define RS485_STELLANTRIEBE_KEY_DESIRED_PWM		(0x0C)	// current PWM ratio
+#define RS485_STELLANTRIEBE_KEY_MAX_PWM			(0x0D)	// current PWM ratio
+#define RS485_STELLANTRIEBE_KEY_VOLTAGE			(0x0E)	// current supply voltage
+#define RS485_STELLANTRIEBE_KEY_STATUS			(0x0F)	// current status, see details below
+#define RS485_STELLANTRIEBE_KEY_CONTROL_STATE		(0x10)	// control state
+#define RS485_STELLANTRIEBE_KEY_CONTROL_TYPE		(0x11)	// control type
 													
-// low bytes for set command: RS485_STELLANTRIEB_DC_KEY_CONTROL_STATE 
+// low bytes for set command: RS485_STELLANTRIEBE_KEY_CONTROL_STATE 
 // turn motor control on/off
-#define RS485_STELLANTRIEB_CONTROL_STATE_ENABLE		(1)
-#define RS485_STELLANTRIEB_CONTROL_STATE_DISABLE	(0)
+#define RS485_STELLANTRIEBE_CONTROL_STATE_ENABLE		(1)
+#define RS485_STELLANTRIEBE_CONTROL_STATE_DISABLE	(0)
 
 
-// low bytes for set command: RS485_STELLANTRIEB_DC_KEY_CONTROL_TYPE
+// low bytes for set command: RS485_STELLANTRIEBE_KEY_CONTROL_TYPE
 // choose control cascade
-#define RS485_STELLANTRIEB_CONTROL_TYPE_NONE	(0)
-#define RS485_STELLANTRIEB_CONTROL_TYPE_POS	(1<<0)
-#define RS485_STELLANTRIEB_CONTROL_TYPE_VEL	(1<<1)
-#define RS485_STELLANTRIEB_CONTROL_TYPE_CUR	(1<<2)
+#define RS485_STELLANTRIEBE_CONTROL_TYPE_NONE	(0)
+#define RS485_STELLANTRIEBE_CONTROL_TYPE_POS	(1<<0)
+#define RS485_STELLANTRIEBE_CONTROL_TYPE_VEL	(1<<1)
+#define RS485_STELLANTRIEBE_CONTROL_TYPE_CUR	(1<<2)
 
 
-// low bytes for RS485_STELLANTRIEB_DC_KEY_DIRECTION
-#define RS485_STELLANTRIEB_DIR_FORWARD		(0x01)		
-#define RS485_STELLANTRIEB_DIR_BACKWARD		(0xFF)	// (-1)
 
-
-// low bytes for RS485_STELLANTRIEB_DC_KEY_STATUS
+// low bytes for RS485_STELLANTRIEBE_KEY_STATUS
 // flags are mutually exclusive. The meaning of the error flag is
 // implementation specific.
-#define RS485_STELLANTRIEB_STATUS_NONE			(0)
-#define RS485_STELLANTRIEB_STATUS_ANGLE_REACHED		(1<<0)
-#define RS485_STELLANTRIEB_STATUS_VELOCITY_REACHED	(1<<1)
-#define RS485_STELLANTRIEB_STATUS_CURRENT_REACHED	(1<<2)
-#define RS485_STELLANTRIEB_STATUS_ERROR			(1<<3)
+#define RS485_STELLANTRIEBE_STATUS_NONE			(0)
+#define RS485_STELLANTRIEBE_STATUS_ANGLE_REACHED		(1<<0)
+#define RS485_STELLANTRIEBE_STATUS_VELOCITY_REACHED	(1<<1)
+#define RS485_STELLANTRIEBE_STATUS_CURRENT_REACHED	(1<<2)
+#define RS485_STELLANTRIEBE_STATUS_ERROR			(1<<3)
 
 
 
 // ----------------------------------------------
-// DC motor commands keys
+// DC motor command keys
 // ----------------------------------------------
-#define RS485_STELLANTRIEB_DC_KEY_SWITCH_STATUS		(0x13)
-#define RS485_STELLANTRIEB_DC_KEY_RETURN_TO_HOME	(0x14)	// requests the slave to return to some defined position where it adjusts 
+#define RS485_STELLANTRIEBE_DC_KEY_SWITCH_STATUS		(0x12)
+#define RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME	(0x13)	// requests the slave to return to some defined position where it adjusts 
 													// its current angle appropriately, takes velocity as argument
 
 

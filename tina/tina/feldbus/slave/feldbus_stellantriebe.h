@@ -18,6 +18,11 @@
  * slow devices. The different possible configuration options are defined in the protocol
  * specification header. The actual location in memory of an entry of the command
  * set is given with a void pointer to the corresponding address.
+ * Generally the entries of the command set are supposed to have a meaning that
+ * justifies them to be handled as floating point values (values with a physical 
+ * representation of some kind). However by setting
+ * the factor to 0.0f you can indicate that the value should rather be seen
+ * as a control value.
  * 
  * Additionally it is possible to supply a human-understandable description
  * for each value which needs to be supplied in a separate array of strings.
@@ -28,6 +33,8 @@
  *    firmware in main context to this value by disabling all interrupts before the actual write.
  *    if your device runs on an architecture whose register size is smaller than the value in question.
  *  - for writable values you additionally need to declare the variable as volatile.
+ * 
+ * 
  *
  */
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
@@ -41,9 +48,14 @@
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(DOXYGEN)
 
 typedef struct {
-    void* value;
+	/// pointer to the actual value
+    void* value;  
+	/// is the value allowed to be altered by the host?
     uint8_t write_access;
+	/// length of the value
     uint8_t length;
+	/// factor that should be applied to the returned values by the host. can be set
+	/// to 0.0f to indicate that the value is a control value (not floating point)
     float factor;
 } feldbus_stellantriebe_command_t;
 
