@@ -27,12 +27,11 @@
  * Additionally it is possible to supply a human-understandable description
  * for each value which needs to be supplied in a separate array of strings.
  *
- * You should be aware of the fact that communication-caused access to the values
- * of the command set does always happen within interrupt context. This has 2 implications:
- *  - for read-only values you need to protect every write access that happens within the device's 
- *    firmware in main context to this value by disabling all interrupts before the actual write.
- *    if your device runs on an architecture whose register size is smaller than the value in question.
- *  - for writable values you additionally need to declare the variable as volatile.
+ * You should be aware of the fact that communication-caused read access to the values
+ * of the command set does happen within interrupt context. That's why 
+ * for read-only values you need to protect every write access that happens within the device's 
+ * firmware in main context to this value by disabling all interrupts before the actual write.
+ * if your device runs on an architecture whose register size is smaller than the value in question.
  * 
  * 
  *
@@ -60,6 +59,16 @@ typedef struct {
 } feldbus_stellantriebe_command_t;
 
 
+typedef union {
+	int8_t char_buffer;
+	int16_t short_buffer;
+	int32_t long_buffer;
+	uint8_t raw_buffer[4];
+} feldbus_stellantriebe_value_buffer_t;
+
+/// Buffers the old value of a changed entry of the command set.
+extern feldbus_stellantriebe_value_buffer_t feldbus_stellantriebe_old_value;
+
 /**
  * Sets up this module.
  *
@@ -76,21 +85,20 @@ void turag_feldbus_stellantriebe_init(
     uint8_t command_set_length);
 
 /** 
- * This function is called when the value that belongs to this key
- * was externally changed.
+ * This function needs to be called continuously from the main loop.
+ * it checks whether the host requested to write a device value and, if yes,
+ * performs the change. If a value was changed, the changed key is returned, otherwise zero.
  * 
- * You can use this function to start additional actions that are connected
- * to a change of a certain value. 
+ * After the call to this function feldbus_stellantriebe_old_value holds the
+ * original value before the change.
  * 
- * At the time this function is called the value is already updated. As of now 
- * there is no way to access the former value unless any form of buffering is done
- * manually.
+ * You MUST protect this function from being interrupted by new write requests
+ * otherwise the behaviour is undefined.
  * 
- * If you don't nedd this functionality you can simply leave the function body empty.
+ * @return key of the changed value, otherwise zero.
  * 
- * @param key		
  */
-extern void turag_feldbus_stellantriebe_value_changed(uint8_t key);
+uint8_t turag_feldbus_stellantriebe_write_value(void);
 
 
 /**
