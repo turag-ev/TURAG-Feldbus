@@ -100,6 +100,7 @@ public:
     bool populateCommandSet(AktorCommand_t* commandSet_, unsigned int commandSetLength_);
     unsigned int getCommandsetLength(void);
     bool getCommandName(uint8_t key, char* name);
+    unsigned int getCommandNameLength(uint8_t key);
 
 #ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
     unsigned int getStructuredOutputTableLength(void);

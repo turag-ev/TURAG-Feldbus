@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-extern const uint8_t* turag_crc_crc8_table;
+extern const uint8_t turag_crc_crc8_table[256];
 
 
 /** Calculates a CRC8-checksum
@@ -37,7 +37,7 @@ TURAG_INLINE uint8_t turag_crc8_calculate(const void* data, size_t length) {
 	uint8_t crc = 0xfd;
 
     while (length--) {
-		crc = turag_crc_crc8_table[crc ^ *(uint8_t*)data];
+        crc = turag_crc_crc8_table[crc ^ *(uint8_t*)data];
 		data = (uint8_t*)data + 1;
 	}
     return crc;

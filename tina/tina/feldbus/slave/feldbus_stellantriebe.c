@@ -31,7 +31,7 @@
 
 
 static feldbus_stellantriebe_command_t* commmand_set = 0;
-static char** command_names = 0;
+static const char** command_names = 0;
 static uint8_t command_set_length = 0;
 
 static feldbus_stellantriebe_command_t* structured_output_table[TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE];
@@ -40,7 +40,7 @@ static uint8_t structured_output_table_length = 0;
 feldbus_stellantriebe_value_buffer_t feldbus_stellantriebe_old_value;
 
 
-void turag_feldbus_stellantriebe_init(feldbus_stellantriebe_command_t* command_set_, char** command_names_, uint8_t command_set_length_) {
+void turag_feldbus_stellantriebe_init(feldbus_stellantriebe_command_t* command_set_, const char** command_names_, uint8_t command_set_length_) {
     commmand_set = command_set_;
     command_names = command_names_;
     command_set_length = command_set_length_;
@@ -187,7 +187,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
                 length = strlen_PF((uint_farptr_t)((uint16_t)command_names[index]));
                 memcpy_PF(response, (uint_farptr_t)((uint16_t)command_names[index]), length);
 #else
-                length = strlen_(command_names[index]);
+                length = strlen(command_names[index]);
                 memcpy(response, command_names[index], length);
 #endif
                 return length;

@@ -409,8 +409,8 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 		return;
 	}
 
-	memcpy(turag_feldbus_slave_uart.rxbuf_main, turag_feldbus_slave_uart.rxbuf, turag_feldbus_slave_uart.rx_length);
 	uint8_t length = turag_feldbus_slave_uart.rx_length;
+	memcpy(turag_feldbus_slave_uart.rxbuf_main, turag_feldbus_slave_uart.rxbuf, length);
 	turag_feldbus_slave_uart.rx_length = 0;
 	turag_feldbus_slave_end_interrupt_protect();
 
@@ -463,15 +463,18 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 			return;
 		}
 
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+		turag_feldbus_slave_uart.chksum_required = 1;
+		turag_feldbus_slave_uart.txbuf[0] = TURAG_FELDBUS_MASTER_ADDR|MY_ADDR;
+#endif
+		
 		// calculate correct checksum and initiate transmission
 #if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
 		turag_feldbus_slave_uart.chksum = xor_checksum_calculate(turag_feldbus_slave_uart.txbuf, turag_feldbus_slave_uart.length);
 #elif TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
 		turag_feldbus_slave_uart.chksum = turag_crc8_calculate(turag_feldbus_slave_uart.txbuf, turag_feldbus_slave_uart.length);
 #endif
-#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-		turag_feldbus_slave_uart.chksum_required = 1;
-#endif
+		
 		start_transmission();
 
 	// not every device protocol requires broadcasts, so we can save a few bytes here

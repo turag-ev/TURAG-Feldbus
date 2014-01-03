@@ -74,7 +74,7 @@ extern feldbus_stellantriebe_value_buffer_t feldbus_stellantriebe_old_value;
  */
 void turag_feldbus_stellantriebe_init(
     feldbus_stellantriebe_command_t* command_set, 
-    char** command_names, 
+    const char** command_names, 
     uint8_t command_set_length);
 
 /** 

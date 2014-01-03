@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 
-extern const uint16_t* turag_crc_crc16_table;
+extern const uint16_t turag_crc_crc16_table[256];
 	
 /** Calculates a CRC16_MCRF4-checksum with the help of a table
  * @param		data	pointer to data that is to be included in the calculation

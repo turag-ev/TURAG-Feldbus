@@ -59,6 +59,7 @@ unsigned int Aktor::getCommandsetLength(void) {
         return commandSetLength;
     } else {
         Request<AktorGetCommandInfo> request;
+        request.data.key = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE;
         request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE;
         request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE;
         request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE;
@@ -323,41 +324,52 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
     return true;
 }
 
-
-bool Aktor::getCommandName(uint8_t key, char* out_name) {
-    if (!out_name) {
-        return false;
-    }
+unsigned int Aktor::getCommandNameLength(uint8_t key) {
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", out_name);
+        errorf("%s: commandSet not populated", name);
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        errorf("%s: key not within commandSetLength", out_name);
+        errorf("%s: key not within commandSetLength", name);
         return false;
     }
 
     AktorCommand_t* command = &commandSet[key-1];
 
     if (command->length == AktorCommandLength::none) {
-        errorf("%s: key not supported", out_name);
+        errorf("%s: key not supported", name);
         return false;
     }
-    
+
     Request<AktorGetCommandInfo> request;
     request.data.key = key;
     request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
     request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
     request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
-    
+
     Response<uint8_t> response;
-    
+
     if (!transceive(request, &response)) {
+        return 0;
+    } else {
+        return response.data;
+    }
+}
+
+bool Aktor::getCommandName(uint8_t key, char* out_name) {
+    if (!out_name) {
         return false;
     }
 
-    int name_length = response.data;
+    int name_length = getCommandNameLength(key);
+    if (name_length == 0) {
+        *out_name = 0;
+        return false;
+    }
     
+    Request<AktorGetCommandInfo> request;
+    request.address = myAddress;
+    request.data.key = key;
     request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
