@@ -21,7 +21,7 @@
 /**
  * Static table used for the table_driven implementation.
  *****************************************************************************/
-static const uint16_t crc_table[256] = {
+const uint16_t turag_crc_crc16_table[256] = {
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
     0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
     0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
@@ -56,11 +56,4 @@ static const uint16_t crc_table[256] = {
     0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 };
 
-
-uint16_t turag_crc16_calculate(const void* data, size_t length) {
-    uint16_t crc = 0xffff;
-
-    while (length--) crc = crc_table[(crc ^ *(uint8_t*)data++) & 0xff] ^ (crc >> 8);
-    return crc;
-}
 

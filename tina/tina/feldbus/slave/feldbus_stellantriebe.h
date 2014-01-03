@@ -27,13 +27,6 @@
  * Additionally it is possible to supply a human-understandable description
  * for each value which needs to be supplied in a separate array of strings.
  *
- * You should be aware of the fact that communication-caused read access to the values
- * of the command set does happen within interrupt context. That's why 
- * for read-only values you need to protect every write access that happens within the device's 
- * firmware in main context to this value by disabling all interrupts before the actual write.
- * if your device runs on an architecture whose register size is smaller than the value in question.
- * 
- * 
  *
  */
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
@@ -85,20 +78,17 @@ void turag_feldbus_stellantriebe_init(
     uint8_t command_set_length);
 
 /** 
- * This function needs to be called continuously from the main loop.
- * it checks whether the host requested to write a device value and, if yes,
- * performs the change. If a value was changed, the changed key is returned, otherwise zero.
+ * This function is called after a value was changed.
  * 
- * After the call to this function feldbus_stellantriebe_old_value holds the
- * original value before the change.
+ * You can use this function to start certain actions that have to follow
+ * the change of a value or you can cjeck whether the new value is 
+ * a valid one and if not, change it back using the variable feldbus_stellantriebe_old_value
+ * that always holds the original value of the entry that was changed last.
  * 
- * You MUST protect this function from being interrupted by new write requests
- * otherwise the behaviour is undefined.
- * 
- * @return key of the changed value, otherwise zero.
+ * @param key of the changed value
  * 
  */
-uint8_t turag_feldbus_stellantriebe_write_value(void);
+extern void turag_feldbus_stellantriebe_value_changed(uint8_t key);
 
 
 /**

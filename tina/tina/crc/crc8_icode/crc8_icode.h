@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+extern const uint8_t* turag_crc_crc8_table;
+
 
 /** Calculates a CRC8-checksum
  * @param		data	pointer to data that is to be included in the calculation
@@ -31,7 +33,15 @@ extern "C" {
  * @return		checksum
  * 
  */
-uint8_t turag_crc8_calculate(const void* data, size_t length);
+TURAG_INLINE uint8_t turag_crc8_calculate(const void* data, size_t length) {
+	uint8_t crc = 0xfd;
+
+    while (length--) {
+		crc = turag_crc_crc8_table[crc ^ *(uint8_t*)data];
+		data = (uint8_t*)data + 1;
+	}
+    return crc;
+}
 
 
 
@@ -42,11 +52,11 @@ uint8_t turag_crc8_calculate(const void* data, size_t length);
  * @return		true on data correct, otherwise false
  * 
  */
-static _always_inline bool turag_crc8_check(const void* data, size_t length, uint8_t chksum) {
+TURAG_INLINE bool turag_crc8_check(const void* data, size_t length, uint8_t chksum) {
     if (chksum == turag_crc8_calculate(data, length)) {
-	return true;
+		return true;
     } else {
-	return false;
+		return false;
     }
 }
 

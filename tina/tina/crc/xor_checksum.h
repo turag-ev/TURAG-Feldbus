@@ -27,7 +27,7 @@ extern "C" {
  * @return		checksum
  *
  */
-static _always_inline uint8_t xor_checksum_calculate(const void* data, unsigned size) {
+TURAG_INLINE uint8_t xor_checksum_calculate(const void* data, unsigned size) {
 	uint8_t checksum = 0;
 
 	uint8_t i;
@@ -43,7 +43,7 @@ static _always_inline uint8_t xor_checksum_calculate(const void* data, unsigned 
  * @return		true on data correct, otherwise false
  *
  */
-static _always_inline  bool xor_checksum_check(const void* data, unsigned size, uint8_t chksum) {
+TURAG_INLINE bool xor_checksum_check(const void* data, unsigned size, uint8_t chksum) {
 	if (chksum == xor_checksum_calculate(data, size)) {
 		return true;
 	} else {

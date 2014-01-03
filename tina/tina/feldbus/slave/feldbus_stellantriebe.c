@@ -37,7 +37,6 @@ static uint8_t command_set_length = 0;
 static feldbus_stellantriebe_command_t* structured_output_table[TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE];
 static uint8_t structured_output_table_length = 0;
 
-static volatile uint8_t write_buffer[5] = {0};
 feldbus_stellantriebe_value_buffer_t feldbus_stellantriebe_old_value;
 
 
@@ -51,7 +50,8 @@ void turag_feldbus_stellantriebe_init(feldbus_stellantriebe_command_t* command_s
 
 
 uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response) {
-    // the feldbus base implementation guarantees message_length to be >= 1 so we don't need to check that
+    // the feldbus base implementation guarantees message_length >= 1 and message[0] >= 1 
+	// so we don't need to check that
 
     uint8_t index = message[0] - 1;
 	uint8_t* pValue;
@@ -93,39 +93,64 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
                 return TURAG_FELDBUS_IGNORE_PACKAGE;
             }
 
-            // fill write buffer with received data; at the same time we 
-            // handle situations where there is too little data
-
+            // buffer received data to handle situations
+            // where there is to little data 
+            uint8_t buffer[4] = {0};
+			
             switch (message_length) {
             case 2:
-				write_buffer[0] = message[0];
-                write_buffer[1] = message[1];
-                write_buffer[2] = 0;
-                write_buffer[3] = 0;
-                write_buffer[4] = 0;
+                buffer[0] = message[1];
                 break;
             case 3:
-				write_buffer[0] = message[0];
-                write_buffer[1] = message[1];
-                write_buffer[2] = message[2];
-                write_buffer[3] = 0;
-                write_buffer[4] = 0;
+                buffer[0] = message[1];
+                buffer[1] = message[2];
                 break;
             case 5:
-				write_buffer[0] = message[0];
-                write_buffer[1] = message[1];
-                write_buffer[2] = message[2];
-                write_buffer[3] = message[3];
-                write_buffer[4] = message[4];
+                buffer[0] = message[1];
+                buffer[1] = message[2];
+                buffer[2] = message[3];
+                buffer[3] = message[4];
                 break;
             default:
                 return TURAG_FELDBUS_IGNORE_PACKAGE;
                 break;
             }
-            
-            return 0;
-			
-        } else {
+
+			uint8_t* pValue = (uint8_t*)command->value;
+
+			switch (command->length) {
+			case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_CHAR:
+				feldbus_stellantriebe_old_value.raw_buffer[0] = pValue[0];
+				pValue[0] = buffer[0];
+				turag_feldbus_stellantriebe_value_changed(message[0]);
+				return 0;
+				break;
+			case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_SHORT:
+				feldbus_stellantriebe_old_value.raw_buffer[0] = pValue[0];
+				pValue[0] = buffer[0];
+				feldbus_stellantriebe_old_value.raw_buffer[1] = pValue[1];
+				pValue[1] = buffer[1];
+				turag_feldbus_stellantriebe_value_changed(message[0]);
+				return 0;
+				break;
+			case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG:
+				feldbus_stellantriebe_old_value.raw_buffer[0] = pValue[0];
+				pValue[0] = buffer[0];
+				feldbus_stellantriebe_old_value.raw_buffer[1] = pValue[1];
+				pValue[1] = buffer[1];
+				feldbus_stellantriebe_old_value.raw_buffer[2] = pValue[2];
+				pValue[2] = buffer[2];
+				feldbus_stellantriebe_old_value.raw_buffer[3] = pValue[3];
+				pValue[3] = buffer[3];
+				turag_feldbus_stellantriebe_value_changed(message[0]);
+				return 0;
+				break;
+			default: 
+				return TURAG_FELDBUS_IGNORE_PACKAGE;
+				break;
+			}
+
+		} else {
             if (message[1] == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_COMMANDSET_SIZE) {
                 // return length of command set
                 response[0] = command_set_length;
@@ -268,42 +293,5 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
     }
 }
 
-uint8_t turag_feldbus_stellantriebe_write_value(void) {
-	uint8_t key = write_buffer[0];
-	
-	if (key == 0) {
-		return 0;
-	}
-	
-	feldbus_stellantriebe_command_t* command = commmand_set + key - 1;
-
-	uint8_t* pValue = (uint8_t*)command->value;
-
-	switch (command->length) {
-	case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_CHAR:
-		feldbus_stellantriebe_old_value.raw_buffer[0] = pValue[0];
-		pValue[0] = write_buffer[1];
-		break;
-	case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_SHORT:
-		feldbus_stellantriebe_old_value.raw_buffer[0] = pValue[0];
-		pValue[0] = write_buffer[1];
-		feldbus_stellantriebe_old_value.raw_buffer[1] = pValue[1];
-		pValue[1] = write_buffer[2];
-		break;
-	case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG:
-		feldbus_stellantriebe_old_value.raw_buffer[0] = pValue[0];
-		pValue[0] = write_buffer[1];
-		feldbus_stellantriebe_old_value.raw_buffer[1] = pValue[1];
-		pValue[1] = write_buffer[2];
-		feldbus_stellantriebe_old_value.raw_buffer[2] = pValue[2];
-		pValue[2] = write_buffer[3];
-		feldbus_stellantriebe_old_value.raw_buffer[3] = pValue[3];
-		pValue[3] = write_buffer[4];
-		break;
-	}
-
-	write_buffer[0] = 0;
-	return key;
-}
 
 #endif

@@ -26,13 +26,23 @@ extern "C" {
 #endif
 
 
+extern const uint16_t* turag_crc_crc16_table;
+	
 /** Calculates a CRC16_MCRF4-checksum with the help of a table
  * @param		data	pointer to data that is to be included in the calculation
  * @param		length	length in bytes of the given data pointer
  * @return		checksum
  * 
  */
-uint16_t turag_crc16_calculate(const void* data, size_t length);
+TURAG_INLINE uint16_t turag_crc16_calculate(const void* data, size_t length) {
+    uint16_t crc = 0xffff;
+
+    while (length--) {
+		crc = crc_table[(crc ^ *(uint8_t*)data) & 0xff] ^ (crc >> 8);
+		data = (uint8_t*)data + 1;
+	}
+    return crc;
+}
 
 
 
@@ -43,7 +53,7 @@ uint16_t turag_crc16_calculate(const void* data, size_t length);
  * @return		true on data correct, otherwise false
  * 
  */
-static _always_inline bool turag_crc16_check(const void* data, size_t length, uint16_t chksum) {
+TURAG_INLINE bool turag_crc16_check(const void* data, size_t length, uint16_t chksum) {
     if (chksum == turag_crc16_calculate(data, length)) {
 	return true;
     } else {
@@ -60,7 +70,7 @@ static _always_inline bool turag_crc16_check(const void* data, size_t length, ui
  * @return		checksum
  * 
  */
-static _always_inline uint16_t turag_crc16_calculate_direct(const void* data, unsigned size) {
+TURAG_INLINE uint16_t turag_crc16_calculate_direct(const void* data, unsigned size) {
 	// preload checksum
 	uint16_t chksum = 0xffff;
 	uint8_t data_byte;
@@ -85,7 +95,7 @@ static _always_inline uint16_t turag_crc16_calculate_direct(const void* data, un
  * @return		true on data correct, otherwise false
  * 
  */
-static _always_inline bool turag_crc16_check_direct(const void* data, unsigned size, uint16_t chksum) {
+TURAG_INLINE bool turag_crc16_check_direct(const void* data, unsigned size, uint16_t chksum) {
 	if (chksum == turag_crc16_calculate_direct(data, size)) {
 		return true;
 	} else {
