@@ -25,6 +25,11 @@ struct AktorGetLong {
     int32_t value;
 } _packed;
 
+struct AktorSetChar {
+    uint8_t key;
+    int8_t value;
+} _packed;
+
 struct AktorSetShort {
     uint8_t key;
     int16_t value;
@@ -247,14 +252,16 @@ bool Aktor::setValue(uint8_t key, float value) {
     Response<> response;
 
     if (command->length == AktorCommandLength::length_char) {
-        Request<int8_t> request;
-        request.data = static_cast<int8_t>(value / command->factor);
+        Request<AktorSetChar> request;
+        request.data.key = key;
+        request.data.value = static_cast<int8_t>(value / command->factor);
 
         if (!transceive(request, &response)) {
             return false;
         }
     } else if (command->length == AktorCommandLength::length_short) {
         Request<AktorSetShort> request;
+        request.data.key = key;
         request.data.value = static_cast<int16_t>(value / command->factor);
 
         if (!transceive(request, &response)) {
@@ -262,6 +269,7 @@ bool Aktor::setValue(uint8_t key, float value) {
         }
     } else {
         Request<AktorSetLong> request;
+        request.data.key = key;
         request.data.value = static_cast<int32_t>(value / command->factor);
 
         if (!transceive(request, &response)) {
@@ -300,14 +308,16 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
     Response<> response;
 
     if (command->length == AktorCommandLength::length_char) {
-        Request<int8_t> request;
-        request.data = static_cast<int8_t>(value);
+        Request<AktorSetChar> request;
+        request.data.key = key;
+        request.data.value = static_cast<int8_t>(value);
 
         if (!transceive(request, &response)) {
             return false;
         }
     } else if (command->length == AktorCommandLength::length_short) {
         Request<AktorSetShort> request;
+        request.data.key = key;
         request.data.value = static_cast<int16_t>(value);
 
         if (!transceive(request, &response)) {
@@ -315,6 +325,7 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
         }
     } else {
         Request<AktorSetLong> request;
+        request.data.key = key;
         request.data.value = static_cast<int32_t>(value);
 
         if (!transceive(request, &response)) {
@@ -478,6 +489,7 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
     }
 
     Request<uint8_t> request;
+    request.address = myAddress;
     request.data = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
 
     uint8_t* response = new uint8_t[data_size + 2];
@@ -486,9 +498,10 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
                    sizeof(request),
                    response,
                    data_size + 2)) {
+        uint8_t* pValue = response + 1;
+
         for (unsigned int i = 0; i < structuredOutputTable.size(); ++i) {
-            float device_value;
-            uint8_t* pValue = response + 1;
+            int32_t device_value;
 
             switch (commandSet[structuredOutputTable[i] - 1].length) {
             case AktorCommandLength::length_char:
@@ -507,9 +520,15 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
                 return false;
             }
 
-            device_value *= commandSet[structuredOutputTable[i] - 1].factor;
+            StructuredDataPair_t pair;
+            pair.key = structuredOutputTable[i];
 
-            values->push_back(StructuredDataPair_t(structuredOutputTable[i], device_value));
+            if (commandSet[structuredOutputTable[i] - 1].factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
+                pair.value = static_cast<float>(device_value);
+            } else {
+                pair.value = static_cast<float>(device_value) * commandSet[structuredOutputTable[i] - 1].factor;
+            }
+            values->push_back(pair);
         }
         delete[] response;
         return true;

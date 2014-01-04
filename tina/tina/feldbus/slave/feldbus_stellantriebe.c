@@ -201,12 +201,14 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
             // generate structured output
             int i;
             uint8_t* out = response;
-            feldbus_stellantriebe_command_t* command = structured_output_table[0];
+            feldbus_stellantriebe_command_t* command;
 
             // we do not check whether command->value is a valid pointer
             // because we check for validity of the requested values
             // when the table is generated
             for (i = 0; i < structured_output_table_length; ++i) {
+				command = structured_output_table[i];
+				
                 switch (command->length) {
                 case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_CHAR:
                     *out = *((uint8_t*)command->value);
@@ -227,7 +229,6 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
                     out += 4;
                     break;
                 }
-                ++command;
             }
             return out - response;
 

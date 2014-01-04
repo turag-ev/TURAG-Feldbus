@@ -59,7 +59,8 @@ struct AktorCommand_t {
 struct StructuredDataPair_t {
     uint8_t key;
     float value;
-    
+    StructuredDataPair_t(void) :
+        key(0), value(0.0f) { }
     StructuredDataPair_t(uint8_t key_, float value_) :
 	key(key_),
 	value(value_) {}
