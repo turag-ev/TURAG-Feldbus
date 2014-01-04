@@ -87,8 +87,8 @@ void print_short(uint16_t x) {
 	turag_feldbus_slave_uart.txbuf[3] = digit_to_hex(x >> 8);
 	turag_feldbus_slave_uart.txbuf[4] = digit_to_hex(x >> 4);
 	turag_feldbus_slave_uart.txbuf[5] = digit_to_hex(x);
-	turag_feldbus_slave_uart.txbuf[6] = '\n';
-	turag_feldbus_slave_uart.txbuf[7] = '\r';
+	turag_feldbus_slave_uart.txbuf[6] = '\r';
+	turag_feldbus_slave_uart.txbuf[7] = '\n';
 
 	turag_feldbus_slave_uart.length = 8;
 	turag_feldbus_slave_uart.chksum_required = 0;
@@ -124,8 +124,8 @@ void print_sshort(int16_t x) {
 	turag_feldbus_slave_uart.txbuf[4] = digit_to_hex(x >> 8);
 	turag_feldbus_slave_uart.txbuf[5] = digit_to_hex(x >> 4);
 	turag_feldbus_slave_uart.txbuf[6] = digit_to_hex(x);
-	turag_feldbus_slave_uart.txbuf[7] = '\n';
-	turag_feldbus_slave_uart.txbuf[8] = '\r';
+	turag_feldbus_slave_uart.txbuf[7] = '\r';
+	turag_feldbus_slave_uart.txbuf[8] = '\n';
 
 	turag_feldbus_slave_uart.length = 9;
 	turag_feldbus_slave_uart.chksum_required = 0;
@@ -164,8 +164,8 @@ void print_long(uint32_t x) {
 	turag_feldbus_slave_uart.txbuf[7] = digit_to_hex(x >> 8);
 	turag_feldbus_slave_uart.txbuf[8] = digit_to_hex(x >> 4);
 	turag_feldbus_slave_uart.txbuf[9] = digit_to_hex(x);
-	turag_feldbus_slave_uart.txbuf[10] = '\n';
-	turag_feldbus_slave_uart.txbuf[11] = '\r';
+	turag_feldbus_slave_uart.txbuf[10] = '\r';
+	turag_feldbus_slave_uart.txbuf[11] = '\n';
 
 
 	turag_feldbus_slave_uart.length = 12;
@@ -182,8 +182,8 @@ void print_short_d(int16_t x) {
 	turag_feldbus_slave_uart.txbuf[3] = ' ';
 	turag_feldbus_slave_uart.txbuf[4] = ' ';
 	turag_feldbus_slave_uart.txbuf[5] = ' ';
-	turag_feldbus_slave_uart.txbuf[6] = '\n';
-	turag_feldbus_slave_uart.txbuf[7] = '\r';
+	turag_feldbus_slave_uart.txbuf[6] = '\r';
+	turag_feldbus_slave_uart.txbuf[7] = '\n';
 	itoa(x, (char*)turag_feldbus_slave_uart.txbuf, 10);
 
 	turag_feldbus_slave_uart.length = 8;
@@ -209,8 +209,8 @@ void print_slong(int32_t x) {
 	turag_feldbus_slave_uart.txbuf[8] = digit_to_hex(x >> 8);
 	turag_feldbus_slave_uart.txbuf[9] = digit_to_hex(x >> 4);
 	turag_feldbus_slave_uart.txbuf[10] = digit_to_hex(x);
-	turag_feldbus_slave_uart.txbuf[11] = '\n';
-	turag_feldbus_slave_uart.txbuf[12] = '\r';
+	turag_feldbus_slave_uart.txbuf[11] = '\r';
+	turag_feldbus_slave_uart.txbuf[12] = '\n';
 
 	turag_feldbus_slave_uart.length = 13;
 	turag_feldbus_slave_uart.chksum_required = 0;
