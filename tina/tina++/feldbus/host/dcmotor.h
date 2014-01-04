@@ -19,16 +19,12 @@ namespace Feldbus {
  *
  */
 class DCMotorBase : public TURAG::Feldbus::ServoBase {
-protected:
-    bool myHomecomingRequested;
-
 public:
 
     DCMotorBase(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-        ServoBase(name_, address, type), myHomecomingRequested(false) {}
+        ServoBase(name_, address, type) {}
 
-    virtual bool driveHome(float velocity);
-    virtual bool enableControl();
+    virtual bool driveHome(float velocity) { return setValue(RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME, velocity); }
 
 };
 

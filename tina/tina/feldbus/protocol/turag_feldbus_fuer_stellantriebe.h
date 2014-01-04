@@ -63,20 +63,11 @@
 #define RS485_STELLANTRIEBE_KEY_VOLTAGE			(0x0E)	// current supply voltage
 #define RS485_STELLANTRIEBE_KEY_STATUS			(0x0F)	// current status, see details below
 #define RS485_STELLANTRIEBE_KEY_CONTROL_STATE		(0x10)	// control state
-#define RS485_STELLANTRIEBE_KEY_CONTROL_TYPE		(0x11)	// control type
 													
 // low bytes for set command: RS485_STELLANTRIEBE_KEY_CONTROL_STATE 
 // turn motor control on/off
 #define RS485_STELLANTRIEBE_CONTROL_STATE_ENABLE		(1)
 #define RS485_STELLANTRIEBE_CONTROL_STATE_DISABLE	(0)
-
-
-// low bytes for set command: RS485_STELLANTRIEBE_KEY_CONTROL_TYPE
-// choose control cascade
-#define RS485_STELLANTRIEBE_CONTROL_TYPE_NONE	(0)
-#define RS485_STELLANTRIEBE_CONTROL_TYPE_POS	(1<<0)
-#define RS485_STELLANTRIEBE_CONTROL_TYPE_VEL	(1<<1)
-#define RS485_STELLANTRIEBE_CONTROL_TYPE_CUR	(1<<2)
 
 
 
@@ -94,8 +85,8 @@
 // ----------------------------------------------
 // DC motor command keys
 // ----------------------------------------------
-#define RS485_STELLANTRIEBE_DC_KEY_SWITCH_STATUS		(0x12)
-#define RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME	(0x13)	// requests the slave to return to some defined position where it adjusts 
+#define RS485_STELLANTRIEBE_DC_KEY_SWITCH_STATUS		(0x11)
+#define RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME	(0x12)	// requests the slave to return to some defined position where it adjusts 
 													// its current angle appropriately, takes velocity as argument
 
 
