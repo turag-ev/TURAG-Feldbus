@@ -7,8 +7,7 @@ namespace TURAG {
 namespace Feldbus {
 
 
-
-
+//Servo verfügbar?
 bool DynamixelDevice::isAvailable(void) {
     if (!hasCheckedAvailabilityYet) {
         while (!hasReachedTransmissionErrorLimit()) {
@@ -23,7 +22,7 @@ bool DynamixelDevice::isAvailable(void) {
 
     return !hasReachedTransmissionErrorLimit();
 }
-
+//Protected (an sich soweit fertig)
 bool DynamixelDevice::readWord(int address, int* word) {
     if (!isAvailable()) {
         return false;
@@ -151,6 +150,9 @@ void DynamixelDevice::printLastDeviceError() {
         criticalf("%s: Instruction code error!", name);
 }
 
+//##############################################################################################################
+
+//Modellnummer
 bool DynamixelDevice::getModelNumber(int* modelNumber) {
     if (modelNumber_ == -1) {
         int tempModelNumber = 0;
@@ -167,6 +169,12 @@ bool DynamixelDevice::getModelNumber(int* modelNumber) {
     return true;
 }
 
+//Version der Firmware
+/*Beispiel für Verwendung:
+ *int out = 0;
+ *device->getFirmwareVersion(&out);
+ *printf("%d", out);
+*/
 bool DynamixelDevice::getFirmwareVersion(int* version) {
     if (firmwareVersion_ == -1) {
         int tempVersion = 0;
@@ -183,10 +191,12 @@ bool DynamixelDevice::getFirmwareVersion(int* version) {
     return true;
 }
 
+//getTemperature
 bool DynamixelDevice::getTemperature(int* temperature) {
     return readByte(TURAG_DXL_ADDRESS_PRESENT_TEMPERATURE, temperature);
 }
 
+//setLed
 bool DynamixelDevice::setLed(bool on) {
     if (on) {
         return writeByte(TURAG_DXL_ADDRESS_LED, 1);
@@ -195,6 +205,7 @@ bool DynamixelDevice::setLed(bool on) {
     }
 }
 
+
 bool DynamixelDevice::getCurrentPosition(int* position) {
     return readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, position);
 }
@@ -202,6 +213,7 @@ bool DynamixelDevice::setGoalPosition(int position) {
     return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, position);
 }
 
+//TorqueEnable
 bool DynamixelDevice::getTorqueEnable(bool* enabled) {
     return readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, (int*)enabled);
 }
@@ -210,6 +222,7 @@ bool DynamixelDevice::setTorqueEnable(bool enable) {
     return writeWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, (int)enable);
 }
 
+//Ccw AngleLimit
 bool DynamixelDevice::getCcwAngleLimit(int* limit) {
     return readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, limit);
 }
@@ -218,6 +231,7 @@ bool DynamixelDevice::setCcwAngleLimit(int limit) {
     return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, limit);
 }
 
+// Cw Angle Limit
 bool DynamixelDevice::getCwAngleLimit(int* limit) {
     return readWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, limit);
 }
@@ -226,6 +240,17 @@ bool DynamixelDevice::setCwAngleLimit(int limit) {
     return writeWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, limit);
 }
 
+//Present speed
+bool DynamixelDevice::getPresentSpeed(int speed){
+    return readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, speed);
+}
+
+//Present load
+bool DynamixelDevice::getPresentLoad(int load){
+    return readWord(TURAG_DXL_ADDRESS_PRESENT_LOAD, load);
+}
+
+}
 } // namespace TURAG
 } // namespace Feldbus
 

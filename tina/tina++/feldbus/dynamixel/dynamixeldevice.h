@@ -43,6 +43,7 @@ protected:
 
     int modelNumber_;
     int firmwareVersion_;
+    int servoID_;
 
     bool readWord(int address, int* word);
     bool readByte(int address, int* byte);
@@ -57,17 +58,21 @@ protected:
 public:
     const char* name;
 
+    //Konstruktor für die Klasse DynamixelDevice
     DynamixelDevice(const char* name_, int id,
                     unsigned int max_transmission_attempts = TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
                     unsigned int max_transmission_errors = TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
+        /*Initialisierungen */
         myId(id), maxTransmissionAttempts(max_transmission_attempts), maxTransmissionErrors(max_transmission_errors),
         myTransmissionErrorCounter(0), hasCheckedAvailabilityYet(false),
         modelNumber_(-1), firmwareVersion_(-1), name(name_)   {}
     virtual ~DynamixelDevice() {}
 
+    //deklariert und implementiert
     unsigned int getID(void) const { return myId; }
     void setMaxTransmissionAttempts(int attempts) { maxTransmissionAttempts = attempts; myTransmissionErrorCounter= 0; }
 
+    //deklariert
     virtual bool getModelNumber(int* modelNumber);
     virtual bool getFirmwareVersion(int* version);
     virtual bool isAvailable(void);
@@ -76,12 +81,18 @@ public:
     virtual bool setLed(bool on);
     virtual bool getCurrentPosition(int* position);
     virtual bool setGoalPosition(int position);
+
     virtual bool getTorqueEnable(bool* enabled);
     virtual bool setTorqueEnable(bool enable);
+
     virtual bool getCcwAngleLimit(int* limit);
     virtual bool setCcwAngleLimit(int limit);
+
     virtual bool getCwAngleLimit(int* limit);
     virtual bool setCwAngleLimit(int limit);
+
+    virtual bool getPresentSpeed(int speed);
+    virtual bool getPresentLoad(int load);
 };
 
 
