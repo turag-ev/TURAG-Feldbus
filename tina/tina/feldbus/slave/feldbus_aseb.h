@@ -19,20 +19,20 @@
 
 
 typedef struct {
-	uint8_t* value;
+	uint8_t value;
 	char* name;
 } feldbus_aseb_digital_io_t;
 
 typedef struct {
 	float factor;
-	int16_t* value;
+	int16_t value;
 	char* name;
 } feldbus_aseb_analog_t;
 
 typedef struct {
-	uint32_t frequency
+	uint32_t frequency;
 	uint16_t max_value;
-	uint16_t* value;
+	uint16_t value;
 	char* name;
 } feldbus_aseb_pwm_t;
 
@@ -53,7 +53,7 @@ typedef struct {
  * @param pwm_outputs_size 
  * @param analog_resolution
  */
-void turag_feldbus_stellantriebe_init(
+void turag_feldbus_aseb_init(
     feldbus_aseb_digital_io_t* digital_inputs, uint8_t digital_inputs_size,
     feldbus_aseb_digital_io_t* digital_outputs, uint8_t digital_outputs_size,
     feldbus_aseb_analog_t* analog_inputs, uint8_t analog_inputs_size,

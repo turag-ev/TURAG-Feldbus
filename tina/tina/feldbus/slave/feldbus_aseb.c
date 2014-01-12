@@ -31,7 +31,7 @@ static uint8_t pwm_outputs_size;
 static uint8_t analog_resolution;
 
 
-void turag_feldbus_stellantriebe_init(
+void turag_feldbus_aseb_init(
     feldbus_aseb_digital_io_t* digital_inputs_, uint8_t digital_inputs_size_,
     feldbus_aseb_digital_io_t* digital_outputs_, uint8_t digital_outputs_size_,
     feldbus_aseb_analog_t* analog_inputs_, uint8_t analog_inputs_size_,
@@ -63,37 +63,37 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		uint8_t high_byte = 0;
 		
 		if (digital_inputs && digital_inputs_size > 0) {
-			if (*digital_inputs[0].value) low_byte = (1<<0);
+			if (digital_inputs[0].value) low_byte = (1<<0);
 			if (digital_inputs_size > 1) {
-				if (*digital_inputs[1].value) low_byte |= (1<<1);
+				if (digital_inputs[1].value) low_byte |= (1<<1);
 				if (digital_inputs_size > 2) {
-					if (*digital_inputs[2].value) low_byte |= (1<<2);
+					if (digital_inputs[2].value) low_byte |= (1<<2);
 					if (digital_inputs_size > 3) {
-						if (*digital_inputs[3].value) low_byte |= (1<<3);
+						if (digital_inputs[3].value) low_byte |= (1<<3);
 						if (digital_inputs_size > 4) {
-							if (*digital_inputs[4].value) low_byte |= (1<<4);
+							if (digital_inputs[4].value) low_byte |= (1<<4);
 							if (digital_inputs_size > 5) {
-								if (*digital_inputs[5].value) low_byte |= (1<<5);
+								if (digital_inputs[5].value) low_byte |= (1<<5);
 								if (digital_inputs_size > 6) {
-									if (*digital_inputs[6].value) low_byte |= (1<<6);
+									if (digital_inputs[6].value) low_byte |= (1<<6);
 									if (digital_inputs_size > 7) {
-										if (*digital_inputs[7].value) low_byte |= (1<<7);
+										if (digital_inputs[7].value) low_byte |= (1<<7);
 										if (digital_inputs_size > 8) {
-											if (*digital_inputs[8].value) high_byte = (1<<0);
+											if (digital_inputs[8].value) high_byte = (1<<0);
 											if (digital_inputs_size > 9) {
-												if (*digital_inputs[9].value) high_byte |= (1<<1);
+												if (digital_inputs[9].value) high_byte |= (1<<1);
 												if (digital_inputs_size > 10) {
-													if (*digital_inputs[10].value) high_byte |= (1<<2);
+													if (digital_inputs[10].value) high_byte |= (1<<2);
 													if (digital_inputs_size > 11) {
-														if (*digital_inputs[11].value) high_byte |= (1<<3);
+														if (digital_inputs[11].value) high_byte |= (1<<3);
 														if (digital_inputs_size > 12) {
-															if (*digital_inputs[12].value) high_byte |= (1<<4);
+															if (digital_inputs[12].value) high_byte |= (1<<4);
 															if (digital_inputs_size > 13) {
-																if (*digital_inputs[13].value) high_byte |= (1<<5);
+																if (digital_inputs[13].value) high_byte |= (1<<5);
 																if (digital_inputs_size > 14) {
-																	if (*digital_inputs[14].value) high_byte |= (1<<6);
+																	if (digital_inputs[14].value) high_byte |= (1<<6);
 																	if (digital_inputs_size > 15) {
-																		if (*digital_inputs[15].value) high_byte |= (1<<7);	
+																		if (digital_inputs[15].value) high_byte |= (1<<7);	
 																	}
 																}
 															}
@@ -116,9 +116,9 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		
 		int i;
 		if (analog_inputs) {
-			for (i = 0; i < analog_inputs_size_; ++i) {
-				out[0] = ((uint8_t*)analog_inputs[i].value)[0];
-				out[1] = ((uint8_t*)analog_inputs[i].value)[1];
+			for (i = 0; i < analog_inputs_size; ++i) {
+				out[0] = ((uint8_t*)&analog_inputs[i].value)[0];
+				out[1] = ((uint8_t*)&analog_inputs[i].value)[1];
 				out += 2;
 			}
 		}
@@ -132,7 +132,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		uint8_t digital_output_index = message[0] - TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT;
 		
 		if (digital_outputs && digital_output_index < digital_outputs_size) {
-			*digital_outputs[digital_output_index].value = message[1];
+			digital_outputs[digital_output_index].value = message[1];
 			return 0;
 		} else {
 			return TURAG_FELDBUS_IGNORE_PACKAGE;
@@ -145,7 +145,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		uint8_t pwm_output_index = message[0] - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
 		
 		if (pwm_outputs && pwm_output_index < pwm_outputs_size) {
-			uint8_t* value = (uint8_t*)pwm_outputs[pwm_output_index].value;
+			uint8_t* value = (uint8_t*)&pwm_outputs[pwm_output_index].value;
 			value[0] = message[1];
 			value[1] = message[2];
 			return 0;
