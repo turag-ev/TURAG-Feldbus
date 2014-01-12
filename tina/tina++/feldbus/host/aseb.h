@@ -96,10 +96,7 @@ public:
     bool getCommandName(unsigned key, char* name);
     unsigned int getCommandNameLength(unsigned key);
     bool getPwmFrequency(unsigned key, uint32_t* frequency);
-                
-
-
-                
+                      
 };
 
 } // namespace Feldbus
