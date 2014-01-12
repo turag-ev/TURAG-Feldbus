@@ -11,12 +11,12 @@
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_ASEB) || defined(DOXYGEN)
 
 
-#ifndef TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
-# error TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM must be defined
+#ifndef TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
+# error TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM must be defined
 #endif
 
 
-#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
+#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
 # include <avr/pgmspace.h>
 #endif		
 
@@ -115,10 +115,12 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		}
 		
 		int i;
-		for (i = 0; i < analog_inputs_size_; ++i) {
-			out[0] = ((uint8_t*)analog_inputs[i].value)[0];
-			out[1] = ((uint8_t*)analog_inputs[i].value)[1];
-			out += 2;
+		if (analog_inputs) {
+			for (i = 0; i < analog_inputs_size_; ++i) {
+				out[0] = ((uint8_t*)analog_inputs[i].value)[0];
+				out[1] = ((uint8_t*)analog_inputs[i].value)[1];
+				out += 2;
+			}
 		}
 		
 		return out - response;
@@ -224,7 +226,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		
         uint8_t length = 0;
 
-#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
+#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
         length = strlen_PF((uint_farptr_t)((uint16_t)name));
         memcpy_PF(response, (uint_farptr_t)((uint16_t)name), length);
 #else
@@ -252,11 +254,22 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		}
 		if (!name) return TURAG_FELDBUS_IGNORE_PACKAGE;
 		
-#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
+#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
         response[0] = strlen_PF((uint_farptr_t)((uint16_t)name));
 #else
         response[0] = strlen(name);
 #endif
+		return 1;
+	} else if (message[0] == TURAG_FELDBUS_ASEB_SYNC_SIZE) {
+		uint8_t size = 0;
+		
+		if (digital_inputs && digital_inputs_size > 0) {
+			size += 2;
+		}
+		if (analog_inputs && analog_inputs_size > 0) {
+			size += analog_inputs_size * 2;
+		}
+		response[0] = size + 2;
 		return 1;
 	}
 	return TURAG_FELDBUS_IGNORE_PACKAGE;
