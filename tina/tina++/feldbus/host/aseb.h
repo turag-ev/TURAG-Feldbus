@@ -44,19 +44,19 @@ public:
 	
 protected:
     Analog_t* analogInputs_;
-    unsigned analogInputSize_;
+    int analogInputSize_;
 
     Pwm_t* pwmOutputs_;
-    unsigned pwmOutputSize_;
+    int pwmOutputSize_;
 
     uint16_t digitalInputs_;
-    unsigned digitalInputSize_;
+    int digitalInputSize_;
 
     uint16_t digitalOutputs_;
-    unsigned digitalOutputSize_;
+    int digitalOutputSize_;
 
     uint8_t* syncBuffer_;
-    unsigned syncSize_;
+    int syncSize_;
 
     bool isSynced_;
 
@@ -65,23 +65,24 @@ public:
 
     Aseb(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
                 Device(name_, address, type),
-                analogInputs_(nullptr), analogInputSize_(0),
-                pwmOutputs_(nullptr), pwmOutputSize_(0),
-                digitalInputs_(0), digitalInputSize_(0),
-                digitalOutputs_(0), digitalOutputSize_(0),
+                analogInputs_(nullptr), analogInputSize_(-1),
+                pwmOutputs_(nullptr), pwmOutputSize_(-1),
+                digitalInputs_(0), digitalInputSize_(-1),
+                digitalOutputs_(0), digitalOutputSize_(-1),
                 syncBuffer_(nullptr), syncSize_(0), isSynced_(false)  { }
                 
                 
-    bool initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
-                    Analog_t* analogInputs, unsigned analogInputSize,
-                    Pwm_t* pwmOutputs, unsigned pwmOutputSize );
+    bool initialize(uint8_t* sync_buffer, int sync_buffer_size,
+                    Analog_t* analogInputs, int analogInputSize,
+                    Pwm_t* pwmOutputs, int pwmOutputSize );
 
     bool isSynced(void) { return isSynced_; }
 
-    bool getDigitalOutputSize(unsigned* size);
-    bool getDigitalInputSize(unsigned* size);
-    bool getAnalogInputSize(unsigned * size);
-    bool getPwmOutputSize(unsigned* size);
+    bool getDigitalOutputSize(int* size);
+    bool getDigitalInputSize(int* size);
+    bool getAnalogInputSize(int * size);
+    bool getPwmOutputSize(int* size);
+    bool getSyncSize(int* size);
 
     bool sync(void);
 
@@ -96,6 +97,7 @@ public:
     bool getCommandName(unsigned key, char* name);
     unsigned int getCommandNameLength(unsigned key);
     bool getPwmFrequency(unsigned key, uint32_t* frequency);
+    bool getAnalogResolution(unsigned* resolution);
                       
 };
 

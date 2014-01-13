@@ -39,16 +39,15 @@ struct AsebGetPwmFrequency {
 } _packed;
 
 
-bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
-                      Analog_t* analogInputs, unsigned analogInputSize,
-                      Pwm_t* pwmOutputs, unsigned pwmOutputSize) {
-    unsigned sizeBuffer = 0;
+bool Aseb::initialize(uint8_t* sync_buffer, int sync_buffer_size,
+                      Analog_t* analogInputs, int analogInputSize,
+                      Pwm_t* pwmOutputs, int pwmOutputSize) {
+
+    syncSize_ = 0;
+
+    int sizeBuffer = 0;
     if (!getDigitalInputSize(&sizeBuffer)) return false;
-    digitalInputSize_ = sizeBuffer;
-
-
     if (!getDigitalOutputSize(&sizeBuffer)) return false;
-    digitalOutputSize_ = sizeBuffer;
 
 
     analogInputs_ = analogInputs;
@@ -63,7 +62,7 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
 
         Response<AsebGetAnalogFactor> response;
 
-        for (unsigned i = 0; i < analogInputSize_; ++i) {
+        for (int i = 0; i < analogInputSize_; ++i) {
             request.data.index = i + TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT;
 
             if (!transceive(request, &response)) return false;
@@ -83,7 +82,7 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
 
         Response<AsebGetPwmMaxValue> response;
 
-        for (unsigned i = 0; i < pwmOutputSize_; ++i) {
+        for (int i = 0; i < pwmOutputSize_; ++i) {
             request.data.index = i + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
 
             if (!transceive(request, &response)) return false;
@@ -91,18 +90,17 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
         }
     }
 
+    if (!getSyncSize(&sizeBuffer)) return false;
+    if (sync_buffer_size < sizeBuffer) return false;
     syncBuffer_ = sync_buffer;
-    syncSize_ = sync_buffer_size;
+    syncSize_ = sizeBuffer;
 
     return true;
 }
 	
 
-bool Aseb::getDigitalOutputSize(unsigned* size) {
-    if (digitalOutputSize_) {
-        *size = digitalOutputSize_;
-        return true;
-    } else {
+bool Aseb::getDigitalOutputSize(int* size) {
+    if (digitalOutputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_DIGITAL_OUTPUTS;
 
@@ -111,16 +109,13 @@ bool Aseb::getDigitalOutputSize(unsigned* size) {
         if (!transceive(request, &response)) return false;
 
         digitalOutputSize_ = response.data;
-        *size = digitalOutputSize_;
-        return true;
     }
+    *size = digitalOutputSize_;
+    return true;
 }
 
-bool Aseb::getDigitalInputSize(unsigned* size) {
-    if (digitalInputSize_) {
-        *size = digitalInputSize_;
-        return true;
-    } else {
+bool Aseb::getDigitalInputSize(int* size) {
+    if (digitalInputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_DIGITAL_INPUTS;
 
@@ -129,16 +124,13 @@ bool Aseb::getDigitalInputSize(unsigned* size) {
         if (!transceive(request, &response)) return false;
 
         digitalInputSize_ = response.data;
-        *size = digitalInputSize_;
-        return true;
     }
+    *size = digitalInputSize_;
+    return true;
 }
 
-bool Aseb::getAnalogInputSize(unsigned * size) {
-    if (analogInputSize_) {
-        *size = analogInputSize_;
-        return true;
-    } else {
+bool Aseb::getAnalogInputSize(int * size) {
+    if (analogInputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_ANALOG_INPUTS;
 
@@ -147,16 +139,13 @@ bool Aseb::getAnalogInputSize(unsigned * size) {
         if (!transceive(request, &response)) return false;
 
         analogInputSize_ = response.data;
-        *size = analogInputSize_;
-        return true;
     }
+    *size = analogInputSize_;
+    return true;
 }
 
-bool Aseb::getPwmOutputSize(unsigned* size) {
-    if (pwmOutputSize_) {
-        *size = pwmOutputSize_;
-        return true;
-    } else {
+bool Aseb::getPwmOutputSize(int* size) {
+    if (pwmOutputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_PWM_OUTPUTS;
 
@@ -165,9 +154,25 @@ bool Aseb::getPwmOutputSize(unsigned* size) {
         if (!transceive(request, &response)) return false;
 
         pwmOutputSize_ = response.data;
-        *size = pwmOutputSize_;
-        return true;
     }
+    *size = pwmOutputSize_;
+    return true;
+}
+
+
+bool Aseb::getSyncSize(int* size) {
+    if (syncSize_ == -1) {
+        Request<uint8_t> request;
+        request.data = TURAG_FELDBUS_ASEB_SYNC_SIZE;
+
+        Response<uint8_t> response;
+
+        if (!transceive(request, &response)) return false;
+
+        syncSize_ = response.data;
+    }
+    *size = syncSize_;
+    return true;
 }
 
 
@@ -196,7 +201,7 @@ bool Aseb::sync(void) {
     }
 
     if (analogInputs_) {
-        for (unsigned i = 0; i < analogInputSize_; ++i) {
+        for (int i = 0; i < analogInputSize_; ++i) {
             analogInputs_[i].value = *(reinterpret_cast<int16_t*>(response));
             response += 2;
         }
@@ -210,7 +215,7 @@ float Aseb::getAnalogInput(unsigned key) {
     if (syncSize_ &&
             analogInputs_ &&
             key >= TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT &&
-            key < TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT + analogInputSize_) {
+            key < TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT + static_cast<unsigned>(analogInputSize_)) {
 
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT;
         return static_cast<float>(analogInputs_[index].value) * analogInputs_[index].factor;
@@ -222,7 +227,7 @@ float Aseb::getAnalogInput(unsigned key) {
 bool Aseb::getDigitalInput(unsigned key) {
     if (syncSize_ &&
             key >= TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT &&
-            key < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT + digitalInputSize_) {
+            key < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT + static_cast<unsigned>(digitalInputSize_)) {
 
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT;
         return static_cast<bool>(digitalInputs_ && (1<<index));
@@ -234,7 +239,7 @@ bool Aseb::getDigitalInput(unsigned key) {
 bool Aseb::getDigitalOutput(unsigned key) {
     if (syncSize_ &&
             key >= TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT &&
-            key < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT + digitalOutputSize_) {
+            key < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT + static_cast<unsigned>(digitalOutputSize_)) {
 
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT;
         return static_cast<bool>(digitalOutputs_ && (1<<index));
@@ -246,7 +251,7 @@ bool Aseb::getDigitalOutput(unsigned key) {
 bool Aseb::setDigitalOutput(unsigned key, bool value) {
     if (syncSize_ &&
             key >= TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT &&
-            key < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT + digitalOutputSize_) {
+            key < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT + static_cast<unsigned>(digitalOutputSize_)) {
 
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT;
 
@@ -278,7 +283,7 @@ float Aseb::getPwmOutput(unsigned key) {
     if (syncSize_ &&
             pwmOutputs_ &&
             key >= TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT &&
-            key < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + pwmOutputSize_) {
+            key < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + static_cast<unsigned>(pwmOutputSize_)) {
 
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
         return pwmOutputs_[index].value;
@@ -291,7 +296,7 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
     if (syncSize_ &&
             pwmOutputs_ &&
             key >= TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT &&
-            key < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + pwmOutputSize_) {
+            key < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + static_cast<unsigned>(pwmOutputSize_)) {
 
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
 
@@ -315,7 +320,7 @@ bool Aseb::getPwmFrequency(unsigned key, uint32_t* frequency) {
     if (syncSize_ &&
             pwmOutputs_ &&
             key >= TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT &&
-            key < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + pwmOutputSize_) {
+            key < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + static_cast<unsigned>(pwmOutputSize_)) {
 
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_PWM_OUTPUT_FREQUENCY;
@@ -383,6 +388,19 @@ bool Aseb::getCommandName(unsigned key, char* out_name) {
 
     return true;
 
+}
+
+bool Aseb::getAnalogResolution(unsigned* resolution) {
+    Request<uint8_t> request;
+    request.data = TURAG_FELDBUS_ASEB_ANALOG_INPUT_RESOLUTION;
+
+    Response<uint8_t> response;
+
+    if (!transceive(request, &response)) return false;
+
+    *resolution = response.data;
+
+    return true;
 }
 
 	
