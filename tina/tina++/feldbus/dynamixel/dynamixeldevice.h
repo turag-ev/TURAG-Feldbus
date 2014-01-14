@@ -91,8 +91,24 @@ public:
     virtual bool getCwAngleLimit(int* limit);
     virtual bool setCwAngleLimit(int limit);
 
-    virtual bool getPresentSpeed(int speed);
-    virtual bool getPresentLoad(int load);
+    virtual bool getPresentSpeed(int* speed);
+    virtual bool getPresentLoad(int* load);
+    virtual bool getPresentVoltage(int* u);
+
+    virtual bool getBaudRate(int* rate);
+    virtual bool setBaudRate(int rate);
+
+    virtual bool getReturnDelayTime(int* time);
+    virtual bool setReturnDelayTime(int time);
+
+    virtual bool getTemperatureLimit(int* temperature);
+    virtual bool setTempetatureLimit(int temperature);
+
+    virtual bool getVoltageLimitLow(int* voltage);
+    virtual bool setVoltageLimitLow(int voltage);
+
+    virtual bool getVoltageLimitHigh(int* voltage);
+    virtual bool setVoltageLimitHigh(int voltage);
 };
 
 

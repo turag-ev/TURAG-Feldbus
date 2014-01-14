@@ -205,21 +205,13 @@ bool DynamixelDevice::setLed(bool on) {
     }
 }
 
-
-bool DynamixelDevice::getCurrentPosition(int* position) {
-    return readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, position);
-}
-bool DynamixelDevice::setGoalPosition(int position) {
-    return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, position);
-}
-
 //TorqueEnable
-bool DynamixelDevice::getTorqueEnable(bool* enabled) {
-    return readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, (int*)enabled);
+bool DynamixelDevice::getTorqueEnable(bool* enable) {
+    return readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, enable);
 }
 
 bool DynamixelDevice::setTorqueEnable(bool enable) {
-    return writeWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, (int)enable);
+    return writeWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, enable);
 }
 
 //Ccw AngleLimit
@@ -241,16 +233,75 @@ bool DynamixelDevice::setCwAngleLimit(int limit) {
 }
 
 //Present speed
-bool DynamixelDevice::getPresentSpeed(int speed){
+bool DynamixelDevice::getPresentSpeed(int* speed){
     return readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, speed);
 }
 
 //Present load
-bool DynamixelDevice::getPresentLoad(int load){
+bool DynamixelDevice::getPresentLoad(int* load){
     return readWord(TURAG_DXL_ADDRESS_PRESENT_LOAD, load);
 }
 
+//Present Voltage
+bool DynamixelDevice::getPresentVoltage(int* u){
+    return readByte(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, u);
 }
+
+//Baud Rate
+bool DynamixelDevice::getBaudRate(int* rate){
+    return readByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
+}
+bool DynamixelDevice::setBaudRate(int rate){
+    return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
+}
+
+//Return Delay Time
+bool DynamixelDevice::getReturnDelayTime(int* time){
+    return readByte(TURAG_DXL_ADDRESS_RETURN_DELAY, time);
+}
+
+bool DynamixelDevice::setReturnDelayTime(int time){
+    return writeByte(TURAG_DXL_ADDRESS_RETURN_DELAY, time);
+}
+
+//Highest Limit Temperature
+bool DynamixelDevice::getTemperatureLimit(int* temperature){
+    return readByte(TURAG_DXL_ADDRESS_TEMPERATURE_LIMIT, temperature);
+}
+bool DynamixelDevice::setTemperatureLimit(int temperature){
+    return writeByte(TURAG_DXL_ADDRESS_TEMPERATURE_LIMIT, temperature);
+}
+
+//Lowest Limit Voltage
+bool DynamixelDevice::getVoltageLimitLow(int *voltage){
+    return readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage);
+}
+bool DynamixelDevice::setVoltageLimitLow(int voltage){
+    return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage);
+}
+
+//Highest Limit Voltage
+bool DynamixelDevice::getVoltageLimitHigh(int *voltage){
+    return readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage);
+}
+bool DynamixelDevice::setVoltageLimitHigh(int voltage){
+    return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage);
+}
+
+/*Position
+------------------------------------------------------------------*/
+//Current Position
+bool DynamixelDevice::getCurrentPosition(int* position) {
+    return readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, position);
+}
+
+//Goal Position
+bool DynamixelDevice::setGoalPosition(int position) {
+    return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, position);
+}
+
+/*----------------------------------------------------------------*/
+
 } // namespace TURAG
 } // namespace Feldbus
 
