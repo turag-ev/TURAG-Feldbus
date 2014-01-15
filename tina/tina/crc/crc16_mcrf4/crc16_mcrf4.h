@@ -38,7 +38,7 @@ TURAG_INLINE uint16_t turag_crc16_calculate(const void* data, size_t length) {
     uint16_t crc = 0xffff;
 
     while (length--) {
-		crc = crc_table[(crc ^ *(uint8_t*)data) & 0xff] ^ (crc >> 8);
+		crc = turag_crc_crc16_table[(crc ^ *(uint8_t*)data) & 0xff] ^ (crc >> 8);
 		data = (uint8_t*)data + 1;
 	}
     return crc;
@@ -55,9 +55,9 @@ TURAG_INLINE uint16_t turag_crc16_calculate(const void* data, size_t length) {
  */
 TURAG_INLINE bool turag_crc16_check(const void* data, size_t length, uint16_t chksum) {
     if (chksum == turag_crc16_calculate(data, length)) {
-	return true;
+		return true;
     } else {
-	return false;
+		return false;
     }
 }
 
