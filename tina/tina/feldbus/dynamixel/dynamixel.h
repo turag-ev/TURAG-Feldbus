@@ -46,6 +46,7 @@ extern "C" {
     
 ///////////// device control methods ////////////////////////
 int turag_dxl_initialize();
+#define TURAG_DXL_DEGREE_FACTOR 0.29
 
 
 //////////// high communication methods ///////////////////////

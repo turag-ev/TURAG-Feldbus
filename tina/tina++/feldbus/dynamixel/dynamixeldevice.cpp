@@ -207,31 +207,60 @@ bool DynamixelDevice::setLed(bool on) {
 
 //TorqueEnable
 bool DynamixelDevice::getTorqueEnable(bool* enable) {
-    return readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, enable);
+    int tempEnable=0;
+    if(readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, &tempEnable)) {
+        if (tempEnable==1){
+            *enable= true;
+        } else {
+            *enable= false;
+        }
+    return true;
+    } else {
+        return false;
+    }
 }
 
 bool DynamixelDevice::setTorqueEnable(bool enable) {
     return writeWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, enable);
 }
 
+/*---------------------------------------------------------------------------*/
+
 //Ccw AngleLimit
-bool DynamixelDevice::getCcwAngleLimit(int* limit) {
-    return readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, limit);
+bool DynamixelDevice::getCcwAngleLimit(float* limit) {
+    int tempLimit=0;
+    if (readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, &tempLimit)){
+        *limit=tempLimit/TURAG_DXL_DEGREE_FACTOR;
+    } else{
+        return false;
+    }
+    return true;
 }
 
-bool DynamixelDevice::setCcwAngleLimit(int limit) {
-    return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, limit);
+bool DynamixelDevice::setCcwAngleLimit(float limit) {
+    int temp_Limit=0;
+    temp_Limit=limit*TURAG_DXL_DEGREE_FACTOR;
+    return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, temp_Limit);
 }
 
 // Cw Angle Limit
-bool DynamixelDevice::getCwAngleLimit(int* limit) {
-    return readWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, limit);
+bool DynamixelDevice::getCwAngleLimit(float* limit) {
+    int tempLimit=0;
+    if (readWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, &tempLimit)){
+        *limit=tempLimit/TURAG_DXL_DEGREE_FACTOR;
+    } else{
+        return false;
+    }
+    return true;
 }
 
-bool DynamixelDevice::setCwAngleLimit(int limit) {
-    return writeWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, limit);
+bool DynamixelDevice::setCwAngleLimit(float limit) {
+    int temp_Limit=0;
+    temp_Limit=limit*TURAG_DXL_DEGREE_FACTOR;
+    return writeWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, temp_Limit);
 }
 
+/*----------------------------------------------------------------------------*/
 //Present speed
 bool DynamixelDevice::getPresentSpeed(int* speed){
     return readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, speed);
@@ -247,7 +276,7 @@ bool DynamixelDevice::getPresentVoltage(int* u){
     return readByte(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, u);
 }
 
-//Baud Rate
+//Baud Rate - muss noch bearbeitet werden...
 bool DynamixelDevice::getBaudRate(int* rate){
     return readByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
 }
@@ -268,6 +297,7 @@ bool DynamixelDevice::setReturnDelayTime(int time){
 bool DynamixelDevice::getTemperatureLimit(int* temperature){
     return readByte(TURAG_DXL_ADDRESS_TEMPERATURE_LIMIT, temperature);
 }
+
 bool DynamixelDevice::setTemperatureLimit(int temperature){
     return writeByte(TURAG_DXL_ADDRESS_TEMPERATURE_LIMIT, temperature);
 }
@@ -287,6 +317,15 @@ bool DynamixelDevice::getVoltageLimitHigh(int *voltage){
 bool DynamixelDevice::setVoltageLimitHigh(int voltage){
     return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage);
 }
+
+//Max Torque
+bool DynamixelDevice::getTorqueMax(int *max){
+    return readWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max);
+}
+bool DynamixelDevice::setTorqueMax(int max){
+    return writeWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max);
+}
+
 
 /*Position
 ------------------------------------------------------------------*/

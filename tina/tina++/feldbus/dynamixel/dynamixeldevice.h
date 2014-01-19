@@ -85,11 +85,11 @@ public:
     virtual bool getTorqueEnable(bool* enabled);
     virtual bool setTorqueEnable(bool enable);
 
-    virtual bool getCcwAngleLimit(int* limit);
-    virtual bool setCcwAngleLimit(int limit);
+    virtual bool getCcwAngleLimit(float* limit);
+    virtual bool setCcwAngleLimit(float limit);
 
-    virtual bool getCwAngleLimit(int* limit);
-    virtual bool setCwAngleLimit(int limit);
+    virtual bool getCwAngleLimit(float* limit);
+    virtual bool setCwAngleLimit(float limit);
 
     virtual bool getPresentSpeed(int* speed);
     virtual bool getPresentLoad(int* load);
@@ -102,13 +102,16 @@ public:
     virtual bool setReturnDelayTime(int time);
 
     virtual bool getTemperatureLimit(int* temperature);
-    virtual bool setTempetatureLimit(int temperature);
+    virtual bool setTemperatureLimit(int temperature);
 
     virtual bool getVoltageLimitLow(int* voltage);
     virtual bool setVoltageLimitLow(int voltage);
 
     virtual bool getVoltageLimitHigh(int* voltage);
     virtual bool setVoltageLimitHigh(int voltage);
+
+    virtual bool getTorqueMax(int* max);
+    virtual bool setTorqueMax(int max);
 };
 
 
