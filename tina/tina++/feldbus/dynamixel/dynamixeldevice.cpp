@@ -230,7 +230,7 @@ bool DynamixelDevice::setTorqueEnable(bool enable) {
 bool DynamixelDevice::getCcwAngleLimit(float* limit) {
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, &tempLimit)){
-        *limit=tempLimit/TURAG_DXL_DEGREE_FACTOR;
+        *limit=tempLimit/TURAG_DXL_FACTOR_DEGREE;
     } else{
         return false;
     }
@@ -239,7 +239,7 @@ bool DynamixelDevice::getCcwAngleLimit(float* limit) {
 
 bool DynamixelDevice::setCcwAngleLimit(float limit) {
     int temp_Limit=0;
-    temp_Limit=limit*TURAG_DXL_DEGREE_FACTOR;
+    temp_Limit=limit*TURAG_DXL_FACTOR_DEGREE;
     return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, temp_Limit);
 }
 
@@ -247,7 +247,7 @@ bool DynamixelDevice::setCcwAngleLimit(float limit) {
 bool DynamixelDevice::getCwAngleLimit(float* limit) {
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, &tempLimit)){
-        *limit=tempLimit/TURAG_DXL_DEGREE_FACTOR;
+        *limit=tempLimit/TURAG_DXL_FACTOR_DEGREE;
     } else{
         return false;
     }
@@ -256,7 +256,7 @@ bool DynamixelDevice::getCwAngleLimit(float* limit) {
 
 bool DynamixelDevice::setCwAngleLimit(float limit) {
     int temp_Limit=0;
-    temp_Limit=limit*TURAG_DXL_DEGREE_FACTOR;
+    temp_Limit=limit*TURAG_DXL_FACTOR_DEGREE;
     return writeWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, temp_Limit);
 }
 
@@ -266,14 +266,32 @@ bool DynamixelDevice::getPresentSpeed(int* speed){
     return readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, speed);
 }
 
-//Present load
-bool DynamixelDevice::getPresentLoad(int* load){
-    return readWord(TURAG_DXL_ADDRESS_PRESENT_LOAD, load);
+//Present load -- float?
+bool DynamixelDevice::getPresentLoad(int* load, int* direction){
+    if(readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, load)){
+        if (*load<1024){
+            *direction=1; //Direction clockwise
+            *load=(*load/1024)/0,01;
+        }
+        if (*load>1023){
+            *direction=0; //Direction counter clockwise
+            *load=(*load/2047)/0,01;
+        }
+        return true;
+    }
+    else{
+        return false;
+    }
 }
 
-//Present Voltage
+//Present Voltage -- besser float?
 bool DynamixelDevice::getPresentVoltage(int* u){
-    return readByte(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, u);
+    if(readWord(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, u)){
+        *u=*u/TURAG_DXL_FACTOR_VOLTAGE;
+        return true;
+    } else{
+        return false;
+    }
 }
 
 //Baud Rate - muss noch bearbeitet werden...
@@ -304,7 +322,12 @@ bool DynamixelDevice::setTemperatureLimit(int temperature){
 
 //Lowest Limit Voltage
 bool DynamixelDevice::getVoltageLimitLow(int *voltage){
-    return readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage);
+    if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage)){
+        *voltage=*voltage/TURAG_DXL_FACTOR_VOLTAGE;
+        return true;
+    } else {
+        return false;
+    }
 }
 bool DynamixelDevice::setVoltageLimitLow(int voltage){
     return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage);

@@ -92,7 +92,7 @@ public:
     virtual bool setCwAngleLimit(float limit);
 
     virtual bool getPresentSpeed(int* speed);
-    virtual bool getPresentLoad(int* load);
+    virtual bool getPresentLoad(int* load, int* direction);
     virtual bool getPresentVoltage(int* u);
 
     virtual bool getBaudRate(int* rate);
