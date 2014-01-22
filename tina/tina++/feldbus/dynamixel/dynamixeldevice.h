@@ -80,8 +80,8 @@ public:
 
     virtual bool getTemperature(int* temperature);
     virtual bool setLed(bool on);
-    virtual bool getCurrentPosition(int* position);
-    virtual bool setGoalPosition(int position);
+    virtual bool getCurrentPosition(float* position);
+    virtual bool setGoalPosition(float position);
 
     virtual bool getTorqueEnable(bool* enabled);
     virtual bool setTorqueEnable(bool enable);
@@ -94,10 +94,10 @@ public:
 
     virtual bool getPresentSpeed(int* speed);
     virtual bool getPresentLoad(int* load, int* direction);
-    virtual bool getPresentVoltage(int* u);
+    virtual bool getPresentVoltage(float* u);
 
     virtual bool getBaudRate(int* rate);
-    virtual bool setBaudRate(int rate);
+    virtual bool setBaudRate(float targetRate);
 
     virtual bool getReturnDelayTime(int* time);
     virtual bool setReturnDelayTime(int time);
@@ -115,6 +115,12 @@ public:
     virtual bool setTorqueMax(int max);
 
     virtual bool isOverload(bool* overload);
+
+    virtual bool getAlarmShutdown(int* value);
+    virtual bool setAlarmShutdown(int value);
+    virtual bool getAlarmLED(int* value);
+    virtual bool setAlarmLED(int value);
+
 };
 
 

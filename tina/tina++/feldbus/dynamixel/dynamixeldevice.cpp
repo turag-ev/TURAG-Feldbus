@@ -222,7 +222,24 @@ bool DynamixelDevice::isMoving(bool *movement){
 
 //isOverload
 bool DynamixelDevice::isOverload(bool *overload){
-    if(readWord(TURAG_DXL_ADDRESS_ALARM_SHUTDOWN,test)){}
+}
+
+//AlarmShutdown (für Übergabewerte siehe Dokumentation)
+bool DynamixelDevice::getAlarmShutdown(int *value){
+    return readByte(TURAG_DXL_ADDRESS_ALARM_SHUTDOWN, value);
+}
+
+bool DynamixelDevice::setAlarmShutdown(int value){
+    return writeByte(TURAG_DXL_ADDRESS_ALARM_SHUTDOWN, value);
+}
+
+//AlarmLED (für Übergabewerte siehe Dokumentation)
+bool DynamixelDevice::getAlarmLED(int *value){
+    return readByte(TURAG_DXL_ADDRESS_ALARM_LED, value);
+}
+
+bool DynamixelDevice::setAlarmLED(int value){
+    return writeByte(TURAG_DXL_ADDRESS_ALARM_LED, value);
 }
 
 //TorqueEnable
@@ -250,7 +267,7 @@ bool DynamixelDevice::setTorqueEnable(bool enable) {
 bool DynamixelDevice::getCcwAngleLimit(float* limit) {
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, &tempLimit)){
-        *limit=tempLimit/TURAG_DXL_FACTOR_DEGREE;
+        *limit=(float)tempLimit*TURAG_DXL_FACTOR_DEGREE;
     } else{
         return false;
     }
@@ -258,16 +275,20 @@ bool DynamixelDevice::getCcwAngleLimit(float* limit) {
 }
 
 bool DynamixelDevice::setCcwAngleLimit(float limit) {
-    int temp_Limit=0;
-    temp_Limit=limit*TURAG_DXL_FACTOR_DEGREE;
-    return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, temp_Limit);
+    if(150<=limit<=300){
+        int temp_Limit=0;
+        temp_Limit=limit/TURAG_DXL_FACTOR_DEGREE;
+        return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, temp_Limit);
+    } else {
+       return false;
+    }
 }
 
 // Cw Angle Limit
 bool DynamixelDevice::getCwAngleLimit(float* limit) {
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, &tempLimit)){
-        *limit=tempLimit/TURAG_DXL_FACTOR_DEGREE;
+        *limit=(float)tempLimit*TURAG_DXL_FACTOR_DEGREE;
     } else{
         return false;
     }
@@ -275,9 +296,13 @@ bool DynamixelDevice::getCwAngleLimit(float* limit) {
 }
 
 bool DynamixelDevice::setCwAngleLimit(float limit) {
+    if(0<=limit<=150){
     int temp_Limit=0;
-    temp_Limit=limit*TURAG_DXL_FACTOR_DEGREE;
+    temp_Limit=limit/TURAG_DXL_FACTOR_DEGREE;
     return writeWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, temp_Limit);
+    } else {
+            return false;
+    }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -304,23 +329,32 @@ bool DynamixelDevice::getPresentLoad(int* load, int* direction){
     }
 }
 
-//Present Voltage -- besser float?
-bool DynamixelDevice::getPresentVoltage(int* u){
-    if(readWord(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, u)){
-        *u=*u/TURAG_DXL_FACTOR_VOLTAGE;
+//Present Voltage
+bool DynamixelDevice::getPresentVoltage(float* u){
+    int* voltage=0;
+    if(readWord(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, voltage)){
+        *u= (float)*voltage/TURAG_DXL_FACTOR_VOLTAGE;
         return true;
     } else{
         return false;
     }
 }
 
-//Baud Rate - muss noch bearbeitet werden...
+//Baud Rate
 bool DynamixelDevice::getBaudRate(int* rate){
     return readByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
 
 }
-bool DynamixelDevice::setBaudRate(int rate){
-    return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
+bool DynamixelDevice::setBaudRate(float targetRate){
+    float data= (2000000/targetRate)-1;
+    data=(int)data;
+    float setRate= 2000000/(data+1);
+    float tolerance= (targetRate-setRate)/targetRate;
+    if((tolerance>=-0.03)&&(tolerance<=0.03)){
+        return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, targetRate);
+    } else{
+        return false;
+    }
 }
 
 //Return Delay Time
@@ -400,13 +434,21 @@ bool DynamixelDevice::setTorqueMax(int max){
 /*Position
 ------------------------------------------------------------------*/
 //Current Position
-bool DynamixelDevice::getCurrentPosition(int* position) {
-    return readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, position);
+bool DynamixelDevice::getCurrentPosition(float* position) {
+    int* presentPosition;
+    if (readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, presentPosition)){
+        *position=(float)*presentPosition*TURAG_DXL_FACTOR_DEGREE;
+        return true;
+    }
 }
 
 //Goal Position
-bool DynamixelDevice::setGoalPosition(int position) {
-    return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, position);
+bool DynamixelDevice::setGoalPosition(float position) {
+    if (0<=position<=300){
+        int targetPosition=(int)position/TURAG_DXL_FACTOR_DEGREE;
+        return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, targetPosition);
+    } else
+        return false;
 }
 
 /*----------------------------------------------------------------*/
