@@ -76,6 +76,7 @@ public:
     virtual bool getModelNumber(int* modelNumber);
     virtual bool getFirmwareVersion(int* version);
     virtual bool isAvailable(void);
+    virtual bool isMoving(bool* movement);
 
     virtual bool getTemperature(int* temperature);
     virtual bool setLed(bool on);
@@ -112,6 +113,8 @@ public:
 
     virtual bool getTorqueMax(int* max);
     virtual bool setTorqueMax(int max);
+
+    virtual bool isOverload(bool* overload);
 };
 
 

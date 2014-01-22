@@ -205,6 +205,26 @@ bool DynamixelDevice::setLed(bool on) {
     }
 }
 
+//Moving
+bool DynamixelDevice::isMoving(bool *movement){
+    int tempMove=0;
+    if(readWord(TURAG_DXL_ADDRESS_MOVING, &tempMove)) {
+        if (tempMove==1){
+            *movement= true;
+        } else {
+            *movement= false;
+        }
+    return true;
+    } else {
+        return false;
+    }
+}
+
+//isOverload
+bool DynamixelDevice::isOverload(bool *overload){
+    if(readWord(TURAG_DXL_ADDRESS_ALARM_SHUTDOWN,test)){}
+}
+
 //TorqueEnable
 bool DynamixelDevice::getTorqueEnable(bool* enable) {
     int tempEnable=0;
@@ -297,6 +317,7 @@ bool DynamixelDevice::getPresentVoltage(int* u){
 //Baud Rate - muss noch bearbeitet werden...
 bool DynamixelDevice::getBaudRate(int* rate){
     return readByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
+
 }
 bool DynamixelDevice::setBaudRate(int rate){
     return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
@@ -329,23 +350,49 @@ bool DynamixelDevice::getVoltageLimitLow(int *voltage){
         return false;
     }
 }
+
 bool DynamixelDevice::setVoltageLimitLow(int voltage){
-    return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage);
+    voltage=voltage*TURAG_DXL_FACTOR_VOLTAGE;
+    if((50<=voltage) && (voltage<=250)){
+        return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage);
+    }
+    else {
+        return false;
+    }
 }
 
 //Highest Limit Voltage
 bool DynamixelDevice::getVoltageLimitHigh(int *voltage){
-    return readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage);
+    if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage)){
+        *voltage=*voltage/TURAG_DXL_FACTOR_VOLTAGE;
+        return true;
+    } else {
+        return false;
+    }
 }
+
 bool DynamixelDevice::setVoltageLimitHigh(int voltage){
-    return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage);
+    voltage=voltage*TURAG_DXL_FACTOR_VOLTAGE;
+    if((50<=voltage) && (voltage<=250)){
+        return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage);
+    }
+    else {
+        return false;
+    }
 }
 
 //Max Torque
 bool DynamixelDevice::getTorqueMax(int *max){
-    return readWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max);
+    if (readWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max)){
+        *max=*max/TURAG_DXL_FACTOR_TORQUE;
+        return true;
+    } else {
+        return false;
+    }
 }
+
 bool DynamixelDevice::setTorqueMax(int max){
+    max=max*TURAG_DXL_FACTOR_TORQUE;
     return writeWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max);
 }
 
