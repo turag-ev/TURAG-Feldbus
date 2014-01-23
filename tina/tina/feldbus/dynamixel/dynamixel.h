@@ -51,6 +51,9 @@ int turag_dxl_initialize();
 #define TURAG_DXL_FACTOR_DEGREE     0.2929f
 #define TURAG_DXL_FACTOR_VOLTAGE    10.0f
 #define TURAG_DXL_FACTOR_TORQUE     10.24f
+#define TURAG_DXL_FACTOR_PRESENT_SPEED  0.111f
+#define TURAG_DXL_FACTOR_PRESENT_LOAD   10.24f
+#define TURAG_DXL_FACTOR_MOVING_SPEED   0.111f
 
 
 //////////// high communication methods ///////////////////////

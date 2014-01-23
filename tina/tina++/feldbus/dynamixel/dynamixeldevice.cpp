@@ -1,3 +1,4 @@
+/* Servodokumentation verfügbar unter http://support.robotis.com/en/techsupport_eng.htm#product/dynamixel/rx_series/rx-10.htm */
 #define LOG_SOURCE "B"
 
 #include <tina++/debug.h>
@@ -22,7 +23,7 @@ bool DynamixelDevice::isAvailable(void) {
 
     return !hasReachedTransmissionErrorLimit();
 }
-//Protected (an sich soweit fertig)
+//Protected
 bool DynamixelDevice::readWord(int address, int* word) {
     if (!isAvailable()) {
         return false;
@@ -221,8 +222,19 @@ bool DynamixelDevice::isMoving(bool *movement){
 }
 
 //isOverload
-bool DynamixelDevice::isOverload(bool *overload){
+bool DynamixelDevice::isOverload(){
+    return hasDeviceError(Error::overload);
 }
+
+//Punch
+bool DynamixelDevice::getPunch(int *punch){
+    return readWord(TURAG_DXL_ADDRESS_PUNCH, punch);
+}
+
+bool DynamixelDevice::setPunch(int punch){
+    return writeWord(TURAG_DXL_ADDRESS_PUNCH, punch);
+}
+
 
 //AlarmShutdown (für Übergabewerte siehe Dokumentation)
 bool DynamixelDevice::getAlarmShutdown(int *value){
@@ -275,7 +287,7 @@ bool DynamixelDevice::getCcwAngleLimit(float* limit) {
 }
 
 bool DynamixelDevice::setCcwAngleLimit(float limit) {
-    if(150<=limit<=300){
+    if((150<=limit)&&(limit<=300)){
         int temp_Limit=0;
         temp_Limit=limit/TURAG_DXL_FACTOR_DEGREE;
         return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, temp_Limit);
@@ -296,7 +308,7 @@ bool DynamixelDevice::getCwAngleLimit(float* limit) {
 }
 
 bool DynamixelDevice::setCwAngleLimit(float limit) {
-    if(0<=limit<=150){
+    if((0<=limit)&&(limit<=150)){
     int temp_Limit=0;
     temp_Limit=limit/TURAG_DXL_FACTOR_DEGREE;
     return writeWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, temp_Limit);
@@ -305,22 +317,84 @@ bool DynamixelDevice::setCwAngleLimit(float limit) {
     }
 }
 
-/*----------------------------------------------------------------------------*/
-//Present speed
-bool DynamixelDevice::getPresentSpeed(int* speed){
-    return readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, speed);
+//Compliance Margin
+bool DynamixelDevice::getCwComplianceMargin(int *margin){
+    return readByte(TURAG_DXL_ADDRESS_CW_COMPLIANCE_MARGIN, margin);
 }
 
-//Present load -- float?
-bool DynamixelDevice::getPresentLoad(int* load, int* direction){
-    if(readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, load)){
-        if (*load<1024){
+bool DynamixelDevice::setCwComplianceMargin(int margin){
+    return writeByte(TURAG_DXL_ADDRESS_CW_COMPLIANCE_MARGIN, margin);
+}
+
+bool DynamixelDevice::getCcwComplianceMargin(int *margin){
+    return readByte(TURAG_DXL_ADDRESS_CCW_COMPLIANCE_MARGIN, margin);
+}
+
+bool DynamixelDevice::setCcwComplianceMargin(int margin){
+    return writeByte(TURAG_DXL_ADDRESS_CCW_COMPLIANCE_MARGIN, margin);
+}
+
+//Compliance Slope
+bool DynamixelDevice::getCwComplianceSlope(int *slope){
+    return readByte(TURAG_DXL_ADDRESS_CW_COMPLIANCE_MARGIN, slope);
+}
+
+bool DynamixelDevice::setCwComplianceSlope(int slope){
+    return writeByte(TURAG_DXL_ADDRESS_CW_COMPLIANCE_MARGIN, slope);
+}
+
+bool DynamixelDevice::getCcwComplianceSlope(int *slope){
+    return readByte(TURAG_DXL_ADDRESS_CCW_COMPLIANCE_MARGIN, slope);
+}
+
+bool DynamixelDevice::setCcwComplianceSlope(int slope){
+    return writeByte(TURAG_DXL_ADDRESS_CCW_COMPLIANCE_MARGIN, slope);
+}
+/*----------------------------------------------------------------------------*/
+//Moving Speed
+bool DynamixelDevice::getMovingSpeed(float *speed){
+    int* value=0;
+    if (readWord(TURAG_DXL_ADDRESS_MOVING_SPEED, value)){
+        *speed=(float)*value*TURAG_DXL_FACTOR_MOVING_SPEED;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool DynamixelDevice::setMovingSpeed(int speed){
+        return (writeWord(TURAG_DXL_ADDRESS_MOVING_SPEED, speed));
+}
+
+//Present speed
+bool DynamixelDevice::getPresentSpeed(float* speed, int* direction){
+    int* value=0;
+    if (readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, value)){
+        if (*value<1024){
+            *direction=0; //Direction counterclockwise
+            *speed=(float)*value/TURAG_DXL_FACTOR_PRESENT_SPEED;
+        }
+        if (*value>=1024){
             *direction=1; //Direction clockwise
-            *load=(*load/1024)/0,01;
+            *speed=(float)*value/TURAG_DXL_FACTOR_PRESENT_SPEED;
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+//Present load
+bool DynamixelDevice::getPresentLoad(int* load, int* direction){
+    int* value=0;
+    if(readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, value)){
+        if (*load<1024){
+            *direction=0; //Direction counterclockwise
+            *load=(int)*value/TURAG_DXL_FACTOR_PRESENT_LOAD;
         }
         if (*load>1023){
-            *direction=0; //Direction counter clockwise
-            *load=(*load/2047)/0,01;
+            *direction=1; //Direction clockwise
+            *load=(int)*value/TURAG_DXL_FACTOR_PRESENT_LOAD;
         }
         return true;
     }
@@ -430,25 +504,43 @@ bool DynamixelDevice::setTorqueMax(int max){
     return writeWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max);
 }
 
+//Torque Limit
+bool DynamixelDevice::getTorqueLimit(int *max){
+    if (readWord(TURAG_DXL_ADDRESS_TORQUE_LIMIT, max)){
+        *max=*max/TURAG_DXL_FACTOR_TORQUE;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool DynamixelDevice::setTorqueLimit(int max){
+    max=max*TURAG_DXL_FACTOR_TORQUE;
+    return writeWord(TURAG_DXL_ADDRESS_TORQUE_LIMIT, max);
+}
+
 
 /*Position
 ------------------------------------------------------------------*/
 //Current Position
 bool DynamixelDevice::getCurrentPosition(float* position) {
-    int* presentPosition;
+    int* presentPosition=0;
     if (readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, presentPosition)){
         *position=(float)*presentPosition*TURAG_DXL_FACTOR_DEGREE;
         return true;
+    } else {
+        return false;
     }
 }
 
 //Goal Position
 bool DynamixelDevice::setGoalPosition(float position) {
-    if (0<=position<=300){
+    if ((0<=position)&&(position<=300)){
         int targetPosition=(int)position/TURAG_DXL_FACTOR_DEGREE;
         return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, targetPosition);
-    } else
+    } else {
         return false;
+    }
 }
 
 /*----------------------------------------------------------------*/

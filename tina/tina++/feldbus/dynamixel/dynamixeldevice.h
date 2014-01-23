@@ -92,7 +92,17 @@ public:
     virtual bool getCwAngleLimit(float* limit);
     virtual bool setCwAngleLimit(float limit);
 
-    virtual bool getPresentSpeed(int* speed);
+    virtual bool getCwComplianceMargin(int* margin);
+    virtual bool setCwComplianceMargin(int margin);
+    virtual bool getCcwComplianceMargin(int* margin);
+    virtual bool setCcwComplianceMargin(int margin);
+
+    virtual bool getCwComplianceSlope(int* slope);
+    virtual bool setCwComplianceSlope(int slope);
+    virtual bool getCcwComplianceSlope(int* slope);
+    virtual bool setCcwComplianceSlope(int slope);
+
+    virtual bool getPresentSpeed(float* speed, int* direction);
     virtual bool getPresentLoad(int* load, int* direction);
     virtual bool getPresentVoltage(float* u);
 
@@ -113,13 +123,21 @@ public:
 
     virtual bool getTorqueMax(int* max);
     virtual bool setTorqueMax(int max);
+    virtual bool getTorqueLimit(int* max);
+    virtual bool setTorqueLimit(int max);
 
-    virtual bool isOverload(bool* overload);
+    virtual bool isOverload();
 
     virtual bool getAlarmShutdown(int* value);
     virtual bool setAlarmShutdown(int value);
     virtual bool getAlarmLED(int* value);
     virtual bool setAlarmLED(int value);
+
+    virtual bool getMovingSpeed(float* speed);
+    virtual bool setMovingSpeed(int speed);
+
+    virtual bool getPunch(int* punch);
+    virtual bool setPunch(int punch);
 
 };
 
