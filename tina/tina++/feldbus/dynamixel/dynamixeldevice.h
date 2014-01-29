@@ -106,7 +106,7 @@ public:
     virtual bool getPresentLoad(int* load, int* direction);
     virtual bool getPresentVoltage(float* u);
 
-    virtual bool getBaudRate(int* rate);
+    virtual bool getBaudRate(float* rate);
     virtual bool setBaudRate(float targetRate);
 
     virtual bool getReturnDelayTime(int* time);

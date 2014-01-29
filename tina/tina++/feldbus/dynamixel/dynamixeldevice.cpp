@@ -207,6 +207,9 @@ bool DynamixelDevice::setLed(bool on) {
 }
 
 //Moving
+/*function: checks for any movements
+ *output: true/false
+ */
 bool DynamixelDevice::isMoving(bool *movement){
     int tempMove=0;
     if(readWord(TURAG_DXL_ADDRESS_MOVING, &tempMove)) {
@@ -222,6 +225,9 @@ bool DynamixelDevice::isMoving(bool *movement){
 }
 
 //isOverload
+/*function: checks for device overload errror
+ *output: true/false
+ */
 bool DynamixelDevice::isOverload(){
     return hasDeviceError(Error::overload);
 }
@@ -236,7 +242,11 @@ bool DynamixelDevice::setPunch(int punch){
 }
 
 
-//AlarmShutdown (für Übergabewerte siehe Dokumentation)
+//AlarmShutdown
+/*function: Dynamixel can protect itself by detecting errors occur during the operation. The errors can be set are as the table below.
+ *ouput: 8-bit, website for more information
+ *input: 8-bit, same as output
+ */
 bool DynamixelDevice::getAlarmShutdown(int *value){
     return readByte(TURAG_DXL_ADDRESS_ALARM_SHUTDOWN, value);
 }
@@ -245,7 +255,8 @@ bool DynamixelDevice::setAlarmShutdown(int value){
     return writeByte(TURAG_DXL_ADDRESS_ALARM_SHUTDOWN, value);
 }
 
-//AlarmLED (für Übergabewerte siehe Dokumentation)
+//AlarmLED
+/*see Alarmshutdown */
 bool DynamixelDevice::getAlarmLED(int *value){
     return readByte(TURAG_DXL_ADDRESS_ALARM_LED, value);
 }
@@ -255,6 +266,11 @@ bool DynamixelDevice::setAlarmLED(int value){
 }
 
 //TorqueEnable
+/*function: 1 = Generates Torque by impressing the power to the motor.
+ * 0 =  Keeps Torque from generating by interrupting the power of motor.
+ *output: true/false
+ *input: true/false
+ */
 bool DynamixelDevice::getTorqueEnable(bool* enable) {
     int tempEnable=0;
     if(readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, &tempEnable)) {
@@ -276,6 +292,10 @@ bool DynamixelDevice::setTorqueEnable(bool enable) {
 /*---------------------------------------------------------------------------*/
 
 //Ccw AngleLimit
+/*function: The angle limit allows the motion to be restrained.
+ *output: AngleLimit(degree)
+ *input: AngleLimit (degree)
+ */
 bool DynamixelDevice::getCcwAngleLimit(float* limit) {
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, &tempLimit)){
@@ -318,6 +338,10 @@ bool DynamixelDevice::setCwAngleLimit(float limit) {
 }
 
 //Compliance Margin
+/*It exists in each direction of CW/CCW and means the error between goal position and present position.
+The range of the value is 0~255, and the unit is the same as Goal Position.(Address 30,31).
+The greater the value, the more difference occurs.
+*/
 bool DynamixelDevice::getCwComplianceMargin(int *margin){
     return readByte(TURAG_DXL_ADDRESS_CW_COMPLIANCE_MARGIN, margin);
 }
@@ -415,18 +439,24 @@ bool DynamixelDevice::getPresentVoltage(float* u){
 }
 
 //Baud Rate
-bool DynamixelDevice::getBaudRate(int* rate){
-    return readByte(TURAG_DXL_ADDRESS_BAUDRATE, rate);
+bool DynamixelDevice::getBaudRate(float* rate){
+    if (!rate) return false;
 
+    int baud_data = 0;
+    if (!readByte(TURAG_DXL_ADDRESS_BAUDRATE, &baud_data)) return false;
+
+    *rate = 2000000.0f/((float)baud_data+1.0f);
+
+    return true;
 }
+
 bool DynamixelDevice::setBaudRate(float targetRate){
-    float data= (2000000/targetRate)-1;
-    data=(int)data;
-    float setRate= 2000000/(data+1);
-    float tolerance= (targetRate-setRate)/targetRate;
-    if((tolerance>=-0.03)&&(tolerance<=0.03)){
-        return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, targetRate);
-    } else{
+    int data = (2000000 / targetRate) - 1;
+    float setRate= 2000000.0f / ((float)data + 1.0f);
+    float tolerance = (targetRate - setRate) / targetRate;
+    if ((tolerance >= -0.03) && (tolerance<=0.03)) {
+        return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, data);
+    } else {
         return false;
     }
 }
@@ -524,9 +554,11 @@ bool DynamixelDevice::setTorqueLimit(int max){
 ------------------------------------------------------------------*/
 //Current Position
 bool DynamixelDevice::getCurrentPosition(float* position) {
-    int* presentPosition=0;
-    if (readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, presentPosition)){
-        *position=(float)*presentPosition*TURAG_DXL_FACTOR_DEGREE;
+    if (!position) return false;
+
+    int presentPosition=0;
+    if (readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, &presentPosition)){
+        *position=(float)presentPosition*TURAG_DXL_FACTOR_DEGREE;
         return true;
     } else {
         return false;
