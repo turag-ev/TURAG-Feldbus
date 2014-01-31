@@ -194,6 +194,7 @@ bool DynamixelDevice::getFirmwareVersion(int* version) {
 
 //getTemperature
 bool DynamixelDevice::getTemperature(int* temperature) {
+    if(!temperature) return false;
     return readByte(TURAG_DXL_ADDRESS_PRESENT_TEMPERATURE, temperature);
 }
 
@@ -211,6 +212,7 @@ bool DynamixelDevice::setLed(bool on) {
  *output: true/false
  */
 bool DynamixelDevice::isMoving(bool *movement){
+    if (!movement) return false;
     int tempMove=0;
     if(readWord(TURAG_DXL_ADDRESS_MOVING, &tempMove)) {
         if (tempMove==1){
@@ -234,6 +236,7 @@ bool DynamixelDevice::isOverload(){
 
 //Punch
 bool DynamixelDevice::getPunch(int *punch){
+    if (!punch) return false;
     return readWord(TURAG_DXL_ADDRESS_PUNCH, punch);
 }
 
@@ -272,6 +275,7 @@ bool DynamixelDevice::setAlarmLED(int value){
  *input: true/false
  */
 bool DynamixelDevice::getTorqueEnable(bool* enable) {
+    if (!enable) return false;
     int tempEnable=0;
     if(readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, &tempEnable)) {
         if (tempEnable==1){
@@ -297,6 +301,7 @@ bool DynamixelDevice::setTorqueEnable(bool enable) {
  *input: AngleLimit (degree)
  */
 bool DynamixelDevice::getCcwAngleLimit(float* limit) {
+    if (!limit) return false;
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, &tempLimit)){
         *limit=(float)tempLimit*TURAG_DXL_FACTOR_DEGREE;
@@ -318,6 +323,7 @@ bool DynamixelDevice::setCcwAngleLimit(float limit) {
 
 // Cw Angle Limit
 bool DynamixelDevice::getCwAngleLimit(float* limit) {
+    if (!limit) return false;
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, &tempLimit)){
         *limit=(float)tempLimit*TURAG_DXL_FACTOR_DEGREE;
@@ -377,6 +383,7 @@ bool DynamixelDevice::setCcwComplianceSlope(int slope){
 /*----------------------------------------------------------------------------*/
 //Moving Speed
 bool DynamixelDevice::getMovingSpeed(float *speed){
+    if (!speed) return false;
     int* value=0;
     if (readWord(TURAG_DXL_ADDRESS_MOVING_SPEED, value)){
         *speed=(float)*value*TURAG_DXL_FACTOR_MOVING_SPEED;
@@ -392,6 +399,7 @@ bool DynamixelDevice::setMovingSpeed(int speed){
 
 //Present speed
 bool DynamixelDevice::getPresentSpeed(float* speed, int* direction){
+    if ((!speed)||(!direction)) return false;
     int* value=0;
     if (readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, value)){
         if (*value<1024){
@@ -410,15 +418,16 @@ bool DynamixelDevice::getPresentSpeed(float* speed, int* direction){
 
 //Present load
 bool DynamixelDevice::getPresentLoad(int* load, int* direction){
-    int* value=0;
-    if(readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, value)){
+    if ((!load) || (!direction)) return false;
+    int value=0;
+    if(readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, &value)){
         if (*load<1024){
             *direction=0; //Direction counterclockwise
-            *load=(int)*value/TURAG_DXL_FACTOR_PRESENT_LOAD;
+            *load=(int)value/TURAG_DXL_FACTOR_PRESENT_LOAD;
         }
         if (*load>1023){
             *direction=1; //Direction clockwise
-            *load=(int)*value/TURAG_DXL_FACTOR_PRESENT_LOAD;
+            *load=(int)value/TURAG_DXL_FACTOR_PRESENT_LOAD;
         }
         return true;
     }
@@ -429,9 +438,10 @@ bool DynamixelDevice::getPresentLoad(int* load, int* direction){
 
 //Present Voltage
 bool DynamixelDevice::getPresentVoltage(float* u){
-    int* voltage=0;
-    if(readWord(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, voltage)){
-        *u= (float)*voltage/TURAG_DXL_FACTOR_VOLTAGE;
+    if (!u) return false;
+    int voltage=0;
+    if(readWord(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, &voltage)){
+        *u= (float)voltage/TURAG_DXL_FACTOR_VOLTAGE;
         return true;
     } else{
         return false;
@@ -481,6 +491,7 @@ bool DynamixelDevice::setTemperatureLimit(int temperature){
 
 //Lowest Limit Voltage
 bool DynamixelDevice::getVoltageLimitLow(int *voltage){
+    if (!voltage) return false;
     if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage)){
         *voltage=*voltage/TURAG_DXL_FACTOR_VOLTAGE;
         return true;
@@ -501,6 +512,7 @@ bool DynamixelDevice::setVoltageLimitLow(int voltage){
 
 //Highest Limit Voltage
 bool DynamixelDevice::getVoltageLimitHigh(int *voltage){
+    if (!voltage) return false;
     if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage)){
         *voltage=*voltage/TURAG_DXL_FACTOR_VOLTAGE;
         return true;
@@ -521,6 +533,7 @@ bool DynamixelDevice::setVoltageLimitHigh(int voltage){
 
 //Max Torque
 bool DynamixelDevice::getTorqueMax(int *max){
+    if (!max) return false;
     if (readWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max)){
         *max=*max/TURAG_DXL_FACTOR_TORQUE;
         return true;
@@ -536,6 +549,7 @@ bool DynamixelDevice::setTorqueMax(int max){
 
 //Torque Limit
 bool DynamixelDevice::getTorqueLimit(int *max){
+    if(!max) return false;
     if (readWord(TURAG_DXL_ADDRESS_TORQUE_LIMIT, max)){
         *max=*max/TURAG_DXL_FACTOR_TORQUE;
         return true;
