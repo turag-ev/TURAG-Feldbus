@@ -133,7 +133,7 @@ public:
     virtual bool getAlarmLED(int* value);
     virtual bool setAlarmLED(int value);
 
-    virtual bool getMovingSpeed(float* speed);
+    virtual bool getMovingSpeed(int* speed);
     virtual bool setMovingSpeed(int speed);
 
     virtual bool getPunch(int* punch);

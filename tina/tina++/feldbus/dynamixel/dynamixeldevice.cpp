@@ -382,17 +382,19 @@ bool DynamixelDevice::setCcwComplianceSlope(int slope){
 }
 /*----------------------------------------------------------------------------*/
 //Moving Speed
-bool DynamixelDevice::getMovingSpeed(float *speed){
+bool DynamixelDevice::getMovingSpeed(int* speed){
     if (!speed) return false;
-    int* value=0;
-    if (readWord(TURAG_DXL_ADDRESS_MOVING_SPEED, value)){
-        *speed=(float)*value*TURAG_DXL_FACTOR_MOVING_SPEED;
+    readWord(TURAG_DXL_ADDRESS_MOVING_SPEED, speed);
+    /*int value=0;
+    if (readWord(TURAG_DXL_ADDRESS_MOVING_SPEED, &value)){
+        *speed=(float)value*TURAG_DXL_FACTOR_MOVING_SPEED;
         return true;
     } else {
         return false;
-    }
+    }*/
 }
 
+/* Achtung, es findet KEINE Einheitenumrechung statt*/
 bool DynamixelDevice::setMovingSpeed(int speed){
         return (writeWord(TURAG_DXL_ADDRESS_MOVING_SPEED, speed));
 }
@@ -400,15 +402,15 @@ bool DynamixelDevice::setMovingSpeed(int speed){
 //Present speed
 bool DynamixelDevice::getPresentSpeed(float* speed, int* direction){
     if ((!speed)||(!direction)) return false;
-    int* value=0;
-    if (readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, value)){
-        if (*value<1024){
+    int value=0;
+    if (readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, &value)){
+        if (value<1024){
             *direction=0; //Direction counterclockwise
-            *speed=(float)*value/TURAG_DXL_FACTOR_PRESENT_SPEED;
+            *speed=(float)value*TURAG_DXL_FACTOR_PRESENT_SPEED;
         }
-        if (*value>=1024){
+        if (value>=1024){
             *direction=1; //Direction clockwise
-            *speed=(float)*value/TURAG_DXL_FACTOR_PRESENT_SPEED;
+            *speed=(float)value*TURAG_DXL_FACTOR_PRESENT_SPEED;
         }
         return true;
     } else {
@@ -441,7 +443,7 @@ bool DynamixelDevice::getPresentVoltage(float* u){
     if (!u) return false;
     int voltage=0;
     if(readWord(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, &voltage)){
-        *u= (float)voltage/TURAG_DXL_FACTOR_VOLTAGE;
+        *u= (float)(voltage/TURAG_DXL_FACTOR_VOLTAGE);
         return true;
     } else{
         return false;
