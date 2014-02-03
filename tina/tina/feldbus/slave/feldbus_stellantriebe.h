@@ -81,7 +81,7 @@ void turag_feldbus_stellantriebe_init(
  * This function is called after a value was changed.
  * 
  * You can use this function to start certain actions that have to follow
- * the change of a value or you can cjeck whether the new value is 
+ * the change of a value or you can check whether the new value is 
  * a valid one and if not, change it back using the variable feldbus_stellantriebe_old_value
  * that always holds the original value of the entry that was changed last.
  * 
