@@ -231,7 +231,11 @@ bool DynamixelDevice::isMoving(bool *movement){
  *output: true/false
  */
 bool DynamixelDevice::isOverload(){
-    return hasDeviceError(Error::overload);
+    if(hasDeviceError(Error::overload)){
+        return true;
+    } else {
+        return false;
+    }
 }
 
 //Punch
@@ -392,6 +396,7 @@ bool DynamixelDevice::getMovingSpeed(int* speed){
     } else {
         return false;
     }*/
+    return true;
 }
 
 /* Achtung, es findet KEINE Einheitenumrechung statt*/
@@ -404,36 +409,24 @@ bool DynamixelDevice::getPresentSpeed(float* speed, int* direction){
     if ((!speed)||(!direction)) return false;
     int value=0;
     if (readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, &value)){
-        if (value<1024){
-            *direction=0; //Direction counterclockwise
-            *speed=(float)value*TURAG_DXL_FACTOR_PRESENT_SPEED;
-        }
-        if (value>=1024){
-            *direction=1; //Direction clockwise
-            *speed=(float)value*TURAG_DXL_FACTOR_PRESENT_SPEED;
-        }
+        *direction= (value && (1<<10));
+        *speed=(value && 1023)*TURAG_DXL_FACTOR_PRESENT_SPEED;
         return true;
     } else {
         return false;
     }
+
 }
 
 //Present load
 bool DynamixelDevice::getPresentLoad(int* load, int* direction){
     if ((!load) || (!direction)) return false;
     int value=0;
-    if(readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, &value)){
-        if (*load<1024){
-            *direction=0; //Direction counterclockwise
-            *load=(int)value/TURAG_DXL_FACTOR_PRESENT_LOAD;
-        }
-        if (*load>1023){
-            *direction=1; //Direction clockwise
-            *load=(int)value/TURAG_DXL_FACTOR_PRESENT_LOAD;
-        }
+    if (readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, &value)){
+        *direction= (value && (1<<10));
+        *load=(value && 1023)*TURAG_DXL_FACTOR_PRESENT_LOAD;
         return true;
-    }
-    else{
+    } else {
         return false;
     }
 }
@@ -442,7 +435,7 @@ bool DynamixelDevice::getPresentLoad(int* load, int* direction){
 bool DynamixelDevice::getPresentVoltage(float* u){
     if (!u) return false;
     int voltage=0;
-    if(readWord(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, &voltage)){
+    if(readByte(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, &voltage)){
         *u= (float)(voltage/TURAG_DXL_FACTOR_VOLTAGE);
         return true;
     } else{
