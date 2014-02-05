@@ -51,8 +51,6 @@ protected:
     bool writeByte(int address, int byte);
     void printLastDeviceError(void);
     bool hasDeviceError(DynamixelDevice::Error index);
-    bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
-    void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
 
 
 public:
@@ -68,9 +66,11 @@ public:
         modelNumber_(-1), firmwareVersion_(-1), name(name_)   {}
     virtual ~DynamixelDevice() {}
 
+    bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
+    void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
+
     //deklariert und implementiert
     unsigned int getID(void) const { return myId; }
-    void setMaxTransmissionAttempts(int attempts) { maxTransmissionAttempts = attempts; myTransmissionErrorCounter= 0; }
 
     //deklariert
     virtual bool getModelNumber(int* modelNumber);
@@ -82,6 +82,7 @@ public:
     virtual bool setLed(bool on);
     virtual bool getCurrentPosition(float* position);
     virtual bool setGoalPosition(float position);
+    virtual bool getGoalPosition(float* position);
 
     virtual bool getTorqueEnable(bool* enabled);
     virtual bool setTorqueEnable(bool enable);

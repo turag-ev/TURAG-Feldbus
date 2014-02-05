@@ -16,24 +16,24 @@ void turag_dxl_hal_close(void) {
 
 
 void turag_dxl_hal_clear(void) {
-    return;
+    turag_rs485_buffer_clear();
 }
 
 int turag_dxl_hal_tx( unsigned char *pPacket, int numPacket )
 {
     if (turag_rs485_transceive (pPacket, numPacket, 0, 0)) {
-	return numPacket;
-    } else {    
-	return 0;
+        return numPacket;
+    } else {
+        return 0;
     }
 }
 
 int turag_dxl_hal_rx( unsigned char *pPacket, int numPacket )
 {
     if (turag_rs485_transceive (0, 0, pPacket, numPacket)) {
-	return numPacket;
-    } else {    
-	return 0;
+        return numPacket;
+    } else {
+        return 0;
     }
 }
 

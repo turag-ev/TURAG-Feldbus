@@ -150,9 +150,6 @@ protected:
     // so take care of the right buffer size and supply one byte less!
     bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 
-    bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
-    void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
-
 public:
     const char* name;
 
@@ -162,6 +159,10 @@ public:
     
     // out_real_name MUST contain space for the name +2 byte!
     bool receiveDeviceRealName(char* out_real_name);
+
+    bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
+    void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
+
 };
 
 } // namespace Feldbus

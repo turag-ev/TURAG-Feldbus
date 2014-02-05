@@ -21,6 +21,10 @@ bool DynamixelDevice::isAvailable(void) {
         }
     }
 
+    if (hasReachedTransmissionErrorLimit()) {
+        warningf("%s: transmission error limit reached", name);
+    }
+
     return !hasReachedTransmissionErrorLimit();
 }
 //Protected
@@ -37,6 +41,7 @@ bool DynamixelDevice::readWord(int address, int* word) {
     unsigned attempt = 0;
 
     while (success == false && attempt < maxTransmissionAttempts) {
+        ++attempt;
         success = turag_dxl_read_word(myId, address, word);
     }
 
@@ -64,6 +69,7 @@ bool DynamixelDevice::readByte(int address, int* byte) {
     unsigned attempt = 0;
 
     while (success == false && attempt < maxTransmissionAttempts) {
+        ++attempt;
         success = turag_dxl_read_byte(myId, address, byte);
     }
 
@@ -87,6 +93,7 @@ bool DynamixelDevice::writeWord(int address, int word) {
     unsigned attempt = 0;
 
     while (success == false && attempt < maxTransmissionAttempts) {
+        ++attempt;
         success = turag_dxl_write_word(myId, address, word);
     }
 
@@ -110,6 +117,7 @@ bool DynamixelDevice::writeByte(int address, int byte) {
     unsigned attempt = 0;
 
     while (success == false && attempt < maxTransmissionAttempts) {
+        ++attempt;
         success = turag_dxl_write_byte(myId, address, byte);
     }
 
@@ -194,7 +202,6 @@ bool DynamixelDevice::getFirmwareVersion(int* version) {
 
 //getTemperature
 bool DynamixelDevice::getTemperature(int* temperature) {
-    if(!temperature) return false;
     return readByte(TURAG_DXL_ADDRESS_PRESENT_TEMPERATURE, temperature);
 }
 
@@ -240,7 +247,6 @@ bool DynamixelDevice::isOverload(){
 
 //Punch
 bool DynamixelDevice::getPunch(int *punch){
-    if (!punch) return false;
     return readWord(TURAG_DXL_ADDRESS_PUNCH, punch);
 }
 
@@ -280,21 +286,21 @@ bool DynamixelDevice::setAlarmLED(int value){
  */
 bool DynamixelDevice::getTorqueEnable(bool* enable) {
     if (!enable) return false;
-    int tempEnable=0;
-    if(readWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, &tempEnable)) {
-        if (tempEnable==1){
-            *enable= true;
+    int tempEnable = 0;
+    if (readByte(TURAG_DXL_ADDRESS_TORQUE_ENABLE, &tempEnable)) {
+        if (tempEnable == 1){
+            *enable = true;
         } else {
-            *enable= false;
+            *enable = false;
         }
-    return true;
+        return true;
     } else {
         return false;
     }
 }
 
 bool DynamixelDevice::setTorqueEnable(bool enable) {
-    return writeWord(TURAG_DXL_ADDRESS_TORQUE_ENABLE, enable);
+    return writeByte(TURAG_DXL_ADDRESS_TORQUE_ENABLE, enable);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -386,7 +392,7 @@ bool DynamixelDevice::setCcwComplianceSlope(int slope){
 }
 /*----------------------------------------------------------------------------*/
 //Moving Speed
-bool DynamixelDevice::getMovingSpeed(int* speed){
+bool DynamixelDevice::getMovingSpeed(int* speed) {
     if (!speed) return false;
     readWord(TURAG_DXL_ADDRESS_MOVING_SPEED, speed);
     /*int value=0;
@@ -405,12 +411,12 @@ bool DynamixelDevice::setMovingSpeed(int speed){
 }
 
 //Present speed
-bool DynamixelDevice::getPresentSpeed(float* speed, int* direction){
+bool DynamixelDevice::getPresentSpeed(float* speed, int* direction) {
     if ((!speed)||(!direction)) return false;
-    int value=0;
-    if (readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, &value)){
-        *direction= (value && (1<<10));
-        *speed=(value && 1023)*TURAG_DXL_FACTOR_PRESENT_SPEED;
+    int value = 0;
+    if (readWord(TURAG_DXL_ADDRESS_PRESENT_SPEED, &value)) {
+        *direction = (value & (1<<10)) ? 1 : 0;
+        *speed = (value & 1023) * TURAG_DXL_FACTOR_PRESENT_SPEED;
         return true;
     } else {
         return false;
@@ -419,12 +425,12 @@ bool DynamixelDevice::getPresentSpeed(float* speed, int* direction){
 }
 
 //Present load
-bool DynamixelDevice::getPresentLoad(int* load, int* direction){
+bool DynamixelDevice::getPresentLoad(int* load, int* direction) {
     if ((!load) || (!direction)) return false;
-    int value=0;
-    if (readByte(TURAG_DXL_ADDRESS_PRESENT_LOAD, &value)){
-        *direction= (value && (1<<10));
-        *load=(value && 1023)*TURAG_DXL_FACTOR_PRESENT_LOAD;
+    int value = 0;
+    if (readWord(TURAG_DXL_ADDRESS_PRESENT_LOAD, &value)) {
+        *direction = (value & (1<<10)) ? 1 : 0;
+        *load = (value & 1023) * TURAG_DXL_FACTOR_PRESENT_LOAD;
         return true;
     } else {
         return false;
@@ -432,19 +438,19 @@ bool DynamixelDevice::getPresentLoad(int* load, int* direction){
 }
 
 //Present Voltage
-bool DynamixelDevice::getPresentVoltage(float* u){
+bool DynamixelDevice::getPresentVoltage(float* u) {
     if (!u) return false;
-    int voltage=0;
-    if(readByte(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, &voltage)){
-        *u= (float)(voltage/TURAG_DXL_FACTOR_VOLTAGE);
+    int voltage = 0;
+    if (readByte(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, &voltage)) {
+        *u = (float)(voltage / TURAG_DXL_FACTOR_VOLTAGE);
         return true;
-    } else{
+    } else {
         return false;
     }
 }
 
 //Baud Rate
-bool DynamixelDevice::getBaudRate(float* rate){
+bool DynamixelDevice::getBaudRate(float* rate) {
     if (!rate) return false;
 
     int baud_data = 0;
@@ -456,7 +462,7 @@ bool DynamixelDevice::getBaudRate(float* rate){
 }
 
 bool DynamixelDevice::setBaudRate(float targetRate){
-    int data = (2000000 / targetRate) - 1;
+    int data = (2000000 + targetRate / 2) / targetRate - 1;
     float setRate= 2000000.0f / ((float)data + 1.0f);
     float tolerance = (targetRate - setRate) / targetRate;
     if ((tolerance >= -0.03) && (tolerance<=0.03)) {
@@ -467,12 +473,19 @@ bool DynamixelDevice::setBaudRate(float targetRate){
 }
 
 //Return Delay Time
-bool DynamixelDevice::getReturnDelayTime(int* time){
-    return readByte(TURAG_DXL_ADDRESS_RETURN_DELAY, time);
+bool DynamixelDevice::getReturnDelayTime(int* time) {
+    int result = 0;
+
+    if (readByte(TURAG_DXL_ADDRESS_RETURN_DELAY, &result)) {
+        *time = result * 2;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool DynamixelDevice::setReturnDelayTime(int time){
-    return writeByte(TURAG_DXL_ADDRESS_RETURN_DELAY, time);
+    return writeByte(TURAG_DXL_ADDRESS_RETURN_DELAY, time / 2);
 }
 
 //Highest Limit Temperature
@@ -579,6 +592,18 @@ bool DynamixelDevice::setGoalPosition(float position) {
     if ((0<=position)&&(position<=300)){
         int targetPosition=(int)position/TURAG_DXL_FACTOR_DEGREE;
         return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, targetPosition);
+    } else {
+        return false;
+    }
+}
+
+bool DynamixelDevice::getGoalPosition(float* position) {
+    if (!position) return false;
+
+    int goalPosition=0;
+    if (readWord(TURAG_DXL_ADDRESS_GOAL_POSITION, &goalPosition)){
+        *position=(float)goalPosition*TURAG_DXL_FACTOR_DEGREE;
+        return true;
     } else {
         return false;
     }
