@@ -459,7 +459,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 		}
 		
 		// this happens if the device protocol or the user code returned TURAG_FELDBUS_IGNORE_PACKAGE.
-		if (turag_feldbus_slave_uart.length == 0) {
+		if (turag_feldbus_slave_uart.length == (uint8_t)(TURAG_FELDBUS_IGNORE_PACKAGE + 1)) {
 			return;
 		}
 
