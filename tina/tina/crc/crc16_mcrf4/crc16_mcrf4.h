@@ -4,14 +4,14 @@
  *
  * Generated on Sat Nov  2 16:02:08 2013,
  * by pycrc v0.8.1, http://www.tty1.net/pycrc/
- * using the configuration:
- *    Width        = 16
- *    Poly         = 0x1021
- *    XorIn        = 0xffff
- *    ReflectIn    = True
- *    XorOut       = 0x0000
- *    ReflectOut   = True
- *    Algorithm    = table-driven
+ * using the configuration:\n
+ *    Width        = 16\n
+ *    Poly         = 0x1021\n
+ *    XorIn        = 0xffff\n
+ *    ReflectIn    = True\n
+ *    XorOut       = 0x0000\n
+ *    ReflectOut   = True\n
+ *    Algorithm    = table-driven\n
  * 
  * edited by Martin Oemus <martin@oemus.net>
  *****************************************************************************/
@@ -28,9 +28,17 @@ extern "C" {
 
 extern const uint16_t turag_crc_crc16_table[256];
 	
-/** Calculates a CRC16_MCRF4-checksum with the help of a table
- * @param		data	pointer to data that is to be included in the calculation
- * @param		length	length in bytes of the given data pointer
+/**
+ * \ingroup checksums-crc
+ * @{
+ */
+ 
+
+
+/** Calculates a CRC16_MCRF4-checksum with the help of a table.
+ * This is fastest, but requires the table in crc16_mcrf4.c to be compiled in (512 Byte).
+ * @param[in]	data	pointer to data that is to be included in the calculation
+ * @param[in]	length	length in bytes of the given data pointer
  * @return		checksum
  * 
  */
@@ -46,10 +54,11 @@ TURAG_INLINE uint16_t turag_crc16_calculate(const void* data, size_t length) {
 
 
 
-/** Checks data with a given CRC16_MCRF4-checksum with the help of a table
- * @param		data	pointer to data that is to be checked
- * @param		length	length in bytes of the given data pointer
- * @param		chksum	checksum used to check the data
+/** Checks data with a given CRC16_MCRF4-checksum with the help of a table.
+ * This is fastest, but requires the table in crc16_mcrf4.c to be compiled in (512 Byte).
+ * @param[in]	data	pointer to data that is to be checked
+ * @param[in]	length	length in bytes of the given data pointer
+ * @param[in]	chksum	checksum used to check the data
  * @return		true on data correct, otherwise false
  * 
  */
@@ -63,10 +72,11 @@ TURAG_INLINE bool turag_crc16_check(const void* data, size_t length, uint16_t ch
 
 
 
-/** Calculates a CRC16_MCRF4-checksum directly
- * @param		data	pointer to data that is to be included in the calculation
- * @param		length	length in bytes of the given data pointer
- * @param 		seed	initial check sum value
+/** Calculates a CRC16_MCRF4-checksum directly.
+ * This function does not rely on a table and yet is pretty fast, as it doesn't rely on
+ * bitwise manipulation of the input data.
+ * @param[in]	data	pointer to data that is to be included in the calculation
+ * @param[in]	size	length in bytes of the given data pointer
  * @return		checksum
  * 
  */
@@ -88,10 +98,12 @@ TURAG_INLINE uint16_t turag_crc16_calculate_direct(const void* data, unsigned si
 }
 
 
-/** Checks data with a given CRC16_MCRF4-checksum directly
- * @param		data	pointer to data that is to be checked
- * @param		length	length in bytes of the given data pointer
- * @param		chksum	checksum used to check the data
+/** Checks data with a given CRC16_MCRF4-checksum directly.
+ * This function does not rely on a table and yet is pretty fast, as it doesn't rely on
+ * bitwise manipulation of the input data.
+ * @param[in]	data	pointer to data that is to be checked
+ * @param[in]	size	length in bytes of the given data pointer
+ * @param[in]	chksum	checksum used to check the data
  * @return		true on data correct, otherwise false
  * 
  */
@@ -102,6 +114,10 @@ TURAG_INLINE bool turag_crc16_check_direct(const void* data, unsigned size, uint
 		return false;
 	}
 }
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }           /* closing brace for extern "C" */

@@ -1,6 +1,6 @@
 /**
  *  @brief		Base class for all TURAG feldbus devices
- *  @file		TURAGFeldbusDevice.cpp
+ *  @file		device_tina.cpp
  *  @date		04.04.2013
  *  @author		Martin Oemus
  *

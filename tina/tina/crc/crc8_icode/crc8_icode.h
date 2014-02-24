@@ -1,17 +1,17 @@
 /**
- * \file crc-8_icode.h
+ * \file crc8_icode.h
  * Functions and types for CRC checks.
  *
  * Generated on Fri Nov  1 21:06:17 2013,
  * by pycrc v0.8.1, http://www.tty1.net/pycrc/
- * using the configuration:
- *    Width        = 8
- *    Poly         = 0x1d
- *    XorIn        = 0xfd
- *    ReflectIn    = False
- *    XorOut       = 0x00
- *    ReflectOut   = False
- *    Algorithm    = table-driven
+ * using the configuration:\n
+ *    Width        = 8\n
+ *    Poly         = 0x1d\n
+ *    XorIn        = 0xfd\n
+ *    ReflectIn    = False\n
+ *    XorOut       = 0x00\n
+ *    ReflectOut   = False\n
+ *    Algorithm    = table-driven\n
  * 
  * edited by Martin Oemus <martin@oemus.net>
  *****************************************************************************/
@@ -26,6 +26,11 @@ extern "C" {
 
 extern const uint8_t turag_crc_crc8_table[256];
 
+/**
+ * @ingroup checksums-crc
+ * @{
+ */
+ 
 
 /** Calculates a CRC8-checksum
  * @param		data	pointer to data that is to be included in the calculation
@@ -60,6 +65,10 @@ TURAG_INLINE bool turag_crc8_check(const void* data, size_t length, uint8_t chks
     }
 }
 
+
+/**
+ * @}
+ */
 
 
 #ifdef __cplusplus

@@ -1,25 +1,13 @@
 /**
  * \file crc16_mcrf4.c
- * Functions and types for CRC checks.
+ * Lookup-Table for crc16_mcrf4.h.
  *
- * Generated on Sat Nov  2 16:02:08 2013,
- * by pycrc v0.8.1, http://www.tty1.net/pycrc/
- * using the configuration:
- *    Width        = 16
- *    Poly         = 0x1021
- *    XorIn        = 0xffff
- *    ReflectIn    = True
- *    XorOut       = 0x0000
- *    ReflectOut   = True
- *    Algorithm    = table-driven
- * 
- * edited by Martin Oemus <martin@oemus.net>
- *****************************************************************************/
+ */
 
 #include <tina/tina.h>
 
 /**
- * Static table used for the table_driven implementation.
+ * Const data table used for the table_driven implementation.
  *****************************************************************************/
 const uint16_t turag_crc_crc16_table[256] = {
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,

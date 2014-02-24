@@ -3,10 +3,16 @@
  *  @file		feldbus_aseb.h
  *  @date		11.01.2014
  *  @author		Martin Oemus <martin@oemus.net>
- *
+ *  @ingroup 	feldbus-slave-aseb
  *
  *
  */
+
+/**
+ *  @defgroup   feldbus-slave-aseb ASEBs
+ *  @ingroup	feldbus-slave
+*/
+
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_ASEB_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_ASEB_H_
 

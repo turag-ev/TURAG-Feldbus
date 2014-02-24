@@ -3,6 +3,7 @@
  *  @file		feldbus_aseb.c
  *  @date		11.01.2014
  *  @author		Martin Oemus <martin@oemus.net>
+ *  @ingroup 	feldbus-slave-aseb
  *
  */
 

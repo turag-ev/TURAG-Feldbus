@@ -1,10 +1,16 @@
+/**
+ *  @brief		TURAG Feldbus für Bootloader protocol definitions.
+ *  @file		turag_feldbus_fuer_aseb.h
+ *  @date		21.02.2014
+ *  @author		Florian Völker <flo-voelker@gmx.de>
+ *  @ingroup	feldbus-protocol
+ *
+ */
+
+
 #ifndef TURAG_FELDBUS_FUER_BOOTLOADER_H_
 #define TURAG_FELDBUS_FUER_BOOTLOADER_H_
 
-/* 
- * This header file contains the specification for the protocol
- * "TURAG-FeldBus für Bootloader". Refer to the DokuWiki for documentation.
- */
 
 #include "turag_feldbus_bus_protokoll.h"
 

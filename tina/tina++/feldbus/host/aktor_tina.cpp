@@ -1,6 +1,6 @@
 /**
  *  @brief		TURAG feldbus actor base class
- *  @file		TURAGFeldbusAktor.cpp
+ *  @file		aktor_tina.cpp
  *  @date		22.03.2013
  *  @author		Martin Oemus
  *

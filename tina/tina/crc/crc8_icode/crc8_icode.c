@@ -1,24 +1,11 @@
 /**
- * \file crc-8_icode.c
- * Functions and types for CRC checks.
- *
- * Generated on Fri Nov  1 21:06:17 2013,
- * by pycrc v0.8.1, http://www.tty1.net/pycrc/
- * using the configuration:
- *    Width        = 8
- *    Poly         = 0x1d
- *    XorIn        = 0xfd
- *    ReflectIn    = False
- *    XorOut       = 0x00
- *    ReflectOut   = False
- *    Algorithm    = table-driven
- * 
- * edited by Martin Oemus <martin@oemus.net>
- *****************************************************************************/
+ * \file crc8_icode.c
+ * Lookup table for crc8_icode.h.
+*/
 #include <tina/tina.h>
 
 /**
- * Static table used for the table_driven implementation.
+ * Const data table used for the table_driven implementation.
  *****************************************************************************/
 const uint8_t turag_crc_crc8_table[256] = {
     0x00, 0x1d, 0x3a, 0x27, 0x74, 0x69, 0x4e, 0x53, 0xe8, 0xf5, 0xd2, 0xcf, 0x9c, 0x81, 0xa6, 0xbb,

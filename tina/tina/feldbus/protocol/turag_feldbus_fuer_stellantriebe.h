@@ -1,10 +1,15 @@
+/**
+ *  @brief		TURAG Feldbus für Stellantriebe protocol definitions.
+ *  @file		turag_feldbus_fuer_aseb.h
+ *  @date		24.02.2014
+ *  @author		Martin Oemus <martin@oemus.net>
+ *  @ingroup	feldbus-protocol
+ *
+ */
+
 #ifndef TURAG_FELDBUS_FUER_STELLANTRIEBE_H_
 #define TURAG_FELDBUS_FUER_STELLANTRIEBE_H_
 
-/* 
- * This header file contains the specification for the protocol
- * "TURAG-FeldBus für Stellantriebe". Refer to the DokuWiki for documentation.
- */
 
 #include "turag_feldbus_bus_protokoll.h"
 

@@ -3,7 +3,13 @@
  *  @file		feldbus.h
  *  @date		06.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
- *
+ *  @ingroup feldbus-slave-base
+ */
+
+
+/** 
+ * @defgroup feldbus-slave-base Base Device
+ * @ingroup feldbus-slave
  * @section TURAG Feldbus base support
  * This header implements generic support for TURAG feldbus compatible slave devices.
  *
@@ -30,6 +36,7 @@
  * This makes it easier to design the protocol functions as these will never be called in
  * the context of an interrupt.
  */
+
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_H_
 

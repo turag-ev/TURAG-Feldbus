@@ -3,6 +3,7 @@
  *  @file		feldbus.c
  *  @date		07.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
+ *  @ingroup    feldbus-slave-base
  * 
  */
 

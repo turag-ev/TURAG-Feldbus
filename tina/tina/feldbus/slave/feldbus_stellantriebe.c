@@ -3,6 +3,7 @@
  *  @file		feldbus_stellantriebe.c
  *  @date		17.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
+ *  @ingroup	feldbus-slave-stellantriebe
  *
  */
 

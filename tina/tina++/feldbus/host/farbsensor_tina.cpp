@@ -1,6 +1,6 @@
 /**
  *  @brief		TURAG feldbus color sensor
- *  @file		TURAGFeldbusFarbsensor.cpp
+ *  @file		farbsensor_tina.cpp
  *  @date		24.03.2013
  *  @author		Martin Oemus
  * 

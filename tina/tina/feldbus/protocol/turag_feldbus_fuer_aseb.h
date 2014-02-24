@@ -1,3 +1,12 @@
+/**
+ *  @brief		TURAG Feldbus für ASEBs protocol definitions.
+ *  @file		turag_feldbus_fuer_aseb.h
+ *  @date		12.01.2014
+ *  @author		Martin Oemus <martin@oemus.net>
+ *  @ingroup	feldbus-protocol
+ *
+ */
+
 #ifndef TURAG_FELDBUS_FUER_ASEB_H_
 #define TURAG_FELDBUS_FUER_ASEB_H_
 

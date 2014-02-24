@@ -3,6 +3,12 @@
  *  @file		feldbus_stellantriebe.h
  *  @date		17.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
+ *  @ingroup	feldbus-slave-stellantriebe
+ */
+
+/**
+ *  @defgroup 	feldbus-slave-stellantriebe Stellantriebe
+ *  @ingroup	feldbus-slave
  *
  * This module implements support for the TURAG Feldbus für Stellantriebe device protocol. 
  * This device protocol was designed to meet the communication requirements of 
