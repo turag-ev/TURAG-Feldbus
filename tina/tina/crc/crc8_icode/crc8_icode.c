@@ -1,7 +1,4 @@
-/**
- * \file crc8_icode.c
- * Lookup table for crc8_icode.h.
-*/
+
 #include <tina/tina.h>
 
 /**

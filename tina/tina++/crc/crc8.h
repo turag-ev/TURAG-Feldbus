@@ -7,6 +7,16 @@
 #include <tina/crc/crc8_icode/crc8_icode.h>
 
 namespace TURAG {
+	
+/**
+ * @ingroup checksums-crc
+ * @{
+ */
+	
+/** 
+ * @brief C++-Interface for CRC-based checksums module
+ * @copydetails checksums-crc
+ */
 namespace CRC8 {
 
 template <typename T> _always_inline
@@ -42,6 +52,11 @@ bool check(const void* data, std::size_t length, uint16_t chksum) {
 }
 
 } // namespace CRC8
+
+/**
+ * @}
+ */
+
 } // namespace TURAG
 
 #endif // TINAPP_CRC_CRC8_H

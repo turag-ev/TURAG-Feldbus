@@ -15,11 +15,13 @@
 #include <tina/feldbus/protocol/turag_feldbus_fuer_stellantriebe.h>
 #include <tina/tina.h>
 
-#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+#if defined(TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE) || defined(DOXYGEN)
 # include <vector>
 #endif
 
 namespace TURAG {
+	
+
 namespace Feldbus {
 
 enum class AktorCommandWriteAccess : uint8_t {
@@ -55,7 +57,7 @@ struct AktorCommand_t {
     bufferValid(false) {}
 };
 
-#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+#if defined(TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE) || defined(DOXYGEN)
 struct StructuredDataPair_t {
     uint8_t key;
     float value;
@@ -76,14 +78,14 @@ protected:
     unsigned int commandSetLength;
     bool commandSetPopulated;
 
-#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+#if defined(TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE) || defined(DOXYGEN)
     unsigned int structuredOutputTableLength;
     std::vector<uint8_t> structuredOutputTable;
 #endif    
 
     
 public:
-#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+#if defined(TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE) || defined(DOXYGEN)
     Aktor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
                 Device(name_, address, type), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false),
                 structuredOutputTableLength(0)  { }
@@ -103,7 +105,7 @@ public:
     bool getCommandName(uint8_t key, char* name);
     unsigned int getCommandNameLength(uint8_t key);
 
-#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+#if defined(TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE) || defined(DOXYGEN)
     unsigned int getStructuredOutputTableLength(void);
     bool setStructuredOutputTable(const std::vector<uint8_t>& keys);
     bool getStructuredOutput(std::vector<StructuredDataPair_t>* values);

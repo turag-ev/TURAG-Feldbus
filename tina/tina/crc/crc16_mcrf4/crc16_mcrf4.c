@@ -1,8 +1,3 @@
-/**
- * \file crc16_mcrf4.c
- * Lookup-Table for crc16_mcrf4.h.
- *
- */
 
 #include <tina/tina.h>
 

@@ -35,6 +35,16 @@
 
 
 namespace TURAG {
+
+/** 
+ * @ingroup feldbus-host
+ * @{
+ */
+ 
+	
+/**
+ * @brief TURAG-Feldbus host classes
+ */	
 namespace Feldbus {
 
 template<typename T = void>
@@ -166,6 +176,11 @@ public:
 };
 
 } // namespace Feldbus
+
+/**
+ * @}
+ */
+
 } // namespace TURAG
 
 #endif /* TURAGFELDBUSDEVICE_H_ */

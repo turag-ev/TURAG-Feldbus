@@ -6,7 +6,7 @@
  *
  *
  *
- * @defgroup checksums-xor XOR-based 
+ * @defgroup checksums-xor XOR-based checksums
  * @ingroup checksums
  * 
  * Provides xor checksum calculation. Fast, simple and also very insecure. Productive use is discouraged.
@@ -16,7 +16,7 @@
  * 
  *  
  *
- * @defgroup checksums-crc CRC (Cyclic Redundancy Check)
+ * @defgroup checksums-crc CRC checksums
  * @ingroup checksums
  * 
  * A CRC is an error-detecting code whose advantages make it particularly useful in embedded applications.
