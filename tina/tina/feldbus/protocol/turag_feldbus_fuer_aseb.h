@@ -1,5 +1,5 @@
 /**
- *  @brief		TURAG Feldbus für ASEBs protocol definitions.
+ *  @brief		TURAG-Feldbus für ASEBs protocol definitions.
  *  @file		turag_feldbus_fuer_aseb.h
  *  @date		12.01.2014
  *  @author		Martin Oemus <martin@oemus.net>
@@ -10,26 +10,33 @@
 #ifndef TURAG_FELDBUS_FUER_ASEB_H_
 #define TURAG_FELDBUS_FUER_ASEB_H_
 
-/* 
- * This header file contains the specification for the protocol
- * "TURAG-FeldBus für ASEB". Refer to the DokuWiki for documentation.
- */
 
 #include "turag_feldbus_bus_protokoll.h"
 
-// device types
+/**
+ * @name device types
+ * @{
+ */
 #define TURAG_FELDBUS_ASEB_GENERIC		0x01
+///@}
 
 
-// channel index range
+/**
+ * @name channel index range
+ * @{
+ */
 #define TURAG_FELDBUS_ASEB_MAX_CHANNELS_PER_TYPE		16
 #define TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT	1
 #define TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT		17
 #define TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT	33
 #define TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT		49
+///@}
 
 
-// commands
+/**
+ * @name commands
+ * @{
+ */
 #define TURAG_FELDBUS_ASEB_SYNC							0xff
 #define TURAG_FELDBUS_ASEB_SYNC_SIZE					244
 #define TURAG_FELDBUS_ASEB_CHANNEL_NAME					245
@@ -42,6 +49,7 @@
 #define TURAG_FELDBUS_ASEB_NUMBER_OF_PWM_OUTPUTS		252
 #define TURAG_FELDBUS_ASEB_PWM_OUTPUT_FREQUENCY			253
 #define TURAG_FELDBUS_ASEB_PWM_OUTPUT_MAX_VALUE			254
+///@}
 
 
 #endif

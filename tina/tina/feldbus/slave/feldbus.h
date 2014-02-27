@@ -129,6 +129,8 @@ extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
 ///@}
 
 
+#define TURAG_FELDBUS_IGNORE_PACKAGE		0xff
+
 /** @name Required device protocol functions
  *  functions that are used by this module
  *  and should be defined by the device protocol implementation
@@ -156,6 +158,7 @@ extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
  * @return					Number of bytes put in the response buffer. You must not return more than TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - 1 bytes.
  */
 extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response);
+
 
 /**
  * This function gets called when the device received a broadcast package.

@@ -29,7 +29,7 @@ extern "C" {
 extern const uint16_t turag_crc_crc16_table[256];
 	
 /**
- * \ingroup checksums-crc
+ * \addtogroup checksums-crc
  * @{
  */
  

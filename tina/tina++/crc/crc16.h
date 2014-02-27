@@ -9,7 +9,7 @@
 namespace TURAG {
 
 /**
- * @ingroup checksums-crc
+ * @addtogroup checksums-crc
  * @{
  */
 	

@@ -1,5 +1,5 @@
 /**
- *  @brief		TURAG Feldbus für Bootloader protocol definitions.
+ *  @brief		TURAG-Feldbus für Bootloader protocol definitions.
  *  @file		turag_feldbus_fuer_bootloader.h
  *  @date		21.02.2014
  *  @author		Florian Völker <flo-voelker@gmx.de>
@@ -14,17 +14,31 @@
 
 #include "turag_feldbus_bus_protokoll.h"
 
-// device types
+/**
+ * @name device types
+ * @{
+ */
 #define TURAG_FELDBUS_BOOTLOADER_GENERIC						0x01
+///@}
 
-// command PC => Bootloader
+
+/**
+ * @name command keys
+ * @{
+ */
 #define TURAG_FELDBUS_BOOTLOADER_COMMAND_START_PROGRAMM			0xFF
 #define TURAG_FELDBUS_BOOTLOADER_COMMAND_PAGE_WRITE				0xAA
 #define TURAG_FELDBUS_BOOTLOADER_COMMAND_ENTER_BOOTLOADER		0x00	//As Broadcast
+///@}
 
 
-// command Bootloader => PC
+/**
+ * @name response codes
+ * @{
+ */
 #define TURAG_FELDBUS_BOOTLOADER_COMMAND_B_PAGE_FAIL_SIZE		0xFF
 #define TURAG_FELDBUS_BOOTLOADER_COMMAND_B_PAGE_CORRECT_SIZE	0x11
+///@}
+
 
 #endif

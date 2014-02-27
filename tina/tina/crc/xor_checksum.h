@@ -19,7 +19,7 @@ extern "C" {
 
 	
 /**
- * @ingroup checksums-xor
+ * @addtogroup checksums-xor
  * @{
  */
 

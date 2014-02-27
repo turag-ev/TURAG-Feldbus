@@ -27,7 +27,7 @@ extern "C" {
 extern const uint8_t turag_crc_crc8_table[256];
 
 /**
- * @ingroup checksums-crc
+ * @addtogroup checksums-crc
  * @{
  */
  

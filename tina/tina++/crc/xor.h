@@ -18,7 +18,7 @@
 namespace TURAG {
 	
 /**
- * @ingroup checksums-xor
+ * @addtogroup checksums-xor
  * @{
  */
 	

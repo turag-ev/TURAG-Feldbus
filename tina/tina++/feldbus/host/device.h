@@ -37,7 +37,7 @@
 namespace TURAG {
 
 /** 
- * @ingroup feldbus-host
+ * @addtogroup feldbus-host
  * @{
  */
  
@@ -149,6 +149,9 @@ protected:
 										sizeof(Response<U>));
 	}
 
+	/*!
+	 * \brief transceive
+	 */
 	template<typename T, typename U> _always_inline
 	bool transceive(Broadcast<T>& transmit) {
 		transmit.address = TURAG_FELDBUS_BROADCAST_ADDR;
