@@ -126,7 +126,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		
 		return out - response;
 	
-	} else if (	message[0] > TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT && 
+	} else if (	message[0] >= TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT && 
 				message[0] < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT + TURAG_FELDBUS_ASEB_MAX_CHANNELS_PER_TYPE) {
 		// set request digital output
 		
@@ -139,7 +139,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 			return TURAG_FELDBUS_IGNORE_PACKAGE;
 		}
 		
-	} else if (	message[0] > TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT && 
+	} else if (	message[0] >= TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT && 
 				message[0] < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + TURAG_FELDBUS_ASEB_MAX_CHANNELS_PER_TYPE) {
 		// set request PWM
 		

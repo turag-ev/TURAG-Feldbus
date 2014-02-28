@@ -26,6 +26,11 @@ struct AsebSet {
     uint16_t value;
 } _packed;
 
+struct AsebSetDigital {
+    uint8_t index;
+    uint8_t value;
+} _packed;
+
 struct AsebGetAnalogFactor {
     float factor;
 } _packed;
@@ -161,7 +166,7 @@ bool Aseb::getPwmOutputSize(int* size) {
 
 
 bool Aseb::getSyncSize(int* size) {
-    if (syncSize_ == -1) {
+    if (!syncSize_) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_SYNC_SIZE;
 
@@ -263,7 +268,7 @@ bool Aseb::setDigitalOutput(unsigned key, bool value) {
             temp &= ~(1<<index);
         }
 
-        Request<AsebSet> request;
+        Request<AsebSetDigital> request;
         request.data.index = key;
         request.data.value = digitalOutputs_;
 
@@ -322,8 +327,9 @@ bool Aseb::getPwmFrequency(unsigned key, uint32_t* frequency) {
             key >= TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT &&
             key < TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + static_cast<unsigned>(pwmOutputSize_)) {
 
-        Request<uint8_t> request;
-        request.data = TURAG_FELDBUS_ASEB_PWM_OUTPUT_FREQUENCY;
+        Request<AsebGetInfo> request;
+        request.data.command = TURAG_FELDBUS_ASEB_PWM_OUTPUT_FREQUENCY;
+        request.data.index = key;
 
         Response<AsebGetPwmFrequency> response;
 
