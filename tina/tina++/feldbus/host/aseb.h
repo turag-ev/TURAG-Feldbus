@@ -60,6 +60,10 @@ protected:
 
     bool isSynced_;
 
+    bool initDigitalOutputBuffer(void);
+    bool initPwmOutputBuffer(void);
+
+
 	
 public:
 
