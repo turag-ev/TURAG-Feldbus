@@ -194,28 +194,31 @@ bool Aseb::sync(void) {
 
     if (!syncSize_) return false;
 
-    Request<uint8_t> request;
-    request.address = myAddress;
-    request.data = TURAG_FELDBUS_ASEB_SYNC;
+    // sync only if there are inputs available
+    if (syncSize_ > 2) {
+        Request<uint8_t> request;
+        request.address = myAddress;
+        request.data = TURAG_FELDBUS_ASEB_SYNC;
 
-    if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
-                    sizeof(request),
-                    syncBuffer_,
-                    syncSize_)) {
-        return false;
-    }
+        if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+                        sizeof(request),
+                        syncBuffer_,
+                        syncSize_)) {
+            return false;
+        }
 
-    uint8_t* response = syncBuffer_ + 1;
+        uint8_t* response = syncBuffer_ + 1;
 
-    if (digitalInputSize_ > 0) {
-        digitalInputs_ = *(reinterpret_cast<uint16_t*>(response));
-        response += 2;
-    }
-
-    if (analogInputs_) {
-        for (int i = 0; i < analogInputSize_; ++i) {
-            analogInputs_[i].value = *(reinterpret_cast<int16_t*>(response));
+        if (digitalInputSize_ > 0) {
+            digitalInputs_ = *(reinterpret_cast<uint16_t*>(response));
             response += 2;
+        }
+
+        if (analogInputs_) {
+            for (int i = 0; i < analogInputSize_; ++i) {
+                analogInputs_[i].value = *(reinterpret_cast<int16_t*>(response));
+                response += 2;
+            }
         }
     }
 
