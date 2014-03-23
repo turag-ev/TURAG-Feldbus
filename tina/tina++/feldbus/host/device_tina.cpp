@@ -38,9 +38,9 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         }
 
 
-        // 	infof("%s: transceive tx [", name);
+        // 	turag_infof("%s: transceive tx [", name);
         // 	for (int i = 0; i < transmit_length; ++i) {
-        // 		infof("%.2x", transmit[i]);
+        // 		turag_infof("%.2x", transmit[i]);
         // 	}
         // 	info("]\n");
 
@@ -84,9 +84,9 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             ++attempt;
         }
 
-        // 	infof("%s: transceive rx success(%x|%x) [", name, success, checksum_correct);
+        // 	turag_infof("%s: transceive rx success(%x|%x) [", name, success, checksum_correct);
         // 	for (int j = 0; j < receive_length; ++j) {
-        // 		infof("%.2x", receive[j]);
+        // 		turag_infof("%.2x", receive[j]);
         // 	}
         // 	info("]\n");
 
@@ -98,7 +98,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             }
             return true;
         } else {
-            warningf("%s: rs485 transceive failed", name);
+            turag_warningf("%s: rs485 transceive failed", name);
             myTransmissionErrorCounter += attempt;
             return false;
         }

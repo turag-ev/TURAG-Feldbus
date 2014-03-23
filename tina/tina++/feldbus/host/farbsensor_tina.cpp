@@ -49,10 +49,10 @@ Farbsensor::Color Farbsensor::getColor(void) {
 		result = Color::Error;
 
 	} else {
-//        infof("h=%d s=%d v=%d", hsv.h, hsv.s, hsv.v);
+//        turag_infof("h=%d s=%d v=%d", hsv.h, hsv.s, hsv.v);
 
 		for (int i = 0; i < myNumberOfColors; i++) {
-//            infof("color id=%d hmin=%d hmax=%d smin=%d smax=%d vmin=%d vmax=%d", i, myColorIndexTable[i].h_min, myColorIndexTable[i].h_max, myColorIndexTable[i].s_min, myColorIndexTable[i].s_max, myColorIndexTable[i].v_min, myColorIndexTable[i].v_max);
+//            turag_infof("color id=%d hmin=%d hmax=%d smin=%d smax=%d vmin=%d vmax=%d", i, myColorIndexTable[i].h_min, myColorIndexTable[i].h_max, myColorIndexTable[i].s_min, myColorIndexTable[i].s_max, myColorIndexTable[i].v_min, myColorIndexTable[i].v_max);
             if (
 					myColorIndexTable[i].initialized &&
 					WITHIN_BOUNDARIES(hsv.h, myColorIndexTable[i].h_min, myColorIndexTable[i].h_max) &&
@@ -60,7 +60,7 @@ Farbsensor::Color Farbsensor::getColor(void) {
                     WITHIN_BOUNDARIES(hsv.v, myColorIndexTable[i].v_min, myColorIndexTable[i].v_max) ) {
 
 				result = (Farbsensor::Color)i;
-//                infof("color match");
+//                turag_infof("color match");
                 break;
 			}
 		}
