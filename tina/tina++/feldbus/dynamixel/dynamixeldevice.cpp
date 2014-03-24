@@ -138,25 +138,25 @@ bool DynamixelDevice::hasDeviceError(DynamixelDevice::Error index) {
 
 void DynamixelDevice::printLastDeviceError() {
     if (hasDeviceError(Error::voltage))
-        criticalf("%s: Input voltage error!", name);
+        turag_criticalf("%s: Input voltage error!", name);
 
     if (hasDeviceError(Error::angle))
-        criticalf("%s: Angle limit error!", name);
+        turag_criticalf("%s: Angle limit error!", name);
 
     if (hasDeviceError(Error::overheat))
-        criticalf("%s: Overheat errorn", name);
+        turag_criticalf("%s: Overheat errorn", name);
 
     if (hasDeviceError(Error::range))
-        criticalf("%s: Out of range error!", name);
+        turag_criticalf("%s: Out of range error!", name);
 
     if (hasDeviceError(Error::checksum))
-        criticalf("%s: Checksum error!", name);
+        turag_criticalf("%s: Checksum error!", name);
 
     if (hasDeviceError(Error::overload))
-        criticalf("%s: Overload error!", name);
+        turag_criticalf("%s: Overload error!", name);
 
     if (hasDeviceError(Error::instruction))
-        criticalf("%s: Instruction code error!", name);
+        turag_criticalf("%s: Instruction code error!", name);
 }
 
 //##############################################################################################################
