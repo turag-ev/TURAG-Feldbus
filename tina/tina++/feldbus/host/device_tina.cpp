@@ -6,7 +6,7 @@
  *
  */
 
-#define TURAG_LOG_SOURCE "B"
+#define TURAG_DEBUG_LOG_SOURCE "B"
 
 #include "device.h"
 #include <tina++/time.h>
