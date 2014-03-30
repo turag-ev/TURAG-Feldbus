@@ -454,8 +454,9 @@ bool DynamixelDevice::setID(int address) {
     // more strictly limited due to restrictions of
     // TURAG feldbus than what the device could handle
     if (address >= 1 && address <= 127) {
+        writeByte(TURAG_DXL_ADDRESS_ID, address);
         myId = address;
-        return writeByte(TURAG_DXL_ADDRESS_ID, address);
+        return true;
     }
     return false;
 }
