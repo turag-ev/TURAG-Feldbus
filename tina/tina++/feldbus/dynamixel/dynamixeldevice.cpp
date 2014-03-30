@@ -449,6 +449,17 @@ bool DynamixelDevice::getPresentVoltage(float* u) {
     }
 }
 
+// ID
+bool DynamixelDevice::setID(int address) {
+    // more strictly limited due to restrictions of
+    // TURAG feldbus than what the device could handle
+    if (address >= 1 && address <= 127) {
+        myId = address;
+        return writeByte(TURAG_DXL_ADDRESS_ID, address);
+    }
+    return false;
+}
+
 //Baud Rate
 bool DynamixelDevice::getBaudRate(float* rate) {
     if (!rate) return false;
@@ -461,7 +472,7 @@ bool DynamixelDevice::getBaudRate(float* rate) {
     return true;
 }
 
-bool DynamixelDevice::setBaudRate(float targetRate){
+bool DynamixelDevice::setBaudRate(float targetRate) {
     int data = (2000000 + targetRate / 2) / targetRate - 1;
     float setRate= 2000000.0f / ((float)data + 1.0f);
     float tolerance = (targetRate - setRate) / targetRate;
@@ -484,82 +495,80 @@ bool DynamixelDevice::getReturnDelayTime(int* time) {
     }
 }
 
-bool DynamixelDevice::setReturnDelayTime(int time){
+bool DynamixelDevice::setReturnDelayTime(int time) {
     return writeByte(TURAG_DXL_ADDRESS_RETURN_DELAY, time / 2);
 }
 
 //Highest Limit Temperature
-bool DynamixelDevice::getTemperatureLimit(int* temperature){
+bool DynamixelDevice::getTemperatureLimit(int* temperature) {
     return readByte(TURAG_DXL_ADDRESS_TEMPERATURE_LIMIT, temperature);
 }
 
-bool DynamixelDevice::setTemperatureLimit(int temperature){
+bool DynamixelDevice::setTemperatureLimit(int temperature) {
     return writeByte(TURAG_DXL_ADDRESS_TEMPERATURE_LIMIT, temperature);
 }
 
 //Lowest Limit Voltage
-bool DynamixelDevice::getVoltageLimitLow(int *voltage){
+bool DynamixelDevice::getVoltageLimitLow(int *voltage) {
     if (!voltage) return false;
-    if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage)){
-        *voltage=*voltage/TURAG_DXL_FACTOR_VOLTAGE;
+    if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage)) {
+        *voltage = *voltage / TURAG_DXL_FACTOR_VOLTAGE;
         return true;
     } else {
         return false;
     }
 }
 
-bool DynamixelDevice::setVoltageLimitLow(int voltage){
+bool DynamixelDevice::setVoltageLimitLow(int voltage) {
     voltage=voltage*TURAG_DXL_FACTOR_VOLTAGE;
-    if((50<=voltage) && (voltage<=250)){
+    if ((50<=voltage) && (voltage<=250)) {
         return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_LOW, voltage);
-    }
-    else {
+    } else {
         return false;
     }
 }
 
 //Highest Limit Voltage
-bool DynamixelDevice::getVoltageLimitHigh(int *voltage){
+bool DynamixelDevice::getVoltageLimitHigh(int *voltage) {
     if (!voltage) return false;
-    if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage)){
-        *voltage=*voltage/TURAG_DXL_FACTOR_VOLTAGE;
+    if (readByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage)) {
+        *voltage = *voltage / TURAG_DXL_FACTOR_VOLTAGE;
         return true;
     } else {
         return false;
     }
 }
 
-bool DynamixelDevice::setVoltageLimitHigh(int voltage){
-    voltage=voltage*TURAG_DXL_FACTOR_VOLTAGE;
-    if((50<=voltage) && (voltage<=250)){
+bool DynamixelDevice::setVoltageLimitHigh(int voltage) {
+    voltage = voltage * TURAG_DXL_FACTOR_VOLTAGE;
+    if ((50 <= voltage) && (voltage<=250)) {
         return writeByte(TURAG_DXL_ADDRESS_VOLTAGE_LIMIT_HIGH, voltage);
-    }
-    else {
+    } else {
         return false;
     }
 }
 
 //Max Torque
-bool DynamixelDevice::getTorqueMax(int *max){
+bool DynamixelDevice::getTorqueMax(int *max) {
     if (!max) return false;
-    if (readWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max)){
-        *max=*max/TURAG_DXL_FACTOR_TORQUE;
+    if (readWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max)) {
+        *max = *max / TURAG_DXL_FACTOR_TORQUE;
         return true;
     } else {
         return false;
     }
 }
 
-bool DynamixelDevice::setTorqueMax(int max){
-    max=max*TURAG_DXL_FACTOR_TORQUE;
+bool DynamixelDevice::setTorqueMax(int max) {
+    max = max * TURAG_DXL_FACTOR_TORQUE;
     return writeWord(TURAG_DXL_ADDRESS_MAX_TORQUE, max);
 }
 
 //Torque Limit
 bool DynamixelDevice::getTorqueLimit(int *max){
-    if(!max) return false;
-    if (readWord(TURAG_DXL_ADDRESS_TORQUE_LIMIT, max)){
-        *max=*max/TURAG_DXL_FACTOR_TORQUE;
+    if (!max) return false;
+    if (readWord(TURAG_DXL_ADDRESS_TORQUE_LIMIT, max)) {
+        *max = *max / TURAG_DXL_FACTOR_TORQUE;
         return true;
     } else {
         return false;
@@ -567,7 +576,7 @@ bool DynamixelDevice::getTorqueLimit(int *max){
 }
 
 bool DynamixelDevice::setTorqueLimit(int max){
-    max=max*TURAG_DXL_FACTOR_TORQUE;
+    max = max * TURAG_DXL_FACTOR_TORQUE;
     return writeWord(TURAG_DXL_ADDRESS_TORQUE_LIMIT, max);
 }
 
@@ -578,9 +587,9 @@ bool DynamixelDevice::setTorqueLimit(int max){
 bool DynamixelDevice::getCurrentPosition(float* position) {
     if (!position) return false;
 
-    int presentPosition=0;
-    if (readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, &presentPosition)){
-        *position=(float)presentPosition*TURAG_DXL_FACTOR_DEGREE;
+    int presentPosition = 0;
+    if (readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, &presentPosition)) {
+        *position = (float)presentPosition * TURAG_DXL_FACTOR_DEGREE;
         return true;
     } else {
         return false;

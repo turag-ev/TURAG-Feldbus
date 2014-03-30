@@ -69,10 +69,9 @@ public:
     bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
     void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
 
-    //deklariert und implementiert
     unsigned int getID(void) const { return myId; }
+    bool setID(int address);
 
-    //deklariert
     virtual bool getModelNumber(int* modelNumber);
     virtual bool getFirmwareVersion(int* version);
     virtual bool isAvailable(void);
