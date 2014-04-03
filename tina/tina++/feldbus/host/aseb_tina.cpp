@@ -235,6 +235,7 @@ float Aseb::getAnalogInput(unsigned key) {
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT;
         return static_cast<float>(analogInputs_[index].value) * analogInputs_[index].factor;
     } else {
+        errorf("%s: wrong arguments to getAnalogInput", name);
         return 0.0f;
     }
 }
@@ -247,6 +248,7 @@ bool Aseb::getDigitalInput(unsigned key) {
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT;
         return static_cast<bool>(digitalInputs_ & (1<<index));
     } else {
+        errorf("%s: wrong arguments to getDigitalInput", name);
         return false;
     }
 }
@@ -259,6 +261,7 @@ bool Aseb::getDigitalOutput(unsigned key) {
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT;
         return static_cast<bool>(digitalOutputs_ & (1<<index));
     } else {
+        errorf("%s: wrong arguments to getDigitalOutput", name);
         return false;
     }
 }
@@ -307,6 +310,7 @@ bool Aseb::setDigitalOutput(unsigned key, bool value) {
 
         return true;
     } else {
+        errorf("%s: wrong arguments to setDigitalOutput", name);
         return false;
     }
 }
@@ -320,6 +324,7 @@ float Aseb::getPwmOutput(unsigned key) {
         unsigned index = key - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
         return pwmOutputs_[index].value;
     } else {
+        errorf("%s: wrong arguments to getPwmOutput", name);
         return false;
     }
 }
@@ -360,6 +365,7 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
         pwmOutputs_[index].value = duty_cycle;
         return true;
     } else {
+        errorf("%s: wrong arguments to setPwmOutput", name);
         return false;
     }
 }
@@ -383,6 +389,7 @@ bool Aseb::getPwmFrequency(unsigned key, uint32_t* frequency) {
 
         return true;
     } else {
+        errorf("%s: wrong arguments to getPwmFrequency", name);
         return false;
     }
 }
