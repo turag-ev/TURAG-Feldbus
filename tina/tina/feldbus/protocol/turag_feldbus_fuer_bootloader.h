@@ -44,7 +44,7 @@
 
 
 /**
- * @name mcu-ids
+ * @name mcu-ids (signature)
  * @{
  */
 #define TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA8				0x07
