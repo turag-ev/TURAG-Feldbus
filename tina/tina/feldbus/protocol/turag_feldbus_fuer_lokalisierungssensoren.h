@@ -29,7 +29,7 @@
  * @name color sensor
  * @{
  */
-#define CMD_CLR_CLR									(0)
+#define CMD_CLR_CLR									(5)
 #define CMD_CLR_HSV									(1)
 #define CMD_CLR_RGB									(2)
 #define CMD_CLR_REQUEST_CONTROL_DATA_TRANSMISSION	(3)
@@ -52,7 +52,7 @@
 #define CMD_GEGI_READ_DATA		(0x00)
 #define CMD_GEGI_OPPO_POS		(0x01)
 #define CMD_GEGI_LED			(0x02)
-#define CMD_GEGI_MEASURE		(0x40)			
+#define CMD_GEGI_MEASURE		(0x40)
 
 #define CMD_GEGI_ACK			(0)		//0 for ack, other for nack
 ///@}
