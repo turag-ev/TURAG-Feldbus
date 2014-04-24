@@ -3,7 +3,7 @@
  *  @file		farbsensor_tina.cpp
  *  @date		24.03.2013
  *  @author		Martin Oemus
- * 
+ *
  */
 
 
@@ -94,7 +94,7 @@ bool Farbsensor::getRGB(rgb_t* rgb) {
 	if (!initiateMeassurement()) return false;
 
 //#warning Thrad delay still implemented, test for necessity!
-	Thread_delay(ms_to_ticks(10));
+	Thread_delay(10_ms);
 
 	unsigned char msg[3];
 	msg[0] = myAddress;
@@ -119,7 +119,7 @@ bool Farbsensor::getHSV(hsv_t* hsv) {
 	if (!initiateMeassurement()) return false;
 
 //#warning Thrad delay still implemented, test for necessity!
-	Thread_delay(ms_to_ticks(10));
+	Thread_delay(10_ms);
 
 	unsigned char msg[3];
 	msg[0] = myAddress;
