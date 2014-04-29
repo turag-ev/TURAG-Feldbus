@@ -95,6 +95,12 @@
 #define RS485_STELLANTRIEBE_KEY_VOLTAGE			(0x0E)	// current supply voltage
 #define RS485_STELLANTRIEBE_KEY_STATUS			(0x0F)	// current status, see details below
 #define RS485_STELLANTRIEBE_KEY_CONTROL_STATE		(0x10)	// control state
+#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_P (0x11) //P-Gain for Position control
+#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_I (0x12)	//I-Gain (invertiert) Position control
+#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_P (0x13)	//P-Gain Velocity
+#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_I (0x14)	//I-Gain Velocity
+#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_P (0x15)	//P-Gain Current control
+#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_I (0x16)	//I-Gain Current control
 ///@}
 													
 /**
