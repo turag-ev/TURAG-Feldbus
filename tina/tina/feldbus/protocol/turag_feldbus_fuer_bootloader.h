@@ -19,6 +19,9 @@
  * @{
  */
 #define TURAG_FELDBUS_BOOTLOADER_GENERIC				0x01
+#define TURAG_FELDBUS_BOOTLOADER_ATMEGA                 0x02
+#define TURAG_FELDBUS_BOOTLOADER_XMEGA  				0x03
+
 ///@}
 
 

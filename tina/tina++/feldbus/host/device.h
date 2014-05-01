@@ -108,38 +108,32 @@ public:
         crc8_icode = TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
 	};
 
-private:
-	const unsigned int maxTransmissionAttempts;
-	const unsigned int maxTransmissionErrors;
-
-	ChecksumType myChecksumType;
-	unsigned int myTransmissionErrorCounter;
-
-	static unsigned int globalTransmissionErrorCounter;
-	static SystemTime lastTransmission;
-
-protected:
-	const unsigned int myAddress;
-	bool hasCheckedAvailabilityYet;
-    DeviceInfo myDeviceInfo;
-
-public:
     Device(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
            unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
            unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
+        name(name_),
+        myAddress(address),
+        hasCheckedAvailabilityYet(false),
         maxTransmissionAttempts(max_transmission_attempts),
         maxTransmissionErrors(max_transmission_errors),
-		myChecksumType(type),
-		myTransmissionErrorCounter(0),
-		myAddress(address),
-		hasCheckedAvailabilityYet(false),
-        name(name_) {
+        myChecksumType(type),
+        myTransmissionErrorCounter(0)
+    {
         myDeviceInfo.bufferSize = 0;
     }
 
     virtual ~Device() {}
 
-protected:
+    unsigned int getAddress(void) const { return myAddress; }
+    virtual bool isAvailable(void);
+    bool getDeviceInfo(DeviceInfo* device_info);
+
+    // out_real_name MUST contain space for the name +2 byte!
+    bool receiveDeviceRealName(char* out_real_name);
+
+    bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
+    void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
+
 	template<typename T, typename U> _always_inline
 	bool transceive(Request<T>& transmit, Response<U>* receive) {
 	transmit.address = myAddress;
@@ -159,22 +153,26 @@ protected:
 											sizeof(Broadcast<T>), nullptr, 0);
 	}
 
+    const char* name;
+
+protected:
     // this funtion will always overwrite the last byte in transmit with the checksum of the preceeding bytes
     // so take care of the right buffer size and supply one byte less!
     bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 
-public:
-    const char* name;
+    const unsigned int myAddress;
+    bool hasCheckedAvailabilityYet;
+    DeviceInfo myDeviceInfo;
 
-    unsigned int getAddress(void) const { return myAddress; }
-    virtual bool isAvailable(void);
-    bool getDeviceInfo(DeviceInfo* device_info);
-    
-    // out_real_name MUST contain space for the name +2 byte!
-    bool receiveDeviceRealName(char* out_real_name);
+private:
+    const unsigned int maxTransmissionAttempts;
+    const unsigned int maxTransmissionErrors;
 
-    bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
-    void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
+    ChecksumType myChecksumType;
+    unsigned int myTransmissionErrorCounter;
+
+    static unsigned int globalTransmissionErrorCounter;
+    static SystemTime lastTransmission;
 
 };
 
