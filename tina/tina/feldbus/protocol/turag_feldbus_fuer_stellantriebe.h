@@ -96,17 +96,11 @@
 #define RS485_STELLANTRIEBE_KEY_STATUS              (0x0F)	// current status, see details below
 #define RS485_STELLANTRIEBE_KEY_CONTROL_STATE		(0x10)	// control state
 #define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_P     (0x11)  // P-Gain for Position control
-#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_P_INV (0x11)  // inv. P-Gain for Position control
-#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_I     (0x13)	// I-Gain Position control
-#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_I_INV (0x14)	// inv. I-Gain Position control
-#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_P     (0x15)	// P-Gain Velocity
-#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_P_INV (0x16)	// inv. P-Gain Velocity
-#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_I     (0x17)	// I-Gain Velocity
-#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_I_INV (0x18)	// inv. I-Gain Velocity
-#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_P     (0x19)	// P-Gain Current control
-#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_P_INV (0x1A)	// inv. P-Gain Current control
-#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_I     (0x1B)	// I-Gain Current control
-#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_I_INV (0x1C)	// inv. I-Gain Current control
+#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_I     (0x12)	// I-Gain Position control
+#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_P     (0x13)	// P-Gain Velocity
+#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_I     (0x14)	// I-Gain Velocity
+#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_P     (0x15)	// P-Gain Current control
+#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_I     (0x16)	// I-Gain Current control
 ///@}
 													
 /**
