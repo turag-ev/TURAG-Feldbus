@@ -53,8 +53,7 @@ static int gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
 static int giBusUsing = 0;
 
 
-int turag_dxl_initialize()
-{
+int turag_dxl_initialize(void) {
 	gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
 	giBusUsing = 0;
 	return 1;
