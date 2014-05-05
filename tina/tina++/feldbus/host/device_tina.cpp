@@ -24,7 +24,11 @@ unsigned int Device::globalTransmissionErrorCounter = 0;
 
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
     if (hasReachedTransmissionErrorLimit()) {
-        errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
+        static unsigned shit_displayed = 0;
+        if (shit_displayed < 5) {
+            errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
+            shit_displayed++;
+        }
         return false;
     } else {
         switch (myChecksumType) {
@@ -107,6 +111,11 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 
 
 bool Device::isAvailable(void) {
+    if (!turag_rs485_ready()) {
+        turag_warningf("%s: isAvailable called with uninited RS485 bus", name);
+        return false;
+    }
+
 	if (!hasCheckedAvailabilityYet) {
 		Request<> request;
 		Response<> response;
