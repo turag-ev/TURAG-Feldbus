@@ -8,13 +8,14 @@
 
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
-#include "device.h"
+#include <tina++/thread.h>
 #include <tina++/time.h>
 #include <tina++/crc/xor.h>
 #include <tina++/crc/crc8.h>
 #include <tina/debug.h>
 #include <tina/rs485.h>
 
+#include "device.h"
 
 namespace TURAG {
 namespace Feldbus {
@@ -23,6 +24,10 @@ SystemTime Device::lastTransmission;
 unsigned int Device::globalTransmissionErrorCounter = 0;
 
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
+	while (!turag_rs485_ready()) {
+		Thread::delay(SystemTime::fromMsec(10));
+	}
+	
     if (hasReachedTransmissionErrorLimit()) {
         static unsigned shit_displayed = 0;
         if (shit_displayed < 5) {
@@ -111,11 +116,6 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 
 
 bool Device::isAvailable(void) {
-    if (!turag_rs485_ready()) {
-        turag_warningf("%s: isAvailable called with uninited RS485 bus", name);
-        return false;
-    }
-
 	if (!hasCheckedAvailabilityYet) {
 		Request<> request;
 		Response<> response;
