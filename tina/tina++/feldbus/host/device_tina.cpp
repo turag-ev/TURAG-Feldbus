@@ -25,7 +25,7 @@ unsigned int Device::globalTransmissionErrorCounter = 0;
 
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
 	while (!turag_rs485_ready()) {
-		Thread::delay(SystemTime::fromMsec(10));
+        Thread<>::delay(SystemTime::fromMsec(10));
 	}
 	
     if (hasReachedTransmissionErrorLimit()) {
