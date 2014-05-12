@@ -21,13 +21,9 @@ bool DynamixelDevice::isAvailable(void) {
         }
     }
 
-    if (hasReachedTransmissionErrorLimit()) {
-        turag_warningf("%s: transmission error limit reached", name);
-    }
-
     return !hasReachedTransmissionErrorLimit();
 }
-//Protected
+
 bool DynamixelDevice::readWord(int address, int* word) {
     if (!isAvailable()) {
         return false;

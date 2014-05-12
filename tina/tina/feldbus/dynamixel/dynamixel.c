@@ -1,5 +1,9 @@
+#include <tina/thread.h>
+#include <tina/debug/print.h>
+
 #include "dxl_hal.h"
 #include "dynamixel.h"
+
 
 
 ///////////// set/get packet methods //////////////////////////
@@ -52,10 +56,16 @@ static unsigned char gbRxGetLength = 0;
 static int gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
 static int giBusUsing = 0;
 
+//static TuragBinarySemaphore sem_;
+
 
 int turag_dxl_initialize(void) {
 	gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
 	giBusUsing = 0;
+
+#warning shit not threadsafe
+    //turag_binary_semaphore_init(&sem_, false);
+
 	return 1;
 }
 
@@ -124,23 +134,20 @@ void turag_dxl_tx_packet(void)
 	gbCommStatus = TURAG_DXL_COMM_TXSUCCESS;
 }
 
-void turag_dxl_rx_packet(void)
-{
+void turag_dxl_rx_packet(void) {
 	unsigned char i, j, nRead;
 	unsigned char checksum = 0;
 
 	if( giBusUsing == 0 )
 		return;
 
-	if( gbInstructionPacket[TURAG_DXL_ID] == TURAG_DXL_BROADCAST_ID )
-	{
+    if( gbInstructionPacket[TURAG_DXL_ID] == TURAG_DXL_BROADCAST_ID ) {
 		gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
 		giBusUsing = 0;
 		return;
 	}
 	
-	if( gbCommStatus == TURAG_DXL_COMM_TXSUCCESS )
-	{
+    if( gbCommStatus == TURAG_DXL_COMM_TXSUCCESS ) {
 		gbRxGetLength = 0;
 		gbRxPacketLength = 6;
 	}
@@ -161,7 +168,7 @@ void turag_dxl_rx_packet(void)
 	}
 	
 	// Find packet header
-	for( i=0; i<(gbRxGetLength-1); i++ )
+    for( i=0; i < (gbRxGetLength-1); i++ )
 	{
 		if( gbStatusPacket[i] == 0xff && gbStatusPacket[i+1] == 0xff )
 		{
@@ -229,9 +236,9 @@ void turag_dxl_txrx_packet(void)
 	if( gbCommStatus != TURAG_DXL_COMM_TXSUCCESS )
 		return;	
 	
-	do{
+    do {
 		turag_dxl_rx_packet();		
-	}while( gbCommStatus == TURAG_DXL_COMM_RXWAITING );	
+    } while( gbCommStatus == TURAG_DXL_COMM_RXWAITING );
 }
 
 
@@ -304,9 +311,10 @@ int turag_dxl_get_highbyte( int word )
 //////////// high communication methods ///////////////////////
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
-bool turag_dxl_ping( int id )
-{
-	while(giBusUsing);
+bool turag_dxl_ping( int id ) {
+    //turag_binary_semaphore_wait(&sem_);
+
+    while (giBusUsing);
 
 	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
 	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_PING;
@@ -314,12 +322,17 @@ bool turag_dxl_ping( int id )
 	
 	turag_dxl_txrx_packet();
 
-	return (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+    bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+
+    //turag_binary_semaphore_signal(&sem_);
+
+    return result;
 }
 
-bool turag_dxl_read_byte( int id, int address, int* output )
-{
-	while(giBusUsing);
+bool turag_dxl_read_byte( int id, int address, int* output ) {
+    //turag_binary_semaphore_wait(&sem_);
+
+    while(giBusUsing);
 
 	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
 	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_READ;
@@ -331,12 +344,17 @@ bool turag_dxl_read_byte( int id, int address, int* output )
 
 	*output = (int)gbStatusPacket[TURAG_DXL_PARAMETER];
 	
-	return (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+    bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+
+    //turag_binary_semaphore_signal(&sem_);
+
+    return result;
 }
 
-bool turag_dxl_write_byte( int id, int address, int value )
-{
-	while(giBusUsing);
+bool turag_dxl_write_byte( int id, int address, int value ) {
+    //turag_binary_semaphore_wait(&sem_);
+
+    while(giBusUsing);
 
 	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
 	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_WRITE;
@@ -346,12 +364,17 @@ bool turag_dxl_write_byte( int id, int address, int value )
 	
 	turag_dxl_txrx_packet();
 	
-	return (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+    bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+
+    //turag_binary_semaphore_signal(&sem_);
+
+    return result;
 }
 
-bool turag_dxl_read_word( int id, int address, int* output )
-{
-	while(giBusUsing);
+bool turag_dxl_read_word( int id, int address, int* output ) {
+    //turag_binary_semaphore_wait(&sem_);
+
+    while(giBusUsing);
 
 	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
 	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_READ;
@@ -363,12 +386,17 @@ bool turag_dxl_read_word( int id, int address, int* output )
 
 	*output = turag_dxl_makeword((int)gbStatusPacket[TURAG_DXL_PARAMETER], (int)gbStatusPacket[TURAG_DXL_PARAMETER+1]);
 	
-	return (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+    bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+
+    //turag_binary_semaphore_signal(&sem_);
+
+    return result;
 }
 
-bool turag_dxl_write_word( int id, int address, int value )
-{
-	while(giBusUsing);
+bool turag_dxl_write_word( int id, int address, int value ) {
+    //turag_binary_semaphore_wait(&sem_);
+
+    while(giBusUsing);
 
 	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
 	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_WRITE;
@@ -379,21 +407,38 @@ bool turag_dxl_write_word( int id, int address, int value )
 	
 	turag_dxl_txrx_packet();
 	
-	return (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+    bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
+
+    //turag_binary_semaphore_signal(&sem_);
+
+    return result;
 }
 
 
-int turag_dxl_get_result(void)
-{
-	return gbCommStatus;
+int turag_dxl_get_result(void) {
+    //turag_binary_semaphore_wait(&sem_);
+
+    int result = gbCommStatus;
+
+    //turag_binary_semaphore_signal(&sem_);
+
+    return result;
 }
 
 
-int turag_dxl_get_rxpacket_error( int errbit )
-{
-	if( gbStatusPacket[TURAG_DXL_ERRBIT] & (unsigned char)errbit )
-		return 1;
+int turag_dxl_get_rxpacket_error( int errbit ) {
+    //turag_binary_semaphore_wait(&sem_);
 
-	return 0;
+    int result;
+
+    if ( gbStatusPacket[TURAG_DXL_ERRBIT] & (unsigned char)errbit ) {
+        result = 1;
+    } else {
+        result = 0;
+    }
+
+    //turag_binary_semaphore_signal(&sem_);
+
+    return result;
 }
 
