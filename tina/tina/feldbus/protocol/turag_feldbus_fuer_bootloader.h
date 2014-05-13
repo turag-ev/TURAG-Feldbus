@@ -39,7 +39,7 @@
 
 
 /**
- * @name response codes - negativ
+ * @name response codes - "negativ"
  * @{
  */
 #define TURAG_FELDBUS_BOOTLOADER_RESPONSE_PAGE_FAIL_END			0xFB
@@ -49,7 +49,7 @@
 ///@}
 
 /**
- * @name response codes - positiv
+ * @name response codes - "positiv"
  * @{
  */
 #define TURAG_FELDBUS_BOOTLOADER_RESPONSE_PAGE_CORRECT_SIZE		0xCF
