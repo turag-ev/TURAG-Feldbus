@@ -122,8 +122,6 @@ public:
         myDeviceInfo.bufferSize = 0;
     }
 
-    virtual ~Device() {}
-
     unsigned int getAddress(void) const { return myAddress; }
     virtual bool isAvailable(void);
     bool getDeviceInfo(DeviceInfo* device_info);
@@ -156,7 +154,7 @@ public:
     const char* name;
 
 protected:
-    // this funtion will always overwrite the last byte in transmit with the checksum of the preceeding bytes
+	// this funtion will always overwrite the last byte in transmit with the checksum of the preceeding bytes
     // so take care of the right buffer size and supply one byte less!
     bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 

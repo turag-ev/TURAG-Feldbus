@@ -41,33 +41,7 @@ public:
 	};
 	
 
-	
-protected:
-    Analog_t* analogInputs_;
-    int analogInputSize_;
-
-    Pwm_t* pwmOutputs_;
-    int pwmOutputSize_;
-
-    uint16_t digitalInputs_;
-    int digitalInputSize_;
-
-    uint16_t digitalOutputs_;
-    int digitalOutputSize_;
-
-    uint8_t* syncBuffer_;
-    int syncSize_;
-
-    bool isSynced_;
-
-    bool initDigitalOutputBuffer(void);
-    bool initPwmOutputBuffer(void);
-
-
-	
-public:
-
-    Aseb(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
+	Aseb(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
                 Device(name_, address, type),
                 analogInputs_(nullptr), analogInputSize_(-1),
                 pwmOutputs_(nullptr), pwmOutputSize_(-1),
@@ -103,6 +77,28 @@ public:
     bool getPwmFrequency(unsigned key, uint32_t* frequency);
     bool getAnalogResolution(unsigned* resolution);
                       
+	
+protected:
+    Analog_t* analogInputs_;
+    int analogInputSize_;
+
+    Pwm_t* pwmOutputs_;
+    int pwmOutputSize_;
+
+    uint16_t digitalInputs_;
+    int digitalInputSize_;
+
+    uint16_t digitalOutputs_;
+    int digitalOutputSize_;
+
+    uint8_t* syncBuffer_;
+    int syncSize_;
+
+    bool isSynced_;
+
+    bool initDigitalOutputBuffer(void);
+    bool initPwmOutputBuffer(void);
+	
 };
 
 } // namespace Feldbus

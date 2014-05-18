@@ -33,39 +33,15 @@ public:
         instruction = TURAG_DXL_ERRBIT_INSTRUCTION
     };
 
-protected:
-    int myId;
-    unsigned int maxTransmissionAttempts;
-    const unsigned int maxTransmissionErrors;
-    unsigned int myTransmissionErrorCounter;
-
-    bool hasCheckedAvailabilityYet;
-
-    int modelNumber_;
-    int firmwareVersion_;
-    int servoID_;
-
-    bool readWord(int address, int* word);
-    bool readByte(int address, int* byte);
-    bool writeWord(int address, int word);
-    bool writeByte(int address, int byte);
-    void printLastDeviceError(void);
-    bool hasDeviceError(DynamixelDevice::Error index);
-
-
-public:
-    const char* name;
-
     //Konstruktor für die Klasse DynamixelDevice
     DynamixelDevice(const char* name_, int id,
                     unsigned int max_transmission_attempts = TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
                     unsigned int max_transmission_errors = TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
         /*Initialisierungen */
-        myId(id), maxTransmissionAttempts(max_transmission_attempts), maxTransmissionErrors(max_transmission_errors),
+        name(name_), myId(id), maxTransmissionAttempts(max_transmission_attempts), maxTransmissionErrors(max_transmission_errors),
         myTransmissionErrorCounter(0), hasCheckedAvailabilityYet(false),
-        modelNumber_(-1), firmwareVersion_(-1), name(name_)   {}
-    virtual ~DynamixelDevice() {}
-
+        modelNumber_(-1), firmwareVersion_(-1)  {}
+        
     bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
     void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
 
@@ -138,6 +114,29 @@ public:
 
     virtual bool getPunch(int* punch);
     virtual bool setPunch(int punch);
+
+	const char* name;
+
+
+	
+protected:
+    int myId;
+    unsigned int maxTransmissionAttempts;
+    const unsigned int maxTransmissionErrors;
+    unsigned int myTransmissionErrorCounter;
+
+    bool hasCheckedAvailabilityYet;
+
+    int modelNumber_;
+    int firmwareVersion_;
+    int servoID_;
+
+    bool readWord(int address, int* word);
+    bool readByte(int address, int* byte);
+    bool writeWord(int address, int word);
+    bool writeByte(int address, int byte);
+    void printLastDeviceError(void);
+    bool hasDeviceError(DynamixelDevice::Error index);
 
 };
 
