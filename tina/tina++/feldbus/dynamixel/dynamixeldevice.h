@@ -41,7 +41,11 @@ public:
         name(name_), myId(id), maxTransmissionAttempts(max_transmission_attempts), maxTransmissionErrors(max_transmission_errors),
         myTransmissionErrorCounter(0), hasCheckedAvailabilityYet(false),
         modelNumber_(-1), firmwareVersion_(-1)  {}
-        
+
+#ifdef TURAG_LIBSTDCPP_SUPPORT
+    virtual ~DynamixelDevice() { }
+#endif
+
     bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
     void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
 

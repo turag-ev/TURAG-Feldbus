@@ -122,6 +122,10 @@ public:
         myDeviceInfo.bufferSize = 0;
     }
 
+#ifdef TURAG_LIBSTDCPP_SUPPORT
+    virtual ~Device() { }
+#endif
+
     unsigned int getAddress(void) const { return myAddress; }
     virtual bool isAvailable(void);
     bool getDeviceInfo(DeviceInfo* device_info);
