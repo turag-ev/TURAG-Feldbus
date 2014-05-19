@@ -50,9 +50,9 @@ public:
                 syncBuffer_(nullptr), syncSize_(0), isSynced_(false)  { }
                 
                 
-    bool initialize(uint8_t* sync_buffer, int sync_buffer_size,
-                    Analog_t* analogInputs, int analogInputSize,
-                    Pwm_t* pwmOutputs, int pwmOutputSize );
+    bool initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
+                    Analog_t* analogInputs, unsigned analogInputSize,
+                    Pwm_t* pwmOutputs, unsigned pwmOutputSize );
 
     bool isSynced(void) { return isSynced_; }
 
