@@ -82,6 +82,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
                 }
             } else {
                 ++globalTransmissionErrorCounter;
+                ++myTotalTransmissionErrors;
                 if (!(globalTransmissionErrorCounter % 25)) {
                     criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
                 }

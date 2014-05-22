@@ -17,6 +17,7 @@ bool DynamixelDevice::isAvailable(void) {
                 return true;
             } else {
                 ++myTransmissionErrorCounter;
+                ++myTotalTransmissionErrors;
             }
         }
     }
@@ -48,6 +49,7 @@ bool DynamixelDevice::readWord(int address, int* word) {
     } else {
         turag_warningf("%s: rs485 transceive failed", name);
         myTransmissionErrorCounter += attempt;
+        myTotalTransmissionErrors += attempt;
         return false;
     }
 }
@@ -76,6 +78,7 @@ bool DynamixelDevice::readByte(int address, int* byte) {
     } else {
         turag_warningf("%s: rs485 transceive failed", name);
         myTransmissionErrorCounter += attempt;
+        myTotalTransmissionErrors += attempt;
         return false;
     }
 }
@@ -100,6 +103,7 @@ bool DynamixelDevice::writeWord(int address, int word) {
     } else {
         turag_warningf("%s: rs485 transceive failed", name);
         myTransmissionErrorCounter += attempt;
+        myTotalTransmissionErrors += attempt;
         return false;
     }
 }
@@ -124,6 +128,7 @@ bool DynamixelDevice::writeByte(int address, int byte) {
     } else {
         turag_warningf("%s: rs485 transceive failed", name);
         myTransmissionErrorCounter += attempt;
+        myTotalTransmissionErrors += attempt;
         return false;
     }
 }

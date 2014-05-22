@@ -39,7 +39,7 @@ public:
                     unsigned int max_transmission_errors = TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
         /*Initialisierungen */
         name(name_), myId(id), maxTransmissionAttempts(max_transmission_attempts), maxTransmissionErrors(max_transmission_errors),
-        myTransmissionErrorCounter(0), hasCheckedAvailabilityYet(false),
+        myTransmissionErrorCounter(0), myTotalTransmissionErrors(0), hasCheckedAvailabilityYet(false),
         modelNumber_(-1), firmwareVersion_(-1)  {}
 
 #ifdef TURAG_LIBSTDCPP_SUPPORT
@@ -48,6 +48,7 @@ public:
 
     bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
     void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
+    unsigned int getTotalTransmissionErrors(void) { return myTotalTransmissionErrors; }
 
     unsigned int getID(void) const { return myId; }
     bool setID(int address);
@@ -128,6 +129,7 @@ protected:
     unsigned int maxTransmissionAttempts;
     const unsigned int maxTransmissionErrors;
     unsigned int myTransmissionErrorCounter;
+    unsigned int myTotalTransmissionErrors;
 
     bool hasCheckedAvailabilityYet;
 
