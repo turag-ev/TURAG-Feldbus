@@ -118,7 +118,8 @@ public:
         maxTransmissionErrors(max_transmission_errors),
         myChecksumType(type),
         myTransmissionErrorCounter(0),
-        myTotalTransmissionErrors(0)
+        myTotalTransmissionErrors(0),
+        myTotalTransmissions(0)
     {
         myDeviceInfo.bufferSize = 0;
     }
@@ -137,6 +138,7 @@ public:
     bool hasReachedTransmissionErrorLimit(void) const { return myTransmissionErrorCounter >= maxTransmissionErrors; }
     void clearTransmissionErrors(void) { myTransmissionErrorCounter = 0; }
     unsigned int getTotalTransmissionErrors(void) { return myTotalTransmissionErrors; }
+    unsigned int getTotalTransmissions(void) { return myTotalTransmissions; }
 
 	template<typename T, typename U> _always_inline
 	bool transceive(Request<T>& transmit, Response<U>* receive) {
@@ -175,6 +177,7 @@ private:
     ChecksumType myChecksumType;
     unsigned int myTransmissionErrorCounter;
     unsigned int myTotalTransmissionErrors;
+    unsigned int myTotalTransmissions;
 
     static unsigned int globalTransmissionErrorCounter;
     static SystemTime lastTransmission;

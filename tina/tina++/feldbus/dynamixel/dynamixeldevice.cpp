@@ -14,8 +14,10 @@ bool DynamixelDevice::isAvailable(void) {
         while (!hasReachedTransmissionErrorLimit()) {
             if (turag_dxl_ping(myId)) {
                 hasCheckedAvailabilityYet = true;
+                ++myTotalTransmissions;
                 return true;
             } else {
+                ++myTotalTransmissions;
                 ++myTransmissionErrorCounter;
                 ++myTotalTransmissionErrors;
             }
@@ -39,6 +41,7 @@ bool DynamixelDevice::readWord(int address, int* word) {
 
     while (success == false && attempt < maxTransmissionAttempts) {
         ++attempt;
+        ++myTotalTransmissions;
         success = turag_dxl_read_word(myId, address, word);
     }
 
@@ -68,6 +71,7 @@ bool DynamixelDevice::readByte(int address, int* byte) {
 
     while (success == false && attempt < maxTransmissionAttempts) {
         ++attempt;
+        ++myTotalTransmissions;
         success = turag_dxl_read_byte(myId, address, byte);
     }
 
@@ -93,6 +97,7 @@ bool DynamixelDevice::writeWord(int address, int word) {
 
     while (success == false && attempt < maxTransmissionAttempts) {
         ++attempt;
+        ++myTotalTransmissions;
         success = turag_dxl_write_word(myId, address, word);
     }
 
@@ -118,6 +123,7 @@ bool DynamixelDevice::writeByte(int address, int byte) {
 
     while (success == false && attempt < maxTransmissionAttempts) {
         ++attempt;
+        ++myTotalTransmissions;
         success = turag_dxl_write_byte(myId, address, byte);
     }
 

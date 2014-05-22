@@ -96,6 +96,8 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         // 	}
         // 	info("]\n");
 
+        ++myTotalTransmissions;
+
         if (success && checksum_correct) {
             // if we had a successful transmission, we reset the error counter
             // but resetting the error only makes sense if we got a response from the device
