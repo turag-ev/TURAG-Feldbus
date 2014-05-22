@@ -12,12 +12,11 @@ namespace Feldbus {
 bool DynamixelDevice::isAvailable(void) {
     if (!hasCheckedAvailabilityYet) {
         while (!hasReachedTransmissionErrorLimit()) {
+            ++myTotalTransmissions;
             if (turag_dxl_ping(myId)) {
                 hasCheckedAvailabilityYet = true;
-                ++myTotalTransmissions;
                 return true;
             } else {
-                ++myTotalTransmissions;
                 ++myTransmissionErrorCounter;
                 ++myTotalTransmissionErrors;
             }
