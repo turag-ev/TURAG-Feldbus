@@ -480,6 +480,23 @@ bool Aseb::getAnalogResolution(unsigned* resolution) {
     return true;
 }
 
+bool Aseb::getUpTime(float* uptime) {
+    Request<uint8_t> request;
+    request.data = TURAG_FELDBUS_ASEB_UPTIME;
+
+    Response<uint32_t> response;
+
+    if (!transceive(request, &response)) return false;
+
+    // The 75 is part of the Aseb protocol defiition (Uptime is
+    // counted with 75 Hz).
+    if (uptime) {
+        *uptime = static_cast<float>(response.data) / 75.0f;
+    }
+
+    return true;
+}
+
 	
 } // namespace Feldbus
 } // namespace TURAG
