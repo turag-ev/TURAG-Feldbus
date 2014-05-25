@@ -67,6 +67,22 @@ void turag_feldbus_aseb_init(
 	uint8_t analog_resolution);
 
 
+/*!
+ * \brief This function toggles some status led.
+ * 
+ * The device implementation needs to provide this function.
+ */
+extern void turag_feldbus_aseb_toggle_status_led(void);
+
+/*!
+ * \brief Needs to be called peridocally with a frequency
+ * of approximately 75 Hz.
+ * 
+ * This function toggles the status led with some characteristic
+ * pattern and increments the uptime counter.
+ */
+void turag_feldbus_aseb_periodic_function(void);
+
 
 #endif
 
