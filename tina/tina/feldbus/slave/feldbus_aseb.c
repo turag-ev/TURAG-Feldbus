@@ -306,6 +306,8 @@ void turag_feldbus_aseb_periodic_function(void) {
 	if (count > 5) {
 		if (subcount == 0) {
 			turag_feldbus_aseb_toggle_status_led();
+		} else if (subcount == 1) {
+			turag_feldbus_aseb_toggle_status_led();
 		}
 		subcount = (subcount+1) & 7;
 		count = 0;
