@@ -27,7 +27,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
     if (hasReachedTransmissionErrorLimit()) {
         static unsigned shit_displayed = 0;
         if (shit_displayed < 5) {
-            errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
+            turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
             shit_displayed++;
         }
         return false;
@@ -79,7 +79,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
                 ++globalTransmissionErrorCounter;
                 ++myTotalTransmissionErrors;
                 if (!(globalTransmissionErrorCounter % 25)) {
-                    criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
+                    turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
                 }
             }
             ++attempt;
