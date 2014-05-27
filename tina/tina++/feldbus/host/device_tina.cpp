@@ -56,11 +56,6 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         // we try to transmit until the transmission succeeds and the checksum is correct
         // or the number of transmission attempts is exceeded.
         while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
-            // introduce smallest possible delay
-            //#warning transmission rate of rs485-bus artificially reduced to avoid errors
-            //			while(lastTransmission > get_current_tick() - ms_to_ticks(1));
-            //			lastTransmission = get_current_tick();
-
             success = turag_rs485_transceive(transmit, transmit_length, receive, receive_length);
 
             if (success) {
@@ -96,7 +91,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         // 	}
         // 	info("]\n");
 
-        ++myTotalTransmissions;
+        myTotalTransmissions += attempt;
 
         if (success && checksum_correct) {
             // if we had a successful transmission, we reset the error counter
