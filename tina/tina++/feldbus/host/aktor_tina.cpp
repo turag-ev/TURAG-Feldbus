@@ -6,10 +6,13 @@
  *
  */
 
+#define TURAG_DEBUG_LOG_SOURCE "B"
+
+
 #include "aktor.h"
 
 #include <tina++/tina.h>
-#include <tina/debug.h>
+#include <tina/debug/print.h>
 
 #include <cstring>
 
@@ -114,22 +117,22 @@ bool Aktor::populateCommandSet(AktorCommand_t* commandSet_, unsigned int command
 
 bool Aktor::getValue(uint8_t key, float* value) {
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name);
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name);
         return false;
     }
 
     AktorCommand_t* command = &commandSet[key-1];
     
     if (command->length == AktorCommandLength::none) {
-        errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name);
         return false;
     }
     if (command->factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        errorf("%s: value not floating point", name);
+        turag_errorf("%s: value not floating point", name);
         return false;
     }
     
@@ -169,22 +172,22 @@ bool Aktor::getValue(uint8_t key, float* value) {
 
 bool Aktor::getValue(uint8_t key, int32_t* value) {
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name);
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name);
         return false;
     }
 
     AktorCommand_t* command = &commandSet[key-1];
 
     if (command->length == AktorCommandLength::none) {
-        errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name);
         return false;
     }
     if (command->factor != TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        errorf("%s: value is floating point", name);
+        turag_errorf("%s: value is floating point", name);
         return false;
     }
 
@@ -225,26 +228,26 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
 
 bool Aktor::setValue(uint8_t key, float value) {
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name);
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name);
         return false;
     }
 
     AktorCommand_t* command = &commandSet[key-1];
 
     if (command->length == AktorCommandLength::none) {
-        errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name);
         return false;
     }
     if (command->writeAccess != AktorCommandWriteAccess::write) {
-        errorf("%s: key not writable", name);
+        turag_errorf("%s: key not writable", name);
         return false;
     }
     if (command->factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        errorf("%s: value not floating point", name);
+        turag_errorf("%s: value not floating point", name);
         return false;
     }
 
@@ -281,26 +284,26 @@ bool Aktor::setValue(uint8_t key, float value) {
 
 bool Aktor::setValue(uint8_t key, int32_t value) {
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name);
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name);
         return false;
     }
 
     AktorCommand_t* command = &commandSet[key-1];
 
     if (command->length == AktorCommandLength::none) {
-        errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name);
         return false;
     }
     if (command->writeAccess != AktorCommandWriteAccess::write) {
-        errorf("%s: key not writable", name);
+        turag_errorf("%s: key not writable", name);
         return false;
     }
     if (command->factor != TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        errorf("%s: value is floating point", name);
+        turag_errorf("%s: value is floating point", name);
         return false;
     }
 
@@ -337,18 +340,18 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
 
 unsigned int Aktor::getCommandNameLength(uint8_t key) {
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name);
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name);
         return false;
     }
 
     AktorCommand_t* command = &commandSet[key-1];
 
     if (command->length == AktorCommandLength::none) {
-        errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name);
         return false;
     }
 
@@ -424,17 +427,17 @@ unsigned int Aktor::getStructuredOutputTableLength(void) {
 
 bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
     if (keys.size() > getStructuredOutputTableLength()) {
-        errorf("%s: output table in device too small for number of provided keys", name);
+        turag_errorf("%s: output table in device too small for number of provided keys", name);
         return false;
     }
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name);
         return false;
     }
     
     for (unsigned int i = 0; i < keys.size(); ++i) {
         if (keys[i] > getCommandsetLength() || commandSet[keys[i] - 1].length == AktorCommandLength::none) {
-            errorf("%s: requested keys invalid", name);
+            turag_errorf("%s: requested keys invalid", name);
             return false;
         }
     }
@@ -463,11 +466,11 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
 
 bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
     if (structuredOutputTable.size() == 0) {
-        errorf("%s: structured output mapping empty", name);
+        turag_errorf("%s: structured output mapping empty", name);
         return false;
     }
     if (!commandSetPopulated) {
-        errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name);
         return false;
     }
     

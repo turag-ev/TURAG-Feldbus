@@ -12,7 +12,7 @@
 #include <tina++/time.h>
 #include <tina++/crc/xor.h>
 #include <tina++/crc/crc8.h>
-#include <tina/debug.h>
+#include <tina/debug/print.h>
 #include <tina/rs485.h>
 
 #include "device.h"
