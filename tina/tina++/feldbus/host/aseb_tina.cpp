@@ -384,7 +384,10 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
         request.data.value = static_cast<uint16_t>(duty_cycle / 100.0f * pwmOutputs_[index].max_value + 0.5f);
 
         Response<> response;
-        if (!transceive(request, &response)) return false;
+        if (!transceive(request, &response)) {
+            turag_errorf("Aseb setPWMOutput transceive failed");
+            return false;
+        }
 
         pwmOutputs_[index].value = duty_cycle;
         return true;
