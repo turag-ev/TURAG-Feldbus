@@ -606,11 +606,15 @@ bool DynamixelDevice::getCurrentPosition(float* position) {
 //Goal Position
 bool DynamixelDevice::setGoalPosition(float position) {
     if ((0<=position)&&(position<=300)){
-        int targetPosition=(int)position/TURAG_DXL_FACTOR_DEGREE;
+        targetPosition=(int)position/TURAG_DXL_FACTOR_DEGREE;
         return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, targetPosition);
     } else {
         return false;
     }
+}
+
+bool DynamixelDevice::resetGoalPosition(void){
+    return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, targetPosition);
 }
 
 bool DynamixelDevice::getGoalPosition(float* position) {

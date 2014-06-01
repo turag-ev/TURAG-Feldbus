@@ -63,6 +63,7 @@ public:
     virtual bool setLed(bool on);
     virtual bool getCurrentPosition(float* position);
     virtual bool setGoalPosition(float position);
+    virtual bool resetGoalPosition(void);
     virtual bool getGoalPosition(float* position);
 
     virtual bool getTorqueEnable(bool* enabled);
@@ -146,6 +147,7 @@ protected:
     void printLastDeviceError(void);
     bool hasDeviceError(DynamixelDevice::Error index);
 
+    int targetPosition;
 };
 
 
