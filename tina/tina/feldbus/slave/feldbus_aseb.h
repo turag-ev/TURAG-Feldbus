@@ -17,8 +17,8 @@
 #define TINA_FELDBUS_SLAVE_FELDBUS_ASEB_H_
 
 #include <tina/tina.h>
-#include "feldbus.h"
 #include <feldbus_config.h>
+#include "feldbus.h"
 
 
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_ASEB) || defined(DOXYGEN)

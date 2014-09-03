@@ -18,8 +18,13 @@
  */
 /// @brief Master address on the bus.
 #define TURAG_FELDBUS_MASTER_ADDR		(0x80)
+/// 2-byte master address on the bus.
+#define TURAG_FELDBUS_MASTER_ADDR_2		(0x8000)
+
 /// @brief Broadcast address on the bus.
 #define TURAG_FELDBUS_BROADCAST_ADDR		(0x00)
+/// @brief 2-byte broadcast address on the bus.
+#define TURAG_FELDBUS_BROADCAST_ADDR_2		(0x0000)
 
 /// @}
 

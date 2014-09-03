@@ -16,7 +16,13 @@ turag_feldbus_slave_uart_t turag_feldbus_slave_uart;
 
 
 void turag_feldbus_slave_init() {
+#if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
 	turag_feldbus_slave_uart.txbuf[0] = TURAG_FELDBUS_MASTER_ADDR|MY_ADDR;
+#elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+	turag_feldbus_slave_uart.txbuf[0] = (TURAG_FELDBUS_MASTER_ADDR_2|MY_ADDR) & 0xff;
+	turag_feldbus_slave_uart.txbuf[1] = (TURAG_FELDBUS_MASTER_ADDR_2|MY_ADDR) >> 8;
+#endif
+	
 	turag_feldbus_slave_uart.index = 0;
 	turag_feldbus_slave_uart.rx_length = 0;
 	turag_feldbus_slave_uart.overflow = 0;
@@ -29,9 +35,7 @@ void turag_feldbus_slave_init() {
 	turag_feldbus_slave_activate_rx_interrupt();
 	turag_feldbus_slave_deactivate_dre_interrupt();
 	turag_feldbus_slave_deactivate_tx_interrupt();
-
 }
-
 
 
 
