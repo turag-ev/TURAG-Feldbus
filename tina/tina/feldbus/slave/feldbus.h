@@ -8,34 +8,15 @@
 
 
 /** 
- * @defgroup feldbus-slave-base Base Device
+ * @defgroup feldbus-slave-base Basis-Implementierung
  * @ingroup feldbus-slave
- * @section TURAG Feldbus base support
- * This header implements generic support for TURAG feldbus compatible slave devices.
- *
- * This header requires the presence of a device-specific header with the name "feldbus_config.h"
- * containing the following definitions:
- * - MY_ADDR
- * - TURAG_FELDBUS_DEVICE_PROTOCOL
- * - TURAG_FELDBUS_DEVICE_TYPE_ID
- * - TURAG_FELDBUS_SLAVE_ADDRESS_LENGTH
- * - TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE
- * - TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
- * - TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
- * - TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
  * 
- * It should also include a device protocol header unless the device works directly on top of the base protocol. 
- * In this case this header should not be included directly but rather by the implementation of the desired device protocol.
- *
- * To be able make use of this module you need to make sure that every required function is present - required hardware functions
- * you need to define yourself while the device protocol should in most cases implement all required functionality.
+ * Zur TURAG-Feldbus-Basisimplementierung gehörige Dateien. 
+ * Nähere Infos siehe \ref feldbus-slave
  * 
- * One very important aspect when using this module is the function turag_feldbus_do_processing.
- * While buffering of received data is done in interrupts, the processing of the received
- * packages is done in this funtion. Thus it needs to be called continuously from the main loop.
+ * feldbus_config.h ist eine Beispieldatei, die nicht direkt includiert werden darf.
  * 
- * This makes it easier to design the protocol functions as these will never be called in
- * the context of an interrupt.
+ * 
  */
 
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_H_
@@ -49,10 +30,17 @@
  *  and need to be defined for the target platform
  */
 ///@{
+
+/**
+ * This function should implement all required hardware initializations (e.g. UART peripheral).
+ */
+extern void turag_feldbus_hardware_init(void);
+
 /**
  * This function should implement all logic that is required to disable the rs485 line driver thus releasing the bus.
  */
 extern void turag_feldbus_slave_rts_off(void);
+
 /**
  * This function should implement all logic that is required to enable the rs485 line driver thus claiming 
  * the bus for active driving.
@@ -186,13 +174,21 @@ extern void turag_feldbus_slave_process_broadcast(uint8_t* message, uint8_t mess
 
 /**Initialize TURAG Feldbus support
  *
- * Call this function after initializing the UART peripheral
- * with the correct baudrate and after enabling transmitter and receiver.
+ * Call this function to set up the TURAG Feldbus module.
  *
  * If your device does not have a bootloader, you should call this function
  * only after making sure that no device is being programmed.
  */
 void turag_feldbus_slave_init(void);
+
+/**
+ * This function needs to be called continuously from the device's
+ * main loop. It handles all advanced communication logic.
+ * 
+ */
+TURAG_INLINE void turag_feldbus_do_processing(void);
+
+
 ///@}
 
 
@@ -238,17 +234,10 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
 
 ///@}
 
-/**
- * This function needs to be called continuously from the device's
- * main loop. It handles all advanced communication logic.
- * 
- */
-TURAG_INLINE void turag_feldbus_do_processing(void);
-
 // debugging functions
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED || defined(DOXYGEN)
 /** @name Debug-Functions
- *  Only available if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED is defined.
+ *  Only available if \ref TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED is defined.
  *
  *  These functions can be used to print conventional
  *  debug messages in between standard communication data for debugging purposes only.

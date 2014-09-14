@@ -40,7 +40,6 @@
 
 #include <tina/tina.h>
 #include "feldbus.h"
-#include <feldbus_config.h>
 
 
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(DOXYGEN)

@@ -31,6 +31,8 @@ void turag_feldbus_slave_init() {
 #endif
 	turag_feldbus_slave_name_length = strlen(turag_feldbus_slave_name);
 
+	turag_feldbus_hardware_init();
+	
 	turag_feldbus_slave_rts_off();
 	turag_feldbus_slave_activate_rx_interrupt();
 	turag_feldbus_slave_deactivate_dre_interrupt();

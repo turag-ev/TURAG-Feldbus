@@ -1,29 +1,210 @@
 /** @defgroup feldbus Feldbus
  *
- * The TURAG Feldbus is a communication protocol on top of RS485.
- * It consists of a basic protocol and specific device protocols.
+ * %TURAG Feldbus ist eine Busspezifikation, die auf RS485 aufsetzt. 
+ * Es besteht aus einem Basis-Protokoll, das den konfliktfreien
+ * Betrieb aller Geräte auf dem Bus gewährleistet, sowie aus spezialisierten
+ * Anwendungsprotokollen, die bestimmte Geräteklassen mit spezialisierten
+ * Eigenschaften definieren.
  * 
+ * Die Spezifikation von Basis- und Anwendungsprotokollen ist im 
+ * [Wiki](https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus) zu finden.
  * 
- * For more information see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus
+ * Dieses Modul enthält in seinen jeweiligen Submodulen fertige Quellcodes
+ * für Slave- und Hostseite, die konform zu den Spezifikationen des Basis- und
+ * der Anwendungsprotokolle ist. Insbesondere bei der Entwicklung neuer Slave-Geräte
+ * ist dies ein großer Vorteil. Ein weiteres Submodul enthält die von den ersten beiden
+ * Modulen benötigten Header mit Steuer-Definitionen (entsprechend der Protokoll-Spezifikationen).
+ *
  * 
- * @defgroup feldbus-slave Slave implementations
+ * @defgroup feldbus-slave Slave Implementierungen [C]
  * @ingroup feldbus
  * 
- * Generic, platform-independent implementations for slave devices.
+ * Um die Entwicklung neuer TURAG-Feldbus Geräte zu beschleunigen und die Kompatibilität
+ * zu gewährleisten, gibt es fertige und plattformunabhängige Implementierungen für Basis-
+ * und Anwendungsprotokolle. Diese nutzen zwar einige der in TinA enthaltenen Algorithmen,
+ * benötigen aber kein Betriebssystem oder Thread-Support und sind daher für kleinere
+ * Controller wie AVR ATmega/Xmega geeignet (und auch vorgesehen).
+ * 
+ * @section felbus-slave-struktur-basis Struktur der Basis-Implementierung
+ * 
+ * \image html feldbus-slave.png "Strukturschema der TURAG-Feldbus-Basisimplementierung"
+ * Die Basis-Implementierung sitzt zwischen Hardware und Firmware des Slave-Gerätes. 
+ * Die Kommunikation mit der Hardware geschieht über ein Hardware-Interface, während für die
+ * Firmware des Gerätes mit dem Protokoll-Interface eine abstrakte Schnittstelle bereitsteht,
+ * um mit geringem Aufwand über den TURAG-Feldbus kommunizieren zu können.
+ * 
+ * Beide Interfaces sind jeweils teilweise implementiert - der andere Teil muss 
+ * vom Entwickler des Slave-Gerätes bereitgestellt werden, so wie dies im Strukturschema 
+ * dargestellt ist.
+ * 
+ * Anhand des Strukturschemas lässt sich die Arbeitsweise der Basis-Implementierung auch 
+ * gut beschreiben. Der Entwickler des Gerätes ruft zu einem frühen Zeitpunkt 
+ * turag_feldbus_slave_init() auf. Das initialisiert interne Strukturen und ruft seinerseits
+ * turag_feldbus_hardware_init() auf, welches die UART-Peripherie des Controllers initialisieren 
+ * sollte. Danach müssen (falls das der Controller verlangt) die Interrupts global aktiviert 
+ * werden. Ab diesem Zeitpunkt werden eintreffende Daten im Hardware-Interfaceteil der
+ * Basis-Implementierung verarbeitet. Da die Paket-Erkennung im Kontext von Interrupts
+ * ausgeführt wird, wird an dieser Stelle nur ein Flag gesetzt, sobald ein gültiges Paket
+ * erkannt wurde. Die eigentliche Auswertung eines angekommenen Paketes wird erst gestartet,
+ * wenn turag_feldbus_do_processing() aufgerufen wird. Diese Funktion deaktiviert 
+ * temporär den Empfang neuer Daten, kopiert das empfangene Paket in einen Zwischenpuffer
+ * und aktiviert die Kommunikation wieder. Dann wird, je nach Pakettyp, 
+ * turag_feldbus_slave_process_package() oder turag_feldbus_slave_process_broadcast() 
+ * aufgerufen und das Paket wird so verarbeitet, wie das die Firmware des Slave-Gerätes
+ * vorsieht.
+ * 
+ * Diese strikte Trennung der Kommunikation zwischen Empfang der Daten in Interrupts
+ * und Verarbeitung im Kontext von main() hat zwei Vorteile:
+ * - Die Verweildauer in Interrupts wird reduziert, was bei zeitkritischen 
+ * Anwendungen wie Motorregelungen relevant sein kann. Der Entwickler muss sich 
+ * dadurch weniger Gedanken über die Laufzeit der Paketverarbeitung machen, da 
+ * diese lediglich ein Teil von main() ist.
+ * - Da der komplette Datenaustausch zwischen Interrupts und main-Kontext 
+ * von der Basis-Implementierung übernommen wird, muss der Entwickler keine 
+ * weiteren Vorkehrungen treffen - es ist weder nötig Variablen als volatile
+ * zu deklarieren, noch nicht-atomare Schreiboperationen vor Unterbrechung durch
+ * Interrupts zu schützen (das gilt natürlich nur, solange das Slave-Gerät nicht
+ * selbst noch weitere Interrupts benutzt).
+ * 
+ * **Wichtig**: damit sich das Slave-Gerät korrekt verhält, muss turag_feldbus_do_processing()
+ * regelmäßig von der Hauptschleife aus aufgerufen werden.
+ * 
+ * @section felbus-slave-struktur-anwendung Struktur der Anwendungsprotokoll-Implementierungen
+ * Die Implementierungen der Anwendungsprotokolle führen im Allgemeinen zwei Änderungen
+ * ein:
+ * - statt turag_feldbus_slave_init() muss eine spezialisierte Initialisierungsroutine
+ * aufgerufen werden
+ * - turag_feldbus_slave_process_package() und turag_feldbus_slave_process_broadcast() 
+ * werden vom Anwendungsprotokoll selbst implementiert, während die Firmware das 
+ * Slave-Gerätes spezialisiertere Funktionen zu implementieren hat.
+ * 
+ * An der Notwendigkeit, turag_feldbus_do_processing() zyklisch aufzurufen,
+ * ändert sich normalerweise nichts.
+ * 
+ * @section feldbus-slave-implementierungsanleitung HowTo: Softwaregerüst für ein neues Feldbusgerät erstellen
+ * 1. Verzeichnisstruktur erstellen:
+ * \image html feldbus-device-file-structure.png
+ * 2. Als Basis für die Konfigurationsdatei sollte eine Kopie der Datei programmierung/tina/tina/feldbus/slave/feldbus_config.h benutzt werden.
+ *    Wichtig ist hierbei das korrekte includieren des passenden Protokoll-Headers. Basiert das Gerät auf einem Anwendungsprotokoll 
+ *    (statt nur des Basis-Protokolls) werden evt. weitere Definitionen nötig, die in der Beispieldatei nicht enthalten sind. 
+ * 3. Die Funktionen des Hardware-Interfaces müssen für die Plattform bereitgestellt werden (feldbus_hardware_driver.c). 
+ * 4. Die Funktionen des Protokoll-Interfaces müssen gemäß dem Strukturschema bereitgestellt werden (main.c).
+ * 5. Ein Makefile ist nötig, welches
+ *  - alle Dateien des src-Ordners compiliert
+ *  - die Feldbus-Slave-Quelldateien compiliert (es kann problemlos der komplette Ordner compiliert werden, da
+ *    nur Code des gewählten Protokolls benutzt wird)
+ *  - die Quelldateien des eingestellten Checksummen-Algorithmus compiliert
+ *  - den tina- und den src-Ordner als Include-Pfad konfiguriert
+ * 
+ * Das Makefile kann üblicherweise aus alten Projekten übernommen und entsprechend angepasst werden.
+ * 
+ * **Wichtig:** zumindest die Datei, die die ISRs enthält (also feldbus_hardware_driver.c) muss mit -O3
+ * compiliert werden! Nur dann beginnt der Compiler automatisch Aufrufe von kleinen Funktionen zu inlinen,
+ * was im Falle der ISRs wichtig ist. Ansonsten leidet die Performance stark.
  * 
  * 
- * @defgroup feldbus-host Host implementations
+ * @section feldbus-slave-beispiel-hardware-interface Beispiel-Implementierung des Hardware-Interfaces
+ * Im folgenden wird ein Beispiel betrachtet, wie die Implementierung des Hardware-Interfaces für einen
+ * ATmega88 aussehen kann.
+ * 
+ * Neben den AVR-Headern wird der entsprechende Protokoll-Header eingebunden.
+ * \snippet feldbus_hardware_driver.c Includes
+ * 
+ * Als nächstes folgen einige Definitionen. Insbesondere die letzten beiden werden
+ * üblicherweise über das Makefile global im Projekt bereitgestellt.
+ * \snippet feldbus_hardware_driver.c Definitions
+ * 
+ * Danach ein paar hilfreiche Makros:
+ * \snippet feldbus_hardware_driver.c Helper macros
+ * 
+ * Einen großen Teil der Implementierung nimmt die Bereitstellung der notwendigen
+ * Hardware-Interface-Funktionen ein, darunter die Funktion \ref turag_feldbus_hardware_init() 
+ * zum Initialisieren der Peripherie des Controllers.
+ * \snippet feldbus_hardware_driver.c Required hardware functions
+ * 
+ * Zu guter letzt folgen die ISR-Handler, die die Ausführung lediglich an die entsprechenden
+ * Funktionen der Basis-Implementierung weiterreichen:
+ * \snippet feldbus_hardware_driver.c Interrupts
+ * 
+ * @section feldbus-slave-korrekt-includen Korrektes includieren der Header
+ * 
+ * Die folgenden Graphen zeigen an, welche Header sinnvollerweise von welchen Dateien includiert
+ * werden sollten. Blau umrandete Dateien sind Teil von TinA, schwarz umrandete solche,
+ * die der Entwickler des Slave-Gerätes bereitstellt.
+ * 
+ * Hervorzuheben sind folgende Punkte:
+ * - die Header von Basis- und Anwendungsprotokoll sind auf die Existenz von 
+ * "feldbus_config.h" angewiesen und die Tatsache, dass dieser Header auch 
+ * den richtigen Protokollheader includiert.
+ * - setzt das Slave-Gerät direkt auf dem Basis-Protokoll auf, so wird stets "feldbus.h" 
+ * includiert, anonsten der entsprechende Header des Anwendungsprotokolls.
+ * 
+ * \dot
+ * digraph G {
+ * 
+ * node [shape="box", fontname="Helvetica", fontsize="12"];
+ * 
+ * subgraph cluster0 {
+ * 		a1 -> a2 -> a3 -> a4;
+ * 		label = "Basis-Implementierung";
+ * 		fontname="Helvetica";
+ * 		fontsize="14";
+ * 		color="white";
+ * }
+ * 
+ * subgraph cluster1 {
+ * 		b1 -> b2 ->b3 -> b4 -> b5 -> b6; 
+ * 		label ="Stellantriebe-Anwendungsprotokoll"
+ * 		fontname="Helvetica";
+ * 		fontsize="14";
+ * 		color="white";
+ * }
+ * 
+ * a1 [label="main.c; andere Dateien"];
+ * a2 [label="feldbus.h", color="blue"];
+ * a3 [label="feldbus_config.h"];
+ * a4 [label="turag_feldbus_bus_protokoll.h", color="blue"];
+ * 
+ * b1 [label="main.c; andere Dateien"];
+ * b2 [label="feldbus_stellantriebe.h", color="blue"];
+ * b3 [label="feldbus.h", color="blue"];
+ * b4 [label="feldbus_config.h"];
+ * b5 [label="turag_feldbus_fuer_stellantriebe.h", color="blue"];
+ * b6 [label="turag_feldbus_bus_protokoll.h", color="blue"];
+ * 
+ * 
+ * }
+ * \enddot
+ * 
+ * @section feldbus-slave-neues-anwendungsprotokoll Implementieren eines neuen Anwendungsprotokolls
+ * Ein neues Anwendungsprotokoll ist normalerweise dann von Nöten, wenn eine 
+ * neue Gerätegruppe entwickelt werden soll. Die Entwicklung eines neuen
+ * Anwendungsprotokolls umfasst mehrere Schritte:
+ * 
+ * 1. Im [Wiki](https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus#anwendungs-protokolle) 
+ * eine Seite mit den Spezifikationsdetails des Anwendungsprotokolls anlegen und auf der 
+ * Hauptseite verlinken
+ * 2. In turag_feldbus_bus_protokoll.h wird die ID des neuen Protokolls eingetragen
+ * 3. Für das neue Protokoll wird ein eigener Protokollheader angelegt, der die in der Spezifikation
+ * definierten Werte und IDs enthält
+ * 4. Eine Slave-Implementierung des Anwendungsprotokolls wird angelegt, die üblicherweise
+ * aus einem Header und einer Quelldatei besteht.
+ * 5. Hostklassen zur Kommunikation mit den neuen Geräten werden angelegt
+ * 6. In der TURAG-Console wird Support für den Gerätetyp eingebaut, was gleich 
+ * zur Verifizierung der Host-Klassen benutzt werden kann.
+ * 
+ * 
+ * @defgroup feldbus-host Host Implementierungen [C++]
  * @ingroup feldbus
  * 
- * Host implementations interfacing different slave device classes. 
+ * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
  * 
- * @defgroup feldbus-protocol Protocol definitions
+ * @defgroup feldbus-protocol Protokoll-Definitionen [C/C++]
  * @ingroup feldbus
  * 
- * Protocol definitions used by slaves and host.
+ * Protokoll-Definitionen, die von Host- und Slave-Implementierungen 
+ * gleichermaßen benutzt werden.
  * 
  * 
  *
  */ 
-
- 

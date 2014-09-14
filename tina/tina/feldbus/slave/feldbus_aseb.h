@@ -17,7 +17,6 @@
 #define TINA_FELDBUS_SLAVE_FELDBUS_ASEB_H_
 
 #include <tina/tina.h>
-#include <feldbus_config.h>
 #include "feldbus.h"
 
 

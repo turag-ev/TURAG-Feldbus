@@ -1,5 +1,5 @@
 /**
- * @defgroup checksums Checksums
+ * @defgroup checksums Checksummen [C/C++]
  * Algorithms for error-detecting and/or error-correcting.
  * 
  * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;checksummen
