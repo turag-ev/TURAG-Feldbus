@@ -1,11 +1,3 @@
-/**
- *  @brief		Implements slave side TURAG feldbus für Stellantriebe support
- *  @file		feldbus_stellantriebe.c
- *  @date		17.11.2013
- *  @author		Martin Oemus <martin@oemus.net>
- *  @ingroup	feldbus-slave-stellantriebe
- *
- */
 
 #include <tina/tina.h>
 #include "feldbus_stellantriebe.h"

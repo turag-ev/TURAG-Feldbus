@@ -1,8 +1,9 @@
 /**
- *  @brief		Implements slave side TURAG feldbus support
+ *  @brief		Implements slave side %TURAG feldbus support
  *  @file		feldbus.h
  *  @date		06.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
+ *  @see 		\ref feldbus-slave
  *  @ingroup feldbus-slave-base
  */
 
@@ -11,11 +12,11 @@
  * @defgroup feldbus-slave-base Basis-Implementierung
  * @ingroup feldbus-slave
  * 
- * Zur TURAG-Feldbus-Basisimplementierung gehörige Dateien. 
- * Nähere Infos siehe \ref feldbus-slave
+ * TURAG-Feldbus-Basisimplementierung. 
  * 
- * feldbus_config.h ist eine Beispieldatei, die nicht direkt includiert werden darf.
- * 
+ * feldbus_config.h ist eine Beispielkonfigurationsdatei, die nicht direkt includiert werden darf.
+ *
+ * \see \ref feldbus-slave
  * 
  */
 
@@ -117,7 +118,8 @@ extern void turag_feldbus_slave_end_interrupt_protect(void);
 extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
 ///@}
 
-
+/// Rückgabewert für turag_feldbus_slave_process_package(), mit dem angezeigt wird,
+/// dass kein Antwortpaket zurückgesendet werden soll.
 #define TURAG_FELDBUS_IGNORE_PACKAGE		0xff
 
 /** @name Required device protocol functions
@@ -131,7 +133,7 @@ extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
  * The response should be made as soon as possible. 
  * 
  * The length of the response package is controlled by the return
- * value. It is possible not to reply to a package at all by returning TURAG_FELDBUS_IGNORE_PACKAGE. 
+ * value. It is possible not to reply to a package at all by returning \ref TURAG_FELDBUS_IGNORE_PACKAGE. 
  * If you return 0, an empty response package consisting only of address and
  * checksum will be generated.
  * 
@@ -283,6 +285,7 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
 #endif
 	
 	
+// hide some uninteresting stuff from documentation
 #if (!defined(__DOXYGEN__))
 
 #include <tina/crc/xor_checksum.h>
@@ -359,6 +362,8 @@ TURAG_INLINE void start_transmission(void) {
 	turag_feldbus_slave_rts_on();
 	turag_feldbus_slave_activate_dre_interrupt();
 }
+
+#endif // (!defined(DOXYGEN))
 
 	
 TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
@@ -558,7 +563,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 }
 
 	
-#endif
+
 
 
 #endif /* TINA_FELDBUS_SLAVE_FELDBUS_H_ */

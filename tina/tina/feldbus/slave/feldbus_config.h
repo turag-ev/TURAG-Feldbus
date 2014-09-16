@@ -48,7 +48,7 @@
  * - \ref TURAG_FELDBUS_DEVICE_PROTOCOL_ASEB	
  * - \ref TURAG_FELDBUS_DEVICE_PROTOCOL_BOOTLOADER
  */
-#define TURAG_FELDBUS_DEVICE_PROTOCOL
+#define TURAG_FELDBUS_DEVICE_PROTOCOL 		TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE
 
 
 /**
@@ -57,7 +57,7 @@
  * Possible values depend on the specified device protocol 
  * and can be found in the corresponding headers.
  */
-#define TURAG_FELDBUS_DEVICE_TYPE_ID
+#define TURAG_FELDBUS_DEVICE_TYPE_ID 		TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_DC
 
 
 /**
@@ -68,7 +68,7 @@
  * - 1
  * - 2
  */
-#define TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
+#define TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH 1
 
 
 /**
@@ -78,21 +78,21 @@
  * - \ref TURAG_FELDBUS_CHECKSUM_XOR
  * - \ref TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
  */
-#define TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE 	
+#define TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE 	TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
 
 
 /**
  * Defines the size of the I/O-buffers. The base implementation
  * allocates 3 buffers of the specified size.
  */
-#define TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE			
+#define TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE		80		
 
 
 /**
  * If set one, debug functions like print_text() become available.
  * If set to zero the function calls are removed and no output is generated.
  */
-#define TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED		
+#define TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED		0
 
 
 /**
@@ -100,7 +100,7 @@
  * If set to zero these packages are droppped which saves a bit
  * of processing time.
  */
-#define TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE		
+#define TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE		0
 
 
 
