@@ -1,5 +1,5 @@
 /**
- *  @brief		TURAG-Feldbus für Bootloader protocol definitions.
+ *  @brief		TURAG-Feldbus für BMaX-Bootloader protocol definitions.
  *  @file		turag_feldbus_fuer_bootloader.h
  *  @date		21.02.2014
  *  @author		Florian Völker <flo-voelker@gmx.de>
