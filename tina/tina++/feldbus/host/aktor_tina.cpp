@@ -404,7 +404,7 @@ bool Aktor::getCommandName(uint8_t key, char* out_name) {
 
 }
 
-#ifdef TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
+#if TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
 
 unsigned int Aktor::getStructuredOutputTableLength(void) {
     if (structuredOutputTableLength != 0) {

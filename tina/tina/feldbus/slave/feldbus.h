@@ -235,7 +235,7 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
 ///@}
 
 // debugging functions
-#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED || defined(DOXYGEN)
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED || defined(__DOXYGEN__)
 /** @name Debug-Functions
  *  Only available if \ref TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED is defined.
  *
@@ -283,7 +283,7 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
 #endif
 	
 	
-#if (!defined(DOXYGEN))
+#if (!defined(__DOXYGEN__))
 
 #include <tina/crc/xor_checksum.h>
 #include <tina/crc/crc8_icode/crc8_icode.h>
