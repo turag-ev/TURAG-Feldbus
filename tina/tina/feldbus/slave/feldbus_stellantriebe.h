@@ -42,7 +42,7 @@
 #include "feldbus.h"
 
 
-#if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(DOXYGEN)
+#if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(__DOXYGEN__)
 
 typedef struct {
 	/// pointer to the actual value

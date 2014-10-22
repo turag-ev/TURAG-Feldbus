@@ -42,7 +42,7 @@ public:
         myTransmissionErrorCounter(0), myTotalTransmissionErrors(0), myTotalTransmissions(0), hasCheckedAvailabilityYet(false),
         modelNumber_(-1), firmwareVersion_(-1)  {}
 
-#ifdef TURAG_LIBSTDCPP_SUPPORT
+#if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
     virtual ~DynamixelDevice() { }
 #endif
 

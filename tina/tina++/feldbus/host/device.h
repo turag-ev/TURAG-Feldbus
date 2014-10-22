@@ -124,7 +124,7 @@ public:
         myDeviceInfo.bufferSize = 0;
     }
 
-#ifdef TURAG_LIBSTDCPP_SUPPORT
+#if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
     virtual ~Device() { }
 #endif
 
