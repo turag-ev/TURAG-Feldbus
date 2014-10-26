@@ -1,10 +1,27 @@
 
 #include "feldbus.h"
 
-uint8_t turag_feldbus_slave_name_length = 0;
-char* turag_feldbus_slave_name = TURAG_FELDBUS_DEVICE_NAME;
+turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
+	.length = 0,
+	.index = 0,
+	.rx_length = 0,
+	.overflow = 0,
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+	.transmission_active = 0
+#endif	
+};
 
-turag_feldbus_slave_uart_t turag_feldbus_slave_uart;
+turag_feldbus_slave_info_t turag_feldbus_slave_info = {
+	.name = TURAG_FELDBUS_DEVICE_NAME,
+	.versioninfo = TURAG_FELDBUS_DEVICE_VERSIONINFO,
+	.packagecount_correct = 0,
+	.packagecount_buffer_overflow = 0,
+	.packagecount_lost = 0,
+	.packagecount_chksum_mismatch = 0,
+#if (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY>=0) && (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY<=65535)
+	.uptime_counter = 0
+#endif
+};
 
 
 void turag_feldbus_slave_init() {
@@ -15,14 +32,6 @@ void turag_feldbus_slave_init() {
 	turag_feldbus_slave_uart.txbuf[1] = (TURAG_FELDBUS_MASTER_ADDR_2|MY_ADDR) >> 8;
 #endif
 	
-	turag_feldbus_slave_uart.index = 0;
-	turag_feldbus_slave_uart.rx_length = 0;
-	turag_feldbus_slave_uart.overflow = 0;
-#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-	turag_feldbus_slave_uart.transmission_active = 0;
-#endif
-	turag_feldbus_slave_name_length = strlen(turag_feldbus_slave_name);
-
 	turag_feldbus_hardware_init();
 	
 	turag_feldbus_slave_rts_off();

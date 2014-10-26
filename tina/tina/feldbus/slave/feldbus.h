@@ -1,5 +1,5 @@
 /**
- *  @brief		Implements slave side %TURAG feldbus support
+ *  @brief		Implementiert slave-side %TURAG feldbus support
  *  @file		feldbus.h
  *  @date		06.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
@@ -14,9 +14,14 @@
  * 
  * TURAG-Feldbus-Basisimplementierung. 
  * 
+ * \see \ref feldbus-slave
+ * 
+ * @section feldbus-slave-base-config Konfiguration
+ * 
+ * Siehe feldbus_config.h.
+ * 
  * feldbus_config.h ist eine Beispielkonfigurationsdatei, die nicht direkt includiert werden darf.
  *
- * \see \ref feldbus-slave
  * 
  */
 
@@ -24,11 +29,18 @@
 #define TINA_FELDBUS_SLAVE_FELDBUS_H_
 
 #include <tina/tina.h>
+#include <tina/helper/static_assert.h>
 #include <feldbus_config.h>
+#include <tina/crc/xor_checksum.h>
+#include <tina/crc/crc8_icode/crc8_icode.h>
+#include <stdlib.h>
+#include <string.h>
 
-/** @name Required hardware functions
- *  hardware interfacing functions that are used by this module
- *  and need to be defined for the target platform
+	
+
+/** @name Benötigte Hardware-Funktionen
+ *  Hardware-Interface-Funktionen die von der Basis-Implementierung benutzt werden
+ * und die für die Zielplattform bereitgestellt werden müssen.
  */
 ///@{
 
@@ -100,16 +112,26 @@ extern void turag_feldbus_slave_start_receive_timeout(void);
  * 
  * Usually this means to deactivate the global interrupt flag.
  * 
- * This fucntion is always followed by a call to turag_feldbus_slave_end_interrupt_protect.
+ * This function is always followed by a call to turag_feldbus_slave_end_interrupt_protect().
  */
 extern void turag_feldbus_slave_begin_interrupt_protect(void);
 
 /**
- * This function follows on a call to turag_feldbus_slave_begin_interrupt_protect.
+ * This function follows on a call to turag_feldbus_slave_begin_interrupt_protect().
  * 
- * It should usually implement the disabling of the global interrupt flag.
+ * It should usually implement the enabling of the global interrupt flag.
  */
 extern void turag_feldbus_slave_end_interrupt_protect(void);
+
+/**
+ * Diese Funktion wird in einem
+ * einem charakteristischen Frequenzmuster aufgerufen, welches
+ * vom Wert von \ref TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY
+ * abhängt. Ist dieser Wert 0 oder ist 
+ * \ref TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK mit 0 konfiguriert,
+ * so ist es nicht nötig, diese Funktion zu implementieren.
+ */
+extern void turag_feldbus_slave_toggle_led(void);
 
 /**
  * Transmits on byte over the bus.
@@ -118,13 +140,64 @@ extern void turag_feldbus_slave_end_interrupt_protect(void);
 extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
 ///@}
 
+/** @name Zu benutzende Hardware-Funktionen
+ *  Funktionen, die vom Hardwaretreiber des Gerätes
+ * aufgerufen werden müssen.
+ */
+///@{
+/**
+ * Receive-Complete-Interrupt Interface.
+ *
+ * Call this function from the Receive-Complete-Interrupt on your system.
+ * @param byte Received byte
+ */
+TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t byte);
+
+/**
+ * Data-Register-Empty-Interrupt-Interface.
+ *
+ * Call this function from the Data-Register-Empty-Interrupt on your system.
+ */
+TURAG_INLINE void turag_feldbus_slave_ready_to_transmit(void);
+
+/**
+ * Transmit-Complete-Interrupt-Interface.
+ *
+ * Call this function from the Transmit-Complete-Interrupt on your system.
+ */
+TURAG_INLINE void turag_feldbus_slave_transmission_complete(void);
+
+/** 
+ * Timeout occured.
+ *
+ * Call this function when the receive timeout has occured.
+ *
+ * If a timer is used to provide this functionality don't forget to deactivate it
+ * before calling this function to avoid additional interrupts because of an overflowing timer.
+ */
+TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
+
+/**
+ * Inkrementiert den Uptime-Counter.
+ * 
+ * Diese Funktion muss periodisch mit einer konstanten Frequenz aufgerufen werden,
+ * die mit \ref TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY festgelegt wird.
+ */
+#if defined(DOXYGEN)
+TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void);
+#endif
+
+///@}
+
+
 /// Rückgabewert für turag_feldbus_slave_process_package(), mit dem angezeigt wird,
 /// dass kein Antwortpaket zurückgesendet werden soll.
 #define TURAG_FELDBUS_IGNORE_PACKAGE		0xff
 
-/** @name Required device protocol functions
- *  functions that are used by this module
- *  and should be defined by the device protocol implementation
+/** @name Benötigte Protokoll-Interface-Funktionen
+ *  Protokoll-Interface-Funktionen die von der Basis-Implementierung
+ * aufgerufen werden und von der Firmware des Gerätes bereitgestellt
+ * werden müssen.
  */
 ///@{
 
@@ -141,12 +214,16 @@ extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
  * stripped of address and checksum. message_length is guaranteed to be >= 1 as a consequence 
  * ping-requests (empty package) being handled by this implementation.
  * 
- * This function is never called in interrupt context.
+ * This function is never called within interrupt context.
  *
  * @param message			Buffer holding the received data
  * @param message_length	Size of received data
  * @param response			Buffer that can be filled with the response data.
- * @return					Number of bytes put in the response buffer. You must not return more than TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - 1 bytes.
+ * @return					Number of bytes put in the response buffer. You must not return 
+ * more than \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - \ref TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH bytes.
+ * 
+ * @warning Keinesfalls dürfen in response mehr Daten geschrieben werden als 
+ * \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - \ref TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH bytes.
  */
 extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response);
 
@@ -157,7 +234,7 @@ extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t mes
  * As broadcasts can never generate a response package this function does neither have a return type
  * nor pointer-type arguments to generate any kind of feedback.
  *
- * This function is never called in interrupt context.
+ * This function is never called within interrupt context.
  * 
  * @param message			Buffer holding the received data
  * @param message_length	Size of received data
@@ -167,10 +244,9 @@ extern void turag_feldbus_slave_process_broadcast(uint8_t* message, uint8_t mess
 ///@}
 
 
-/** @name Device protocol interface
- *  functions provided by this module
- *  and the device protocol implementation
- *  is supposed to make use of
+/** @name Zu benutzende Protokoll-Interface-Funktionen
+ *  Funktionen, die von der Firmware des Gerätes aufgerufen
+ * werden müssen.
  */
 ///@{
 
@@ -194,55 +270,14 @@ TURAG_INLINE void turag_feldbus_do_processing(void);
 ///@}
 
 
-/** @name Hardware interface
- *  functions provided by this module
- *  which should be called by the hardware driver
- */
-///@{
-// ---------------------------------------------------
-// functions provided by this module
-// which should be called by the hardware driver
-// ---------------------------------------------------
-/**
- * Receive-Complete-Interrupt Interface.
- *
- * Call this function from the Receive-Complete-Interrupt on your system.
- * @param byte Received byte
- */
-TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t byte);
-
-/**
- * Data-Register-Empty-Interrupt-Interface.
- *
- * Call this function from the Data-Register-Empty-Interrupt on your system.
- */
-TURAG_INLINE void turag_feldbus_slave_ready_to_transmit(void);
-
-/**
- * Transmit-Complete-Interrupt-Interface.
- *
- * Call this function from the Transmit-Complete-Interrupt on your system.
- */
-TURAG_INLINE void turag_feldbus_slave_transmission_complete(void);
-
-/** Timeout occured.
- *
- * Call this function when the receive timeout has occured.
- *
- * If a timer is used to provide this functionality don't forget to deactivate the interrupt
- * before calling this function to avoid additional interrupts because of an overflowing timer.
- */
-TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
-
-///@}
 
 // debugging functions
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED || defined(__DOXYGEN__)
 /** @name Debug-Functions
- *  Only available if \ref TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED is defined.
+ * Diese Funktionen können verwendet werden, um Debugausgaben in Form
+ * konventioneller Zeichenketten auf dem Bus auszugeben.
  *
- *  These functions can be used to print conventional
- *  debug messages in between standard communication data for debugging purposes only.
+ *  \pre Nur verfügbar, wenn \ref TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED auf 1 definiert ist.
  */
 ///@{
 	/// print some text
@@ -287,44 +322,21 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
 	
 // hide some uninteresting stuff from documentation
 #if (!defined(__DOXYGEN__))
-
-#include <tina/crc/xor_checksum.h>
-#include <tina/crc/crc8_icode/crc8_icode.h>
-#include <stdlib.h>
-#include <string.h>
-
 	
 #ifndef MY_ADDR
 # error MY_ADDR must be defined
 #endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE
-# error TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE must be defined
+#ifndef TURAG_FELDBUS_DEVICE_NAME
+# define TURAG_FELDBUS_DEVICE_NAME "unnamed device"
 #endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
-# error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
-#else
-# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 20
-#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 20 and needs to be bigger.
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-# error TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE must be defined
+#ifndef TURAG_FELDBUS_DEVICE_VERSIONINFO
+# define TURAG_FELDBUS_DEVICE_VERSIONINFO __DATE__ " " __TIME__
 #endif
 #ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
 # error TURAG_FELDBUS_DEVICE_PROTOCOL must be defined
 #endif
 #ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
 # error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_NAME
-# define TURAG_FELDBUS_DEVICE_NAME "unnamed device"
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-# error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
-#else
-# if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
-# endif
 #endif
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
 # error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be defined
@@ -333,10 +345,37 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
 #  error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be 1 or 2
 # endif
 #endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE
+# error TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
+# error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+# error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
+#else
+# if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
+# endif
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
+# error TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY
+# error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be defined
+#else
+# if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<0) || (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>65535)
+#  error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be within the range of 0-65535
+# else
+#  ifndef TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK
+#   error TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK must be defined
+#  endif
+# endif
+#endif
 
 typedef struct {
-	uint8_t rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE];
 	uint8_t txbuf[TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE];
+	uint8_t rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE];
 	uint8_t rxbuf_main[TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE];
 	uint8_t length;
 	uint8_t index;
@@ -349,9 +388,20 @@ typedef struct {
 #endif
 } turag_feldbus_slave_uart_t;
 
+typedef struct {
+	char* name;
+	char* versioninfo;
+	uint32_t packagecount_correct;
+	uint32_t packagecount_buffer_overflow;
+	uint32_t packagecount_lost;
+	uint32_t packagecount_chksum_mismatch;
+#if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>=0) && (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<=65535)
+	uint32_t uptime_counter;
+#endif
+} turag_feldbus_slave_info_t;
+
 extern turag_feldbus_slave_uart_t turag_feldbus_slave_uart;
-extern uint8_t turag_feldbus_slave_name_length;
-extern char* turag_feldbus_slave_name;
+extern turag_feldbus_slave_info_t turag_feldbus_slave_info;
 
 
 TURAG_INLINE void start_transmission(void) {
@@ -367,15 +417,46 @@ TURAG_INLINE void start_transmission(void) {
 
 	
 TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
-	// By clearing rx_length turag_feldbus_do_processing() will no longer
-	// try to copy packages from the in-buffer which will be overwritten now anyway.
-	turag_feldbus_slave_uart.rx_length = 0;
+	// if at this point rx_length is not 0, obviously the last 
+	// received package was not processed yet. This package
+	// will be overwritten now and is lost.
+	// Once rx_length is cleared, turag_feldbus_do_processing() will no longer
+	// try to copy packages from the in-buffer.
+	if (turag_feldbus_slave_uart.rx_length) {
+		turag_feldbus_slave_uart.rx_length = 0;
+		++turag_feldbus_slave_info.packagecount_lost;
+	}
+
 	turag_feldbus_slave_uart.rxbuf[turag_feldbus_slave_uart.index] = data;
 	++turag_feldbus_slave_uart.index;
 
 	if (turag_feldbus_slave_uart.index >= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
 		turag_feldbus_slave_uart.index = 0;
-		turag_feldbus_slave_uart.overflow = 1;
+		
+		// We have a buffer overflow. If this happens for the 
+		// first time for this package, we check the address.
+		// If the package was for us, we increase the counter for 
+		// lost packages.
+		if (turag_feldbus_slave_uart.overflow == 0) {
+#if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1	
+# if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
+			if ((turag_feldbus_slave_uart.rxbuf[0] == MY_ADDR || turag_feldbus_slave_uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR))
+# else
+			if (turag_feldbus_slave_uart.rxbuf[0] == MY_ADDR)
+# endif
+#elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+# if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
+			if (((turag_feldbus_slave_uart.rxbuf[0] == (MY_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (MY_ADDR >> 8)) || 
+				(turag_feldbus_slave_uart.rxbuf[0] == (TURAG_FELDBUS_BROADCAST_ADDR_2 & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (TURAG_FELDBUS_BROADCAST_ADDR_2 >> 8))))
+# else
+			if ((turag_feldbus_slave_uart.rxbuf[0] == (MY_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (MY_ADDR >> 8)))
+# endif
+#endif		
+			{
+				++turag_feldbus_slave_info.packagecount_buffer_overflow;
+			}
+			turag_feldbus_slave_uart.overflow = 1;
+		}
 	}
 
 	// activate timer to recognize end of command
@@ -436,7 +517,7 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 # endif
 #endif		
 	{
-		// package ok -> signal start of processing in main loop
+		// package ok -> signal main loop that we have package ready
 		turag_feldbus_slave_uart.rx_length = turag_feldbus_slave_uart.index;
 	}
 
@@ -444,6 +525,48 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 	turag_feldbus_slave_uart.overflow = 0;
 }
 
+#if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 || defined(DOXYGEN)
+TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void) {
+	++turag_feldbus_slave_info.uptime_counter;
+	
+# if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
+#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >= 12
+#   define COUNT_MAX (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY / 12 - 1)
+#    if COUNT_MAX > 255
+	static uint16_t count = 0;
+#    else
+	static uint8_t count = 0;
+#    endif
+	static uint8_t subcount = 0;
+	
+	++count;
+	if (count > COUNT_MAX) {
+		if (subcount == 0) {
+			turag_feldbus_slave_toggle_led();
+		} else if (subcount == 1) {
+			turag_feldbus_slave_toggle_led();
+		}
+		subcount = (subcount+1) & 7;
+		count = 0;
+	}
+#  elif TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >= 2
+	static uint8_t count = 0;
+	
+	++count;
+	if (count > (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY / 2 - 1)) {
+		turag_feldbus_slave_toggle_led();
+		count = 0;
+	}
+#  else
+	turag_feldbus_slave_toggle_led();
+#  endif
+# endif
+	
+	
+}
+#else
+# define turag_feldbus_slave_increase_uptime_counter()
+#endif
 
 TURAG_INLINE void turag_feldbus_do_processing(void) {
 	// One might think it is unnecessary to disable interrupts just for
@@ -477,8 +600,11 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 	if (!turag_crc8_check(turag_feldbus_slave_uart.rxbuf_main, length - 1, turag_feldbus_slave_uart.rxbuf_main[length - 1]))
 #endif
 	{
+		++turag_feldbus_slave_info.packagecount_chksum_mismatch;
 		return;
 	}
+	
+	++turag_feldbus_slave_info.packagecount_correct;
 
 	// The address is already checked in turag_feldbus_slave_receive_timeout_occured(). 
 	// Thus the second check is only necessary
@@ -498,18 +624,72 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 			// first data byte is zero -> reserved packet
 			if (length == 2 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
 				// received a debug packet
+				_Static_assert(8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
 				turag_feldbus_slave_uart.txbuf[0 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_DEVICE_PROTOCOL;
 				turag_feldbus_slave_uart.txbuf[1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_DEVICE_TYPE_ID;
 				turag_feldbus_slave_uart.txbuf[2 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
 				turag_feldbus_slave_uart.txbuf[3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
-				turag_feldbus_slave_uart.txbuf[4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = turag_feldbus_slave_name_length;
-				turag_feldbus_slave_uart.length = 5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
-			} else if (turag_feldbus_slave_uart.rxbuf_main[1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] == 0 && length == 3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
-				// return device name
-				memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, turag_feldbus_slave_name, turag_feldbus_slave_name_length);
-				turag_feldbus_slave_uart.length = turag_feldbus_slave_name_length + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;    
+				turag_feldbus_slave_uart.txbuf[4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_NAME) - 1;
+				turag_feldbus_slave_uart.txbuf[5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1;
+				turag_feldbus_slave_uart.txbuf[6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY & 0xff;
+				turag_feldbus_slave_uart.txbuf[7 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >> 8;
+				turag_feldbus_slave_uart.length = 8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+			} else if (length == 3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
+				switch (turag_feldbus_slave_uart.rxbuf_main[1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH]) {
+				case TURAG_FELDBUS_SLAVE_COMMAND_DEVICE_NAME: {
+					_Static_assert(sizeof(TURAG_FELDBUS_DEVICE_NAME) - 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, turag_feldbus_slave_info.name, sizeof(TURAG_FELDBUS_DEVICE_NAME) - 1);
+					turag_feldbus_slave_uart.length = sizeof(TURAG_FELDBUS_DEVICE_NAME) - 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}
+				case TURAG_FELDBUS_SLAVE_COMMAND_UPTIME_COUNTER: {
+					_Static_assert(sizeof(turag_feldbus_slave_info.uptime_counter) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.uptime_counter, sizeof(turag_feldbus_slave_info.uptime_counter));
+					turag_feldbus_slave_uart.length = sizeof(turag_feldbus_slave_info.uptime_counter) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}	
+				case TURAG_FELDBUS_SLAVE_COMMAND_VERSIONINFO: {
+					_Static_assert(sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, turag_feldbus_slave_info.versioninfo, sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1);
+					turag_feldbus_slave_uart.length = sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}	
+				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CORRECT: {
+					_Static_assert(sizeof(turag_feldbus_slave_info.packagecount_correct) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.packagecount_correct, sizeof(turag_feldbus_slave_info.packagecount_correct));
+					turag_feldbus_slave_uart.length = sizeof(turag_feldbus_slave_info.packagecount_correct) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}	
+				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_BUFFEROVERFLOW: {
+					_Static_assert(sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.packagecount_buffer_overflow, sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow));
+					turag_feldbus_slave_uart.length = sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}	
+				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_LOST: {
+					_Static_assert(sizeof(turag_feldbus_slave_info.packagecount_lost) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.packagecount_lost, sizeof(turag_feldbus_slave_info.packagecount_lost));
+					turag_feldbus_slave_uart.length = sizeof(turag_feldbus_slave_info.packagecount_lost) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}
+				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CHKSUM_MISMATCH: {
+					_Static_assert(sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.packagecount_chksum_mismatch, sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch));
+					turag_feldbus_slave_uart.length = sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}	
+				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_ALL: {
+					_Static_assert(sizeof(turag_feldbus_slave_info.packagecount_correct) + sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + sizeof(turag_feldbus_slave_info.packagecount_lost) + sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.packagecount_correct, sizeof(turag_feldbus_slave_info.packagecount_correct) + sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + sizeof(turag_feldbus_slave_info.packagecount_lost) + sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch));
+					turag_feldbus_slave_uart.length = sizeof(turag_feldbus_slave_info.packagecount_correct) + sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + sizeof(turag_feldbus_slave_info.packagecount_lost) + sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}	
+				default:
+					// unhandled reserved packet with length == 3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
+					return;
+				}
 			} else {
-				// unhandled reserved packet
+				// unhandled reserved packet with length > 3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
 				return;
 			}
 		} else {
@@ -518,12 +698,13 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 				turag_feldbus_slave_uart.rxbuf_main + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, 
 				length - (1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH), 
 				turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+				
+			// this happens if the device protocol or the user code returned TURAG_FELDBUS_IGNORE_PACKAGE.
+			if (turag_feldbus_slave_uart.length == (uint8_t)(TURAG_FELDBUS_IGNORE_PACKAGE + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH)) {
+				return;
+			}
 		}
 		
-		// this happens if the device protocol or the user code returned TURAG_FELDBUS_IGNORE_PACKAGE.
-		if (turag_feldbus_slave_uart.length == (uint8_t)(TURAG_FELDBUS_IGNORE_PACKAGE + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH)) {
-			return;
-		}
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 		turag_feldbus_slave_uart.chksum_required = 1;

@@ -69,6 +69,15 @@
  * **Wichtig**: damit sich das Slave-Gerät korrekt verhält, muss turag_feldbus_do_processing()
  * regelmäßig von der Hauptschleife aus aufgerufen werden.
  * 
+ * Ein weiteres erwähnenswertes Feature ist der Uptime-Counter. Ein Timer des Slaves wird
+ * so konfiguriert, dass er mit einer wählbaren Frequenz 
+ * turag_feldbus_slave_increase_uptime_counter() aufruft. Der Master kann die Laufzeit des
+ * Slaves auslesen und so zum Beispiel Probleme in der Stromversorgung feststellen, was sich 
+ * in Neustarts des Slaves und einem Zurücksetzen des Uptime-Counters äußern
+ * würde. Wenn eine LED vorhanden ist, kann automatisch die Funktion
+ * turag_feldbus_slave_toggle_led() aufgerufen werden. Das Blinkmuster ist dabei
+ * (soweit möglich) unabhängig von der Timer-Frequenz.
+ * 
  * @section felbus-slave-struktur-anwendung Struktur der Anwendungsprotokoll-Implementierungen
  * Die Implementierungen der Anwendungsprotokolle führen im Allgemeinen zwei Änderungen
  * ein:
@@ -192,6 +201,10 @@
  * 5. Hostklassen zur Kommunikation mit den neuen Geräten werden angelegt
  * 6. In der TURAG-Console wird Support für den Gerätetyp eingebaut, was gleich 
  * zur Verifizierung der Host-Klassen benutzt werden kann.
+ * 
+ * Wenn möglich, sollte \ref _Static_assert benutzt werden, um sicherzustellen
+ * dass mit \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE ein ausreichend großer
+ * Transmit-Buffer konfiguriert ist, da es ansonsten zu Pufferüberläufen kommen kann.
  * 
  * 
  * @defgroup feldbus-host Host Implementierungen [C++]

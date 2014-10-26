@@ -32,6 +32,14 @@
  * 
  * Additionally it is possible to supply a human-understandable description
  * for each value which needs to be supplied in a separate array of strings.
+ * 
+ * @section feldbus-slave-stellantriebe-config Konfiguration
+ * Die folgenden Makros werden von diesem Protokoll in feldbus_config.h 
+ * erwartet:
+ * 
+ * **TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM**:\n
+ * 
+ * **TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE**:\n
  *
  *
  */
