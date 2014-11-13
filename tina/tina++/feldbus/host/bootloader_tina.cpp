@@ -19,15 +19,13 @@
 namespace TURAG {
 namespace Feldbus {
 
-Bootloader::Bootloader(TURAG::Feldbus::Device *dev_) : Device(*dev_){}
-
 bool Bootloader::transceiveBoot (uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length){
 
-    if( this ->transceive(transmit, transmit_length, receive, receive_length) ) return true;
+    if( this -> transceive(transmit, transmit_length, receive, receive_length) ) return true;
     else return false;
 
 }
-	
+
 } // namespace Feldbus
 } // namespace TURAG
 

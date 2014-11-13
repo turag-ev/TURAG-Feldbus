@@ -30,7 +30,7 @@ public:
 		Blue,
 		Black,
 		// Do not add any colors below!!!
-		// Do not change anythong below!!!
+        // Do not change anything below!!!
 		Unknown,		// color doesn't match any defined pattern
 		Error			// couldn't receive color
 	};
