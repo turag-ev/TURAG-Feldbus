@@ -14,6 +14,7 @@
 
 #include <tina++/tina.h>
 #include <tina++/thread.h>
+#include <tina++/time.h>
 #include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
 
 
