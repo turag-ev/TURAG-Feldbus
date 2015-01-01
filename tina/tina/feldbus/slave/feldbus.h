@@ -180,10 +180,11 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
 /**
  * Inkrementiert den Uptime-Counter.
  * 
- * Diese Funktion muss periodisch mit einer konstanten Frequenz aufgerufen werden,
- * die mit \ref TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY festgelegt wird.
+ * Diese Funktion muss periodisch mit einer konstanten Frequenz aufgerufen werden.
+ * Zusätzlich muss \ref TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY mit der gleichen
+ * Frequenz definiert werden.
  */
-#if defined(DOXYGEN)
+#if defined(__DOXYGEN__)
 TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void);
 #endif
 
@@ -202,6 +203,12 @@ TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void);
 ///@{
 
 /**
+ * @param[in] message			Buffer holding the received data
+ * @param[in] message_length	Size of received data
+ * @param[out] response			Buffer that can be filled with the response data.
+ * @return						Number of bytes put in the response buffer. You must not return 
+ * more than \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - \ref TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH bytes.
+ * 
  * This function gets called when the device received a package.
  * The response should be made as soon as possible. 
  * 
@@ -214,14 +221,8 @@ TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void);
  * stripped of address and checksum. message_length is guaranteed to be >= 1 as a consequence 
  * ping-requests (empty package) being handled by this implementation.
  * 
- * This function is never called within interrupt context.
+ * \note Diese Funktion wird stets im main-Kontext aufgerufen.
  *
- * @param message			Buffer holding the received data
- * @param message_length	Size of received data
- * @param response			Buffer that can be filled with the response data.
- * @return					Number of bytes put in the response buffer. You must not return 
- * more than \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - \ref TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH bytes.
- * 
  * @warning Keinesfalls dürfen in response mehr Daten geschrieben werden als 
  * \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - \ref TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH bytes.
  */
@@ -229,16 +230,18 @@ extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t mes
 
 
 /**
- * This function gets called when the device received a broadcast package.
- * 
- * As broadcasts can never generate a response package this function does neither have a return type
- * nor pointer-type arguments to generate any kind of feedback.
+ * @param[in] message			Puffer mit den empfangenen Daten-
+ * @param[in] message_length	Länge des Puffers.
+ * @param[in] protocol_id		Protokoll-ID, an die der Broadcast gerichtet ist.
  *
- * This function is never called within interrupt context.
+ * Diese Funktion wird aufgerufen, wenn das Gerät ein Broadcast-Paket empfängt. 
+ * Dies ist nur dann der Fall, wenn die Protokoll-ID des Broadcasts der des Gerätes
+ * entspricht oder 0 ist.
  * 
- * @param message			Buffer holding the received data
- * @param message_length	Size of received data
- * @param protocol_id		protocol ID to determine for which devices the broadcast was meant
+ * Da Antworten auf Braodcasts nicht zulässig sind, besitzt diese Funktion weder
+ * einen Rückgabetyp, noch output-Argumente.
+ *
+ * \note Diese Funktion wird stets im main-Kontext aufgerufen.
  */
 extern void turag_feldbus_slave_process_broadcast(uint8_t* message, uint8_t message_length, uint8_t protocol_id);
 ///@}
@@ -413,7 +416,7 @@ TURAG_INLINE void start_transmission(void) {
 	turag_feldbus_slave_activate_dre_interrupt();
 }
 
-#endif // (!defined(DOXYGEN))
+#endif // (!defined(__DOXYGEN__))
 
 	
 TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
@@ -525,7 +528,7 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 	turag_feldbus_slave_uart.overflow = 0;
 }
 
-#if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 || defined(DOXYGEN)
+#if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 || defined(__DOXYGEN__)
 TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void) {
 	++turag_feldbus_slave_info.uptime_counter;
 	

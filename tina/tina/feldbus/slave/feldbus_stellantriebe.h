@@ -10,7 +10,7 @@
  *  @defgroup 	feldbus-slave-stellantriebe Stellantriebe
  *  @ingroup	feldbus-slave
  *
- * This module implements support for the TURAG Feldbus für Stellantriebe device protocol. 
+ * This module implements support for the %TURAG Feldbus für Stellantriebe device protocol. 
  * This device protocol was designed to meet the communication requirements of 
  * usual mechanical actors. 
  * 
@@ -33,13 +33,26 @@
  * Additionally it is possible to supply a human-understandable description
  * for each value which needs to be supplied in a separate array of strings.
  * 
+ * Ein weiteres wichtiges Feature ist die Ausgabe zusammenhängender 
+ * Gerätewerte. Dafür wird im Gerät ein Puffer vorgesehen. Der Client 
+ * kann eine Liste gewünschter abzufragender Werte übermitteln. Danach
+ * kann beliebig oft mit einem simplen Befehl das Versenden der 
+ * kompletten Daten initiiert werden. Auf diese Art und Weise können 
+ * größere Datenmengen mit geringst möglichem Overhead vom Gerät abgefragt
+ * werden und zum Beispiel zur grafischen Darstellung benutzt werden.
+ * 
  * @section feldbus-slave-stellantriebe-config Konfiguration
  * Die folgenden Makros werden von diesem Protokoll in feldbus_config.h 
  * erwartet:
  * 
  * **TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM**:\n
+ * Weist die Firmware an, dass die Zeichenketten, die die Gerätewerte
+ * beschreiben, mit dem PROGMEM-Macro gespeichert wurden.
  * 
  * **TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE**:\n
+ * Gibt an, wieviel Speicher für die zusammenhängende Datenausgabe verwendet
+ * werden soll. Diese Zahl beeinflusst, wieviele Gerätewerte maximal gemeinsam
+ * ausgegeben werden können.
  *
  *
  */

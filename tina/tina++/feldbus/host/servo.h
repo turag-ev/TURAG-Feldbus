@@ -94,7 +94,7 @@ public:
 
 class Servo : public ServoBase {
 protected:
-    AktorCommand_t command_set[17];
+    Aktor::Command_t command_set[17];
 
 public:
     Servo(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :

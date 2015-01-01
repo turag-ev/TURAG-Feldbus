@@ -1,8 +1,6 @@
 
 #include <tina/tina.h>
 #include "feldbus_stellantriebe.h"
-#include "feldbus.h"
-#include <feldbus_config.h>
 #include <string.h>
 
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(__DOXYGEN__)

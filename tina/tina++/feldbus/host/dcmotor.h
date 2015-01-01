@@ -31,7 +31,7 @@ public:
 
 class DCMotor : public DCMotorBase {
 protected:
-    AktorCommand_t command_set[19];
+    Aktor::Command_t command_set[19];
 
 public:
     DCMotor(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :

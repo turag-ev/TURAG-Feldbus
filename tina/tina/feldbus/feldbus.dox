@@ -210,7 +210,6 @@
  * @defgroup feldbus-host Host Implementierungen [C++]
  * @ingroup feldbus
  * 
- * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
  * 
  * @defgroup feldbus-protocol Protokoll-Definitionen [C/C++]
  * @ingroup feldbus
