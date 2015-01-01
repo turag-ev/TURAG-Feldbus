@@ -225,7 +225,7 @@ bool Aseb::sync(void) {
             return false;
         }
 
-        uint8_t* response = syncBuffer_ + 1;
+        uint8_t* response = syncBuffer_ + sizeof(FeldbusAddressType);
 
         if (digitalInputSize_ > 0) {
             digitalInputs_ = *(reinterpret_cast<uint16_t*>(response));
@@ -457,12 +457,12 @@ bool Aseb::getCommandName(unsigned key, char* out_name) {
     if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
                     sizeof(request),
                     reinterpret_cast<uint8_t*>(out_name),
-                    name_length + 2)) {
+                    name_length + sizeof(FeldbusAddressType) + 1)) {
         return false;
     }
 
     for (unsigned i = 0; i < name_length; ++i) {
-        out_name[i] = out_name[i+1];
+        out_name[i] = out_name[i + sizeof(FeldbusAddressType)];
     }
     out_name[name_length] = 0;
 
@@ -491,7 +491,7 @@ bool Aseb::getUpTime(float* uptime) {
 
     if (!transceive(request, &response)) return false;
 
-    // The 75 is part of the Aseb protocol defiition (Uptime is
+    // The 75 is part of the Aseb protocol definition (Uptime is
     // counted with 75 Hz).
     if (uptime) {
         *uptime = static_cast<float>(response.data) / 75.0f;

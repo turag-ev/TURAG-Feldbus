@@ -56,6 +56,8 @@ static unsigned char gbRxGetLength = 0;
 static int gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
 static int giBusUsing = 0;
 
+
+#warning Shit not thread-safe. DO NOT use this code from multiple threads.
 //static TuragBinarySemaphore sem_;
 
 
@@ -63,7 +65,6 @@ int turag_dxl_initialize(void) {
 	gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
 	giBusUsing = 0;
 
-#warning shit not threadsafe
     //turag_binary_semaphore_init(&sem_, false);
 
 	return 1;

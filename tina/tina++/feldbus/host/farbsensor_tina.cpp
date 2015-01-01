@@ -89,6 +89,7 @@ bool Farbsensor::initiateMeassurement() {
 }
 
 bool Farbsensor::getRGB(rgb_t* rgb) {
+#warning not compatible with 2-byte-addressing
 	if (!rgb) return false;
 
 	if (!initiateMeassurement()) return false;
@@ -114,6 +115,7 @@ bool Farbsensor::getRGB(rgb_t* rgb) {
 }
 
 bool Farbsensor::getHSV(hsv_t* hsv) {
+#warning not compatible with 2-byte-addressing
 	if (!hsv) return false;
 
 	if (!initiateMeassurement()) return false;

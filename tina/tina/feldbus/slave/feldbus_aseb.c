@@ -298,7 +298,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		if (analog_inputs && analog_inputs_size > 0) {
 			size += analog_inputs_size * 2;
 		}
-		response[0] = size + 2;
+		response[0] = size + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1;
 		return 1;
 	} else if (message[0] == TURAG_FELDBUS_ASEB_UPTIME) {
 		response[0] = ((uint8_t*)(&uptime_counter))[0];
