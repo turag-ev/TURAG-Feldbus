@@ -14,6 +14,7 @@
 #include <tina++/crc/crc8.h>
 #include <tina/debug/print.h>
 #include <tina/feldbus/host/rs485.h>
+#include <tina/math.h>
 
 #include "device.h"
 
@@ -53,12 +54,14 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         bool success = false, checksum_correct = false;
         unsigned int attempt = 0;
 		
-		int transmit_length_backup = transmit_length;
 
         // we try to transmit until the transmission succeeds and the checksum is correct
         // or the number of transmission attempts is exceeded.
         while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
-            success = turag_rs485_transceive(transmit, &transmit_length, receive, &receive_length);
+            int transmit_length_copy = transmit_length;
+            int receive_length_copy = receive_length;
+
+            success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy);
 
             if (success) {
                 if (!receive || receive_length == 0) {
@@ -87,9 +90,9 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
                     }
                 }
             } else {
-				if (transmit_length < transmit_length_backup) {
+                if (transmit_length_copy < transmit_length) {
 					++myTotalTransmitErrors;
-				} else if (receive_length == 0) {
+                } else if (receive_length_copy == 0) {
 					++myTotalNoAnswerErrors;
 				} else {
 					++myTotalMissingDataErrors;
@@ -134,9 +137,7 @@ bool Device::sendPing(void) {
 }
 
 bool Device::isAvailable(bool forceUpdate) {
-	hasCheckedAvailabilityYet = true;
-	
-	if (!hasCheckedAvailabilityYet || forceUpdate) {
+		if (!hasCheckedAvailabilityYet || forceUpdate) {
 		while (!isDysfunctional()) {
 			if (sendPing()) {
 				break;
@@ -144,7 +145,8 @@ bool Device::isAvailable(bool forceUpdate) {
 		}
 	}
 
-	return !isDysfunctional();
+    hasCheckedAvailabilityYet = true;
+    return !isDysfunctional();
 }
 
 bool Device::getDeviceInfo(DeviceInfo* device_info) {
@@ -230,6 +232,110 @@ bool Device::receiveString(uint8_t command, uint8_t stringLength, char* out_stri
 
     return true;	
 }
+
+bool Device::receiveUptime(float* uptime) {
+	if (!uptime) {
+		return false;
+	}
+	
+	if (!getDeviceInfo(nullptr)) {
+		return false;
+	}
+	
+	if (myDeviceInfo.uptimeFrequency == 0) {
+		return NAN;
+	}
+	
+	uint32_t count = 0;
+	
+	if (!receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_UPTIME_COUNTER, &count)) {
+		return false;
+	}
+	
+	return (float)count / (float)myDeviceInfo.uptimeFrequency;
+}
+
+bool Device::receiveNumberOfAcceptedPackages(uint32_t* packageCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CORRECT, packageCount);
+}
+
+bool Device::receiveNumberOfOverflows(uint32_t* overflowCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_BUFFEROVERFLOW, overflowCount);
+}
+
+bool Device::receiveNumberOfLostPackages(uint32_t* lostPackagesCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_LOST, lostPackagesCount);
+}
+
+bool Device::receiveNumberOfChecksumErrors(uint32_t* checksumErrorCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CHKSUM_MISMATCH, checksumErrorCount);
+}
+
+bool Device::receiveErrorCount(uint8_t command, uint32_t* buffer) {
+	if (!buffer) {
+		return false;
+	}
+	
+	struct cmd {
+		uint8_t a;
+		uint8_t b;
+	};
+
+	Request<cmd> request;
+	request.data.a = 0;
+	request.data.b = command;
+	
+	// this seems to be required for proper alignment
+	struct Value {
+		uint32_t value;
+	} _packed;
+
+	Response<Value> response;
+	
+	if (!transceive(request, &response)) {
+		return false;
+	}
+	
+	*buffer = response.data.value;
+	
+	return true;
+}
+
+bool Device::receiveAllSlaveErrorCount(uint32_t* counts) {
+	if (!counts) {
+		return false;
+	}
+	
+	struct cmd {
+		uint8_t a;
+		uint8_t b;
+	};
+
+	Request<cmd> request;
+	request.data.a = 0;
+	request.data.b = TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_ALL;
+	
+	struct Value {
+		uint32_t packageCount;
+		uint32_t overflowCount;
+		uint32_t lostPackagesCount;
+		uint32_t checksumErrorCount;
+	} _packed;
+
+	Response<Value> response;
+	
+	if (!transceive(request, &response)) {
+		return false;
+	}
+
+	counts[0] = response.data.packageCount;
+	counts[1] = response.data.overflowCount;
+	counts[2] = response.data.lostPackagesCount;
+	counts[3] = response.data.checksumErrorCount;
+	
+	return true;
+}
+
 
 } // namespace Feldbus
 } // namespace TURAG
