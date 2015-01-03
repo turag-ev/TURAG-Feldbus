@@ -183,6 +183,9 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
  * Diese Funktion muss periodisch mit einer konstanten Frequenz aufgerufen werden.
  * Zusätzlich muss \ref TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY mit der gleichen
  * Frequenz definiert werden.
+ * 
+ * Dies gilt nicht, wenn \ref TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY auf
+ * 0 definiert wird: dies zeigt an, dass das Feature nicht verfügbar ist.
  */
 #if defined(__DOXYGEN__)
 TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void);
@@ -370,7 +373,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void);
 # if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<0) || (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>65535)
 #  error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be within the range of 0-65535
 # else
-#  ifndef TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK
+#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 && !defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK)
 #   error TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK must be defined
 #  endif
 # endif
@@ -388,6 +391,9 @@ typedef struct {
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 	volatile uint8_t transmission_active;
 	uint8_t chksum_required;
+#endif
+#if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
+	uint8_t toggleLedBlocked;
 #endif
 } turag_feldbus_slave_uart_t;
 
@@ -522,6 +528,12 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 	{
 		// package ok -> signal main loop that we have package ready
 		turag_feldbus_slave_uart.rx_length = turag_feldbus_slave_uart.index;
+		
+		// we stop the led blinking until the user program starts the package
+		// processing
+#if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
+		turag_feldbus_slave_uart.toggleLedBlocked = 1;
+#endif
 	}
 
 	turag_feldbus_slave_uart.index = 0;
@@ -531,41 +543,45 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 #if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 || defined(__DOXYGEN__)
 TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void) {
 	++turag_feldbus_slave_info.uptime_counter;
-	
+
 # if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
+	// we only toggle the led if there is no package
+	// waiting to be processsed.
+	// We use this as an indicator for the user whether
+	// there is something wrong with the communication.
+	if (!turag_feldbus_slave_uart.toggleLedBlocked) {
 #  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >= 12
 #   define COUNT_MAX (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY / 12 - 1)
 #    if COUNT_MAX > 255
-	static uint16_t count = 0;
+		static uint16_t count = 0;
 #    else
-	static uint8_t count = 0;
+		static uint8_t count = 0;
 #    endif
-	static uint8_t subcount = 0;
+		static uint8_t subcount = 0;
 	
-	++count;
-	if (count > COUNT_MAX) {
-		if (subcount == 0) {
-			turag_feldbus_slave_toggle_led();
-		} else if (subcount == 1) {
-			turag_feldbus_slave_toggle_led();
+		++count;
+		if (count > COUNT_MAX) {
+			if (subcount == 0) {
+				turag_feldbus_slave_toggle_led();
+			} else if (subcount == 1) {
+				turag_feldbus_slave_toggle_led();
+			}
+			subcount = (subcount+1) & 7;
+			count = 0;
 		}
-		subcount = (subcount+1) & 7;
-		count = 0;
-	}
 #  elif TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >= 2
-	static uint8_t count = 0;
-	
-	++count;
-	if (count > (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY / 2 - 1)) {
-		turag_feldbus_slave_toggle_led();
-		count = 0;
-	}
+		static uint8_t count = 0;
+		
+		++count;
+		if (count > (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY / 2 - 1)) {
+			turag_feldbus_slave_toggle_led();
+			count = 0;
+		}
 #  else
-	turag_feldbus_slave_toggle_led();
+		turag_feldbus_slave_toggle_led();
 #  endif
+	}
 # endif
-	
-	
 }
 #else
 # define turag_feldbus_slave_increase_uptime_counter()
@@ -590,6 +606,12 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 	uint8_t length = turag_feldbus_slave_uart.rx_length;
 	memcpy(turag_feldbus_slave_uart.rxbuf_main, turag_feldbus_slave_uart.rxbuf, length);
 	turag_feldbus_slave_uart.rx_length = 0;
+	
+	// we release the blinking to indicate that the user programming is
+	// still calling turag_feldbus_do_processing() as required.
+#if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
+	turag_feldbus_slave_uart.toggleLedBlocked = 0;
+#endif
 	turag_feldbus_slave_end_interrupt_protect();
 
 	// if we are here, we have a package (with length>1 that is adressed to us) safe in our buffer

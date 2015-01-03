@@ -74,9 +74,16 @@
  * turag_feldbus_slave_increase_uptime_counter() aufruft. Der Master kann die Laufzeit des
  * Slaves auslesen und so zum Beispiel Probleme in der Stromversorgung feststellen, was sich 
  * in Neustarts des Slaves und einem Zurücksetzen des Uptime-Counters äußern
- * würde. Wenn eine LED vorhanden ist, kann automatisch die Funktion
+ * würde. 
+ * 
+ * Wenn eine LED vorhanden ist, kann automatisch die Funktion
  * turag_feldbus_slave_toggle_led() aufgerufen werden. Das Blinkmuster ist dabei
- * (soweit möglich) unabhängig von der Timer-Frequenz.
+ * (soweit möglich) unabhängig von der Timer-Frequenz und fungiert außerdem als Indikator
+ * für die Stabilität der Kommunikation: das Blinken der LED wird ausgesetzt, solange
+ * im Gerät ein unverarbeitetes Paket vorliegt (zum Beispiel weil turag_feldbus_do_processing())
+ * nicht oder nur zu selten aufgerufen wird. Zeigt die LED also ein unregelmäßiges Blinkmuster an
+ * oder blinkt sie sogar gar nicht, gibt es Kommunikationsprobleme oder der Gerät
+ * ist abgestürzt.
  * 
  * @section felbus-slave-struktur-anwendung Struktur der Anwendungsprotokoll-Implementierungen
  * Die Implementierungen der Anwendungsprotokolle führen im Allgemeinen zwei Änderungen
@@ -111,6 +118,10 @@
  * compiliert werden! Nur dann beginnt der Compiler automatisch Aufrufe von kleinen Funktionen zu inlinen,
  * was im Falle der ISRs wichtig ist. Ansonsten leidet die Performance stark.
  * 
+ * **Wichtig:** Die von der Basis-Implementerung bereitgestellten Hardware-Funktionen 
+ * (wie z.B. turag_feldbus_slave_receive_timeout_occured()) gehen davon aus,
+ * dass ihre Ausführung nicht unterbrochen werden kann. Die Interrupts, die diese Funktionen
+ * aufrefen, sollten also nicht von anderen Interrupts unterbrochen werden können.
  * 
  * @section feldbus-slave-beispiel-hardware-interface Beispiel-Implementierung des Hardware-Interfaces
  * Im folgenden wird ein Beispiel betrachtet, wie die Implementierung des Hardware-Interfaces für einen

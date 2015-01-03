@@ -7,8 +7,11 @@ turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
 	.rx_length = 0,
 	.overflow = 0,
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-	.transmission_active = 0
+	.transmission_active = 0,
 #endif	
+#if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
+	.toggleLedBlocked = 0,
+#endif
 };
 
 turag_feldbus_slave_info_t turag_feldbus_slave_info = {
