@@ -93,6 +93,9 @@
 /// @brief Ausgabe aller vier Paketanzahlen in folgender Reihenfolge: korrekte Pakete, Pufferüberläufe, verlorene Pakete, Checksummenfehler
 #define TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_ALL				0x07
 
+/// @brief Alle 4 Paketanzahlen werden auf 0 zurückgesetzt
+#define TURAG_FELDBUS_SLAVE_COMMAND_RESET_PACKAGE_COUNT				0x08
+
 
 ///@}
 

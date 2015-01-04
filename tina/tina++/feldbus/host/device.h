@@ -359,6 +359,12 @@ public:
 	bool receiveAllSlaveErrorCount(uint32_t* counts);
 	
 	/**
+	 * \brief Weist das Gerät an, seine internen Paketstatistiken zurückzusetzen.
+	 * \return True bei Erfolg, anonsten false.
+	 */
+	bool resetSlaveErrors(void);
+	
+	/**
 	 * \brief Sendet ein Ping-Paket.
 	 * \return True, wenn des Gerät erwartungsgemäß geantwortet hat, false
 	 * im Fehlerfall.
@@ -402,6 +408,9 @@ public:
 	/**
 	 * \brief Gibt die Anzahl der durchgeführten Datenübertragungen zurück.
 	 * \return Anzahl der durchgeführten Datenübertragungen.
+	 * 
+	 * Dieser Wert repräsentiert die Gesamtanzahl an Übertragungsversuchen, schließt also 
+	 * die Fehlerfälle mit ein.
 	 */
 	unsigned int getTotalTransmissions(void) const { return myTotalTransmissions; }
 

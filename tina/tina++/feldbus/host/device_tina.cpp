@@ -61,6 +61,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             int transmit_length_copy = transmit_length;
             int receive_length_copy = receive_length;
 
+			turag_rs485_buffer_clear();
             success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy);
 
             if (success) {
@@ -243,7 +244,8 @@ bool Device::receiveUptime(float* uptime) {
 	}
 	
 	if (myDeviceInfo.uptimeFrequency == 0) {
-		return NAN;
+        *uptime = NAN;
+        return true;
 	}
 	
 	uint32_t count = 0;
@@ -251,8 +253,9 @@ bool Device::receiveUptime(float* uptime) {
 	if (!receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_UPTIME_COUNTER, &count)) {
 		return false;
 	}
-	
-	return (float)count / (float)myDeviceInfo.uptimeFrequency;
+
+    *uptime = (float)count / (float)myDeviceInfo.uptimeFrequency;
+    return true;
 }
 
 bool Device::receiveNumberOfAcceptedPackages(uint32_t* packageCount) {
@@ -336,6 +339,20 @@ bool Device::receiveAllSlaveErrorCount(uint32_t* counts) {
 	return true;
 }
 
+bool Device::resetSlaveErrors(void) {
+	struct cmd {
+		uint8_t a;
+		uint8_t b;
+	};
+
+	Request<cmd> request;
+	request.data.a = 0;
+	request.data.b = TURAG_FELDBUS_SLAVE_COMMAND_RESET_PACKAGE_COUNT;
+
+	Response<> response;
+	
+	return transceive(request, &response);
+}
 
 } // namespace Feldbus
 } // namespace TURAG
