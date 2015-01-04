@@ -7,8 +7,10 @@ turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
 	.rxOffset = 0,
 	.rx_length = 0,
 	.overflow = 0,
+#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	.package_lost_flag = 0,
 	.package_overflow_flag = 0,
+#endif
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 	.transmission_active = 0,
 #endif	
@@ -20,11 +22,13 @@ turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
 turag_feldbus_slave_info_t turag_feldbus_slave_info = {
 	.name = TURAG_FELDBUS_DEVICE_NAME,
 	.versioninfo = TURAG_FELDBUS_DEVICE_VERSIONINFO,
+#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	.packagecount_correct = 0,
 	.packagecount_buffer_overflow = 0,
 	.packagecount_lost = 0,
 	.packagecount_chksum_mismatch = 0,
-#if (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY>=0) && (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY<=65535)
+#endif
+#if (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY>0) && (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY<=65535)
 	.uptime_counter = 0
 #endif
 };

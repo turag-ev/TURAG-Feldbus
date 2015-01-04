@@ -177,6 +177,9 @@ public:
 
     /*!
      * \brief Speichert das Device-Info-Paket eines Slave-Gerätes.
+     *
+     * Diese Struktur entspricht vom Speicherlayout nicht dem, was der
+     * Slave über den Bus sendet.
      */
     struct DeviceInfo {
         uint8_t deviceProtocolId;
@@ -186,7 +189,8 @@ public:
         uint8_t nameLength;
         uint8_t versioninfoLength;
         uint16_t uptimeFrequency;
-    } _packed;
+        bool packageStatisticsAvailable;
+    };
 
 
 	/**

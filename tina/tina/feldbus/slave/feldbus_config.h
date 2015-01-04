@@ -155,5 +155,16 @@
  */
 #define TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK	1
 
+/**
+ * Legt fest, ob das Slave-Gerät Informationen über
+ * das Auftreten von Fehlern bei Transaktionen sammelt.
+ * 
+ * Werden diese Informationen nicht benötigt oder ist der Speicher
+ * auf dem Zielgerät sehr begrenzt, kann dieses Feature deaktiviert werden.
+ * In diesem Falle antwortet das Gerät auf die Anfragen zwar korrekt,
+ * allerdings stets mit einem Wert von 0.
+ */
+#define TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE 1
+
 #endif /* FELDBUS_CONFIG_H_ */
  

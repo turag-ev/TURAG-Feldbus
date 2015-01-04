@@ -21,7 +21,21 @@
 namespace TURAG {
 namespace Feldbus {
 
- std::atomic_int Device::globalTransmissionErrorCounter{0};
+namespace {
+
+struct DeviceInfoInternal {
+    uint8_t deviceProtocolId;
+    uint8_t deviceTypeId;
+    uint8_t crcType;
+    uint8_t bufferSize;
+    uint8_t nameLength;
+    uint8_t versioninfoLength;
+    uint16_t uptimeFrequency;
+} _packed;
+
+}
+
+std::atomic_int Device::globalTransmissionErrorCounter{0};
  
 	
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
@@ -153,14 +167,21 @@ bool Device::isAvailable(bool forceUpdate) {
 bool Device::getDeviceInfo(DeviceInfo* device_info) {
     if (myDeviceInfo.bufferSize == 0) {
         Request<uint8_t> request;
-        Response<DeviceInfo> response;
+        Response<DeviceInfoInternal> response;
 
         request.data = 0;
 
         if (!transceive(request, &response)) {
             return false;
         }
-        myDeviceInfo = response.data;
+        myDeviceInfo.deviceProtocolId = response.data.deviceProtocolId;
+        myDeviceInfo.deviceTypeId = response.data.deviceTypeId;
+        myDeviceInfo.crcType = response.data.crcType & 0x7f;
+        myDeviceInfo.bufferSize = response.data.bufferSize;
+        myDeviceInfo.nameLength = response.data.nameLength;
+        myDeviceInfo.versioninfoLength = response.data.versioninfoLength;
+        myDeviceInfo.uptimeFrequency = response.data.uptimeFrequency;
+        myDeviceInfo.packageStatisticsAvailable = response.data.crcType & 0x80 ? true : false;
     }
     if (device_info) *device_info = myDeviceInfo;
     return true;
