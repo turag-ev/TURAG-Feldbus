@@ -76,9 +76,6 @@ public:
     unsigned int getCommandNameLength(unsigned key);
     bool getPwmFrequency(unsigned key, uint32_t* frequency);
     bool getAnalogResolution(unsigned* resolution);
-
-    bool getUpTime(float* uptime);
-                      
 	
 protected:
     Analog_t* analogInputs_;

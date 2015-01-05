@@ -32,9 +32,6 @@ static feldbus_aseb_pwm_t* pwm_outputs;
 static uint8_t pwm_outputs_size;
 static uint8_t analog_resolution;
 
-static uint32_t uptime_counter = 0;
-
-
 
 
 void turag_feldbus_aseb_init(
@@ -300,12 +297,6 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		}
 		response[0] = size + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1;
 		return 1;
-	} else if (message[0] == TURAG_FELDBUS_ASEB_UPTIME) {
-		response[0] = ((uint8_t*)(&uptime_counter))[0];
-		response[1] = ((uint8_t*)(&uptime_counter))[1];
-		response[2] = ((uint8_t*)(&uptime_counter))[2];
-		response[3] = ((uint8_t*)(&uptime_counter))[3];
-		return 4;
 	}
 	return TURAG_FELDBUS_IGNORE_PACKAGE;
 }
