@@ -40,6 +40,8 @@
 
 /**
  * @name command length
+ * \note Diese Definitionen dürfen nicht geändert werden, da die Implementierung
+ * davon abhängt.
  * @{
  */
 #define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE		0x00

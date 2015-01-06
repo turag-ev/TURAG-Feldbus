@@ -65,6 +65,8 @@
 
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(__DOXYGEN__)
 
+// do not change this structure!!! Otherwise the device will send 
+// corrupted command info packages.
 typedef struct {
 	/// pointer to the actual value
     void* value;  
