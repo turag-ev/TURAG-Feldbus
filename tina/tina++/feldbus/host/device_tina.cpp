@@ -35,10 +35,11 @@ struct DeviceInfoInternal {
 
 }
 
-std::atomic_int Device::globalTransmissionErrorCounter{0};
+template <typename AddressType>
+std::atomic_int BaseDevice<AddressType>::globalTransmissionErrorCounter{0};
  
-	
-bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
+template <typename AddressType>	
+bool BaseDevice<AddressType>::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
     if (isDysfunctional()) {
         static unsigned dysfunctionalMessageDisplayed = 0;
         if (dysfunctionalMessageDisplayed < 5) {
@@ -144,14 +145,16 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
     }
 }
 
-bool Device::sendPing(void) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::sendPing(void) {
 	Request<> request;
 	Response<> response;
 
 	return transceive(request, &response);
 }
 
-bool Device::isAvailable(bool forceUpdate) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::isAvailable(bool forceUpdate) {
 		if (!hasCheckedAvailabilityYet || forceUpdate) {
 		while (!isDysfunctional()) {
 			if (sendPing()) {
@@ -164,7 +167,8 @@ bool Device::isAvailable(bool forceUpdate) {
     return !isDysfunctional();
 }
 
-bool Device::getDeviceInfo(DeviceInfo* device_info) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::getDeviceInfo(DeviceInfo* device_info) {
     if (myDeviceInfo.bufferSize == 0) {
         Request<uint8_t> request;
         Response<DeviceInfoInternal> response;
@@ -187,7 +191,8 @@ bool Device::getDeviceInfo(DeviceInfo* device_info) {
     return true;
 }
 
-bool Device::receiveDeviceRealName(char* out_string) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveDeviceRealName(char* out_string) {
     // It is possible that nobody called getDeviceInfo() yet,
     // so our device info would be empty. Because the device
     // info contains the length of the string we are about 
@@ -204,7 +209,8 @@ bool Device::receiveDeviceRealName(char* out_string) {
 		out_string);
 }
 
-bool Device::receiveVersionInfo(char* out_string) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveVersionInfo(char* out_string) {
     // It is possible that nobody called getDeviceInfo() yet,
     // so our device info would be empty. Because the device
     // info contains the length of the string we are about 
@@ -221,7 +227,8 @@ bool Device::receiveVersionInfo(char* out_string) {
 		out_string);
 }
 
-bool Device::receiveString(uint8_t command, uint8_t stringLength, char* out_string) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveString(uint8_t command, uint8_t stringLength, char* out_string) {
     if (!out_string) {
 		return false;
     }
@@ -255,7 +262,8 @@ bool Device::receiveString(uint8_t command, uint8_t stringLength, char* out_stri
     return true;	
 }
 
-bool Device::receiveUptime(float* uptime) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveUptime(float* uptime) {
 	if (!uptime) {
 		return false;
 	}
@@ -279,23 +287,28 @@ bool Device::receiveUptime(float* uptime) {
     return true;
 }
 
-bool Device::receiveNumberOfAcceptedPackages(uint32_t* packageCount) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveNumberOfAcceptedPackages(uint32_t* packageCount) {
 	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CORRECT, packageCount);
 }
 
-bool Device::receiveNumberOfOverflows(uint32_t* overflowCount) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveNumberOfOverflows(uint32_t* overflowCount) {
 	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_BUFFEROVERFLOW, overflowCount);
 }
 
-bool Device::receiveNumberOfLostPackages(uint32_t* lostPackagesCount) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveNumberOfLostPackages(uint32_t* lostPackagesCount) {
 	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_LOST, lostPackagesCount);
 }
 
-bool Device::receiveNumberOfChecksumErrors(uint32_t* checksumErrorCount) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveNumberOfChecksumErrors(uint32_t* checksumErrorCount) {
 	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CHKSUM_MISMATCH, checksumErrorCount);
 }
 
-bool Device::receiveErrorCount(uint8_t command, uint32_t* buffer) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveErrorCount(uint8_t command, uint32_t* buffer) {
 	if (!buffer) {
 		return false;
 	}
@@ -325,7 +338,8 @@ bool Device::receiveErrorCount(uint8_t command, uint32_t* buffer) {
 	return true;
 }
 
-bool Device::receiveAllSlaveErrorCount(uint32_t* counts) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::receiveAllSlaveErrorCount(uint32_t* counts) {
 	if (!counts) {
 		return false;
 	}
@@ -360,7 +374,8 @@ bool Device::receiveAllSlaveErrorCount(uint32_t* counts) {
 	return true;
 }
 
-bool Device::resetSlaveErrors(void) {
+template <typename AddressType>
+bool BaseDevice<AddressType>::resetSlaveErrors(void) {
 	struct cmd {
 		uint8_t a;
 		uint8_t b;
@@ -374,6 +389,11 @@ bool Device::resetSlaveErrors(void) {
 	
 	return transceive(request, &response);
 }
+
+// explicit template instantiations
+template class BaseDevice<uint8_t>;
+template class BaseDevice<uint16_t>;
+
 
 } // namespace Feldbus
 } // namespace TURAG

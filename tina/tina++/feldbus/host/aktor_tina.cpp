@@ -446,14 +446,13 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
     }
     
     uint8_t* request = new uint8_t[keys.size() + sizeof(FeldbusAddressType) + 3];
-#if TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 1
-    request[0] = myAddress;
-#elif TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 2
-    request[0] = myAddress & 0xff;
-    request[1] = myAddress >> 8;
-#else
-# error TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH with invalid value
-#endif
+    if (sizeof(FeldbusAddressType) == 1) {
+        request[0] = myAddress;
+    } else if (sizeof(FeldbusAddressType) == 2) {
+        request[0] = myAddress & 0xff;
+        request[1] = myAddress >> 8;
+    }
+
     request[sizeof(FeldbusAddressType) + 0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
     request[sizeof(FeldbusAddressType) + 1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
     memcpy(request + sizeof(FeldbusAddressType) + 2, keys.data(), keys.size());

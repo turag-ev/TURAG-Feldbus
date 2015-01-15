@@ -20,8 +20,13 @@
 /**
  * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
  * 
- * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::Device, das masterseitigen 
- * Support für das Basis-Protokoll bereitstellt.
+ * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::BaseDevice, das masterseitigen 
+ * Support für das Basis-Protokoll bereitstellt. Es ist ein Klassen-Template, welches
+ * mit beliebigen Adresslängen instantiiert werden kann, damit konventionelle Geräte
+ * und Bootloadergeräte mit potentiell verschiedenen Adresslängen in einem System existieren
+ * können. Die beiden Vererbungshierarchien bauen daher auf den Typefinitionen TURAG::Feldbus::Device
+ * und TURAG::Feldbus::Bootloader auf, mit deren Hilfe die benötigte Spezialisierung von BaseDevice 
+ * gewählt werden kann.
  * 
  * Das Verhalten des Masters kann mit einigen Definitionen angepasst werden, für die
  * sinnvolle Standardwerte eingestellt sind. Bei Bedarf können diese über die TinA-Konfiguration
@@ -76,27 +81,19 @@
 /// Definiert, wieviele Übetragungen hintereinander fehlschlagen müssen,
 /// damit das Gerät als dysfunktional deklariert wird, falls im Konstruktor
 /// kein anderer Wert angegeben wird.
-#ifndef TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS
+#if !defined(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) || defined(__DOXYGEN__)
 # define TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS			35
 #endif
 
 /// Checksummen-Algorithmus der beim Instanziieren von Feldbusklassen
 /// standardmäßig benutzt wird.
-#ifndef TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE
-# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::Device::ChecksumType::crc8_icode
-#endif
-
-/// Stellt die Größe der Geräteadressen auf dem Bus ein.
-/// Alle Slaves und der Master müssen hier die gleiche Einstellung 
-/// verwenden.
-#ifndef TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH
-# define TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH					1
+#if !defined(TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) || defined(__DOXYGEN__)
+# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			ChecksumType::crc8_icode
 #endif
 
 /*!
  * @}
  */
-
 
 
 
@@ -115,6 +112,7 @@ namespace Feldbus {
 
 /**
  * \brief Basis-Klasse aller Feldbus-Geräte.
+ * \tparam AddressType Typ, der benutzt wird, um die Geräteadresse zu speichern.
  * 
  * Die Device-Klasse implementiert auf Hostseite das Basis-Protkoll
  * des %TURAG-Feldbus.
@@ -125,22 +123,22 @@ namespace Feldbus {
  * 
  * Während des Betriebs kann isAvailable() jederzeit benutzt werden um den Status
  * des Gerätes zu prüfen, da dieser Aufruf nur einmalig Buslast verursacht.
+ * 
+ * \note Dieses Klassen-Template kann nur explizit instantiiert werden, da die
+ * Funktionsdefinitionen teilweise nicht in diesem Header vorliegen. Mit TURAG::Feldbus::Device
+ * und TURAG::Feldbus::Bootloader sind zwei Instantiierungen verfügbar, die benutzt werden können.
  */
-class Device {
+template <typename AddressType>
+class BaseDevice {
 public:
-	
 	/**
-	 * Typ, der die Geräteadresse speichert. kann 8 oder 16 Bit lang sehen,
-	 * je nach Einstellung von \ref TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH.
+	 * \brief Typ, der die Geräteadresse speichert.
+	 * 
+	 * Dieser Typ entspricht dem, der als Template-Argument übergeben wurde.
+	 * Die Typdefinition ist nötig, da Kindklassen diesen Typ benötigen.
 	 */
-#if TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 1 || defined(__DOXYGEN__)
-		typedef uint8_t FeldbusAddressType;
-#elif TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 2
-		typedef uint16_t FeldbusAddressType;
-#else
-# error TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH with invalid value
-#endif
-
+	typedef AddressType FeldbusAddressType;
+	
 	/*!
 	 * Verfügbare Checksummenalgorithmen.
 	 * \see \ref checksums
@@ -151,7 +149,7 @@ public:
 	};
 
     /*!
-     *
+     * \brief Struktur-Template zur Verwendung mit transceive().
      */
     template<typename T = void>
     struct Broadcast {
@@ -161,6 +159,9 @@ public:
         uint8_t checksum;
     } _packed;
 
+	/**
+	 * \brief Struktur-Template zur Verwendung mit transceive().
+	 */
     template<typename T = void>
     struct Request {
         FeldbusAddressType address;
@@ -168,6 +169,9 @@ public:
         uint8_t checksum;
     } _packed;
 
+	/**
+	 * \brief Struktur-Template zur Verwendung mit transceive().
+	 */
     template<typename T = void>
     struct Response {
         FeldbusAddressType address;
@@ -201,7 +205,7 @@ public:
 	 * \param[in] max_transmission_attempts
 	 * \param[in] max_transmission_errors
 	 */
-    Device(const char* name_, FeldbusAddressType address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+    BaseDevice(const char* name_, FeldbusAddressType address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
            unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
            unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
         name(name_),
@@ -221,7 +225,7 @@ public:
     }
 
 #if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
-    virtual ~Device() { }
+    virtual ~BaseDevice() { }
 #endif
 
 	/**
@@ -552,26 +556,107 @@ private:
 	static std::atomic_int globalTransmissionErrorCounter;
 };
 
+
+
+/*
+ * The following lines are required to hide the fact that Device and Bootloader
+ * are different instantiations of the same template. 
+ * Originally BaseDevice was not a template, but then the requirement to 
+ * support devices with different address sizes at runtime came up. To reduce the 
+ * amount of necessary changes it was deemed sufficient to separate between conventional 
+ * devices and bootloader devices which could be configured to use different address lengths.
+ * As a result we can develop independent object hierarchies, each with a different
+ * address length.
+ * 
+ * To be able the keep function definitions separate from the header, we use explicit 
+ * template instatiation.
+ * 
+ * Regarding the container templates: what we would actually need was partial
+ * specialization of nested templates but this is not possible without dirty tricks.
+ * So we declare the required specializations for each instance of BaseDevice
+ * we want to support.
+ * 
+ * To hide all the template stuff, we use typedefs to make all this accessable to
+ * the user in a simple manner. Inherited devices can use these typedefs as a base class
+ * without worrying about the internal details - it should all just work.
+ */
+
+// forbid implicit instantiations, because we explicitly instantiate it
+// in the source file.
+extern template class BaseDevice<uint8_t>;
+extern template class BaseDevice<uint16_t>;
+
+
+// specializations of the container templates
+
 /// for zero size requests/responces
 template<>
-struct Device::Broadcast<void> {
+template<>
+struct BaseDevice<uint8_t>::Broadcast<void> {
     uint8_t address; // must be 0
     uint8_t id;
     uint8_t checksum;
 } _packed;
 
+/// for zero size requests/responces
 template<>
-struct Device::Request<void> {
+template<>
+struct BaseDevice<uint8_t>::Request<void> {
     uint8_t address;
     uint8_t checksum;
 } _packed;
 
+/// for zero size requests/responces
 template<>
-struct Device::Response<void> {
+template<>
+struct BaseDevice<uint8_t>::Response<void> {
     uint8_t address;
     uint8_t checksum;
 } _packed;
 
+/// for zero size requests/responces
+template<>
+template<>
+struct BaseDevice<uint16_t>::Broadcast<void> {
+    uint8_t address; // must be 0
+    uint8_t id;
+    uint8_t checksum;
+} _packed;
+
+/// for zero size requests/responces
+template<>
+template<>
+struct BaseDevice<uint16_t>::Request<void> {
+    uint8_t address;
+    uint8_t checksum;
+} _packed;
+
+/// for zero size requests/responces
+template<>
+template<>
+struct BaseDevice<uint16_t>::Response<void> {
+    uint8_t address;
+    uint8_t checksum;
+} _packed;
+
+
+/**
+ * \brief Typ für konventionelle Bus-Geräte
+ * 
+ * Diese Typdefinition stellt ein, mit welcher Adresslänge alle
+ * konventionellen Busgeräte arbeiten sollen und sollte die Basis
+ * für alle abgeleiteten Klassen konventioneller Geräte sein.
+ */
+typedef BaseDevice<uint8_t> Device;
+
+/**
+ * \brief Typ für Bootloader-Geräte
+ * 
+ * Diese Typdefinition stellt ein, mit welcher Adresslänge alle
+ * Bootloader-Geräte auf dem Bus arbeiten sollen und sollte die Basis
+ * für alle abgeleiteten Klassen von Bootloader-Geräten sein.
+ */
+typedef BaseDevice<uint8_t> Bootloader;
 
 
 } // namespace Feldbus

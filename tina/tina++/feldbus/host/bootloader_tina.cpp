@@ -19,7 +19,7 @@
 namespace TURAG {
 namespace Feldbus {
 
-bool Bootloader::transceiveBoot (uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length){
+bool BMaxBootloader::transceiveBoot (uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length){
 
     if( this -> transceive(transmit, transmit_length, receive, receive_length) ) return true;
     else return false;
