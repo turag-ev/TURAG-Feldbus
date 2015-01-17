@@ -19,21 +19,23 @@
 namespace TURAG {
 namespace Feldbus {
 
-class BMaxBootloader : public TURAG::Feldbus::Bootloader {
+class Bootloader : public TURAG::Feldbus::Device {
 public:
-	typedef uint8_t FeldbusAddressType;
-
 	/**
 	 * \brief Konstruktor.
 	 * \param[in] name_
 	 * \param[in] address
 	 * \param[in] type
+	 * \param[in] addressLength
 	 */
-    BMaxBootloader(const char* name_, FeldbusAddressType address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-        Bootloader(name_, address, type)
+    Bootloader(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+        Device(name_, address, type, addressLength)
     {
     }
     
+    bool sendEnterBootloaderBroadcast(void);
+
     bool transceiveBoot (uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 };
 

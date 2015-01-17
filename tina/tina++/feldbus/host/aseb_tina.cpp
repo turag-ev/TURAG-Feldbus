@@ -214,18 +214,17 @@ bool Aseb::sync(void) {
 
     // sync only if there are inputs available
     if (syncSize_ > 2) {
-        Request<uint8_t> request;
-        request.address = myAddress;
-        request.data = TURAG_FELDBUS_ASEB_SYNC;
+		uint8_t request[myAddressLength + 1 + 1];
+		request[myAddressLength] = TURAG_FELDBUS_ASEB_SYNC;
 
-        if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+        if (!transceive(request,
                         sizeof(request),
                         syncBuffer_,
                         syncSize_)) {
             return false;
         }
 
-        uint8_t* response = syncBuffer_ + sizeof(FeldbusAddressType);
+        uint8_t* response = syncBuffer_ + myAddressLength;
 
         if (digitalInputSize_ > 0) {
             digitalInputs_ = *(reinterpret_cast<uint16_t*>(response));
@@ -441,20 +440,19 @@ bool Aseb::getCommandName(unsigned key, char* out_name) {
         return false;
     }
 
-    Request<AsebGetInfo> request;
-    request.address = myAddress;
-    request.data.command = TURAG_FELDBUS_ASEB_CHANNEL_NAME;
-    request.data.index = key;
+	uint8_t request[myAddressLength + 2 + 1];
+	request[myAddressLength] = TURAG_FELDBUS_ASEB_CHANNEL_NAME;
+	request[myAddressLength + 1] = key;
 
-    if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+    if (!transceive(request,
                     sizeof(request),
                     reinterpret_cast<uint8_t*>(out_name),
-                    name_length + sizeof(FeldbusAddressType) + 1)) {
+                    name_length + myAddressLength + 1)) {
         return false;
     }
 
     for (unsigned i = 0; i < name_length; ++i) {
-        out_name[i] = out_name[i + sizeof(FeldbusAddressType)];
+        out_name[i] = out_name[i + myAddressLength];
     }
     out_name[name_length] = 0;
 

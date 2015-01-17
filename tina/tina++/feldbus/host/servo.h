@@ -20,8 +20,9 @@ namespace Feldbus {
  */
 class ServoBase : public TURAG::Feldbus::Aktor {
 public:
-    ServoBase(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-        Aktor(name_, address, type) {}
+    ServoBase(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+        Aktor(name_, address, type, addressLength) {}
 
     bool getCurrentAngle(float* angle) { return getValue(RS485_STELLANTRIEBE_KEY_CURRENT_ANGLE, angle); }
 
@@ -97,8 +98,9 @@ protected:
     Aktor::Command_t command_set[17];
 
 public:
-    Servo(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-        ServoBase(name_, address, type) {}
+    Servo(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+        ServoBase(name_, address, type, addressLength) {}
 
     bool initialize(void) { return populateCommandSet(command_set, 17); }
 };

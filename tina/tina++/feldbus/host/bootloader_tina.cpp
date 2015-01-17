@@ -19,11 +19,19 @@
 namespace TURAG {
 namespace Feldbus {
 
-bool BMaxBootloader::transceiveBoot (uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length){
+bool Bootloader::transceiveBoot (uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length){
 
     if( this -> transceive(transmit, transmit_length, receive, receive_length) ) return true;
     else return false;
 
+}
+
+bool Bootloader::sendEnterBootloaderBroadcast(void) {
+    TURAG::Feldbus::Device::Broadcast<uint8_t> request;
+    request.id = TURAG_FELDBUS_DEVICE_PROTOCOL_BOOTLOADER;
+    request.data = TURAG_FELDBUS_BOOTLOADER_COMMAND_ENTER_BOOTLOADER;
+
+    return transceive(request);
 }
 
 } // namespace Feldbus

@@ -20,13 +20,8 @@
 /**
  * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
  * 
- * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::BaseDevice, das masterseitigen 
- * Support für das Basis-Protokoll bereitstellt. Es ist ein Klassen-Template, welches
- * mit beliebigen Adresslängen instantiiert werden kann, damit konventionelle Geräte
- * und Bootloadergeräte mit potentiell verschiedenen Adresslängen in einem System existieren
- * können. Die beiden Vererbungshierarchien bauen daher auf den Typefinitionen TURAG::Feldbus::Device
- * und TURAG::Feldbus::Bootloader auf, mit deren Hilfe die benötigte Spezialisierung von BaseDevice 
- * gewählt werden kann.
+ * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::Device, das masterseitigen 
+ * Support für das Basis-Protokoll bereitstellt.
  * 
  * Das Verhalten des Masters kann mit einigen Definitionen angepasst werden, für die
  * sinnvolle Standardwerte eingestellt sind. Bei Bedarf können diese über die TinA-Konfiguration
@@ -51,7 +46,7 @@
  * Dies ist eine übliche Einschränkung, da die Gewährleistung von Threadsicherheit
  * für jede Funktion einen zu großen Overhead mit sich bringen würde. Soll ein Busgerät
  * von mehreren Threads angesprochen werden, so müssen entweder zwei Instanzen 
- * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-immutable Funktionen
+ * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-immutable Funktionen muss
  * synchronisert werden. Welche Variante sinnvoller ist, hängt stark von den Details
  * der entsprechenden Klasse ab.
  * 
@@ -88,7 +83,12 @@
 /// Checksummen-Algorithmus der beim Instanziieren von Feldbusklassen
 /// standardmäßig benutzt wird.
 #if !defined(TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) || defined(__DOXYGEN__)
-# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			ChecksumType::crc8_icode
+# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::Device::ChecksumType::crc8_icode
+#endif
+
+/// Standardmäßige Adresslänge.
+#if !defined(TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) || defined(__DOXYGEN__)
+# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH		TURAG::Feldbus::Device::AddressLength::byte_
 #endif
 
 /*!
@@ -112,7 +112,6 @@ namespace Feldbus {
 
 /**
  * \brief Basis-Klasse aller Feldbus-Geräte.
- * \tparam AddressType Typ, der benutzt wird, um die Geräteadresse zu speichern.
  * 
  * Die Device-Klasse implementiert auf Hostseite das Basis-Protkoll
  * des %TURAG-Feldbus.
@@ -124,36 +123,41 @@ namespace Feldbus {
  * Während des Betriebs kann isAvailable() jederzeit benutzt werden um den Status
  * des Gerätes zu prüfen, da dieser Aufruf nur einmalig Buslast verursacht.
  * 
- * \note Dieses Klassen-Template kann nur explizit instantiiert werden, da die
- * Funktionsdefinitionen teilweise nicht in diesem Header vorliegen. Mit TURAG::Feldbus::Device
- * und TURAG::Feldbus::Bootloader sind zwei Instantiierungen verfügbar, die benutzt werden können.
+ * Instanzen dieser Klasse können je nach Bedarf mit verschiedenen Adresslängen 
+ * gebildet werden.
+ * 
  */
-template <typename AddressType>
-class BaseDevice {
+class Device {
 public:
-	/**
-	 * \brief Typ, der die Geräteadresse speichert.
-	 * 
-	 * Dieser Typ entspricht dem, der als Template-Argument übergeben wurde.
-	 * Die Typdefinition ist nötig, da Kindklassen diesen Typ benötigen.
-	 */
-	typedef AddressType FeldbusAddressType;
-	
 	/*!
-	 * Verfügbare Checksummenalgorithmen.
+	 * \brief Verfügbare Checksummenalgorithmen.
 	 * \see \ref checksums
 	 */
 	enum class ChecksumType {
 		xor_based = TURAG_FELDBUS_CHECKSUM_XOR, ///< XOR-Checksumme.
         crc8_icode = TURAG_FELDBUS_CHECKSUM_CRC8_ICODE ///< CRC8-Checksumme.
 	};
+	
+	/**
+	 * \brief Verfügbare Adresslängen.
+	 */
+	enum class AddressLength {
+		// do not change the values! They are casted to
+		// int and used for pointer arithmetics.
+		// Also the size of the address fields in the following templates
+		// equal the largest element.
+		byte_ = 1, 	///< Adresse umfasst 1 Byte.
+		short_ = 2	///< Adresse umfasst 2 Byte.
+	};
 
     /*!
      * \brief Struktur-Template zur Verwendung mit transceive().
+	 * 
+	 * address und checksum werden dann automatisch befüllt.
      */
     template<typename T = void>
     struct Broadcast {
-        FeldbusAddressType address; // must be 0
+		uint8_t address[2];
         uint8_t id;
         T data;
         uint8_t checksum;
@@ -161,20 +165,24 @@ public:
 
 	/**
 	 * \brief Struktur-Template zur Verwendung mit transceive().
+	 * 
+	 * address und checksum werden dann automatisch befüllt.
 	 */
     template<typename T = void>
     struct Request {
-        FeldbusAddressType address;
+		uint8_t address[2];
         T data;
         uint8_t checksum;
     } _packed;
 
 	/**
 	 * \brief Struktur-Template zur Verwendung mit transceive().
-	 */
+	 * 
+	 * address und checksum werden dann automatisch befüllt.
+s	 */
     template<typename T = void>
     struct Response {
-        FeldbusAddressType address;
+		uint8_t address[2];
         T data;
         uint8_t checksum;
     } _packed;
@@ -194,6 +202,17 @@ public:
         uint8_t versioninfoLength;
         uint16_t uptimeFrequency;
         bool packageStatisticsAvailable;
+		
+		DeviceInfo() :
+			deviceProtocolId(0),
+			deviceTypeId(0),
+			crcType(0),
+			bufferSize(0),
+			nameLength(0),
+			versioninfoLength(0),
+			uptimeFrequency(0),
+			packageStatisticsAvailable(false)
+		{}
     };
 
 
@@ -204,12 +223,15 @@ public:
 	 * \param[in] type
 	 * \param[in] max_transmission_attempts
 	 * \param[in] max_transmission_errors
+	 * \param[in] addressLength
 	 */
-    BaseDevice(const char* name_, FeldbusAddressType address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
-           unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
+    Device(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+           const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH,
+		   unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
            unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
         name(name_),
         myAddress(address),
+        myAddressLength(static_cast<unsigned>(addressLength)),
         hasCheckedAvailabilityYet(false),
         maxTransmissionAttempts(max_transmission_attempts),
         maxTransmissionErrors(max_transmission_errors),
@@ -220,12 +242,10 @@ public:
 		myTotalNoAnswerErrors(0),
 		myTotalMissingDataErrors(0),
 		myTotalTransmitErrors(0)
-    {
-        myDeviceInfo.bufferSize = 0;
-    }
+    { }
 
 #if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
-    virtual ~BaseDevice() { }
+    virtual ~Device() { }
 #endif
 
 	/**
@@ -260,7 +280,7 @@ public:
 	 * \brief Gibt die Adresse des Gerätes zurück.
 	 * \return Adresse des Gerätes.
 	 */
-    FeldbusAddressType getAddress(void) const { return myAddress; }
+    unsigned getAddress(void) const { return myAddress; }
 	
 	/*!
 	 * \brief Gibt die Geräte-Info zurück.
@@ -453,11 +473,10 @@ public:
 	 */
 	template<typename T, typename U> _always_inline
 	bool transceive(Request<T>& transmit, Response<U>* receive) {
-	transmit.address = myAddress;
-	return transceive(reinterpret_cast<uint8_t*>(std::addressof(transmit)),
-										sizeof(Request<T>),
-										reinterpret_cast<uint8_t*>(receive),
-										sizeof(Response<U>));
+	return transceive(reinterpret_cast<uint8_t*>(std::addressof(transmit)) + sizeof(Request<T>::address) - myAddressLength,
+										sizeof(Request<T>) + myAddressLength - sizeof(Request<T>::address),
+										reinterpret_cast<uint8_t*>(receive) + sizeof(Response<T>::address) - myAddressLength,
+										sizeof(Response<U>) + myAddressLength - sizeof(Response<T>::address));
 	}
 
 	/*!
@@ -470,9 +489,10 @@ public:
 	 */
     template<typename T> _always_inline
 	bool transceive(Broadcast<T>& transmit) {
-		transmit.address = TURAG_FELDBUS_BROADCAST_ADDR;
-		return transceive(static_cast<uint8_t*>(static_cast<void*>(std::addressof(transmit))),
-											sizeof(Broadcast<T>), nullptr, 0);
+		return transceive(reinterpret_cast<uint8_t*>(std::addressof(transmit)) + sizeof(Broadcast<T>::address) - myAddressLength,
+											sizeof(Broadcast<T>) + myAddressLength - sizeof(Broadcast<T>::address), 
+											nullptr, 
+											0);
 	}
 
     /*!
@@ -500,9 +520,12 @@ protected:
 	 * das transceive-Funktions-Template in Verbindung mit Request und Response bzw.
 	 * Broadcast bevorzugt werden.
 	 * 
-	 * \warning Diese Funktion geht stillschweigend davon aus, dass das letzte Byte 
-	 * des transmit-Puffers für die Checksumme vorgesehen ist und überschreibt
-	 * dieses entsprechend.
+	 * \warning Diese Funktion überschreibt den Anfang des Puffers mit der 
+	 * Adresse (je nach Adresslänge) und den Ende des Puffers mit der Checksumme.
+	 * Die Nutzdaten müssen also dazwischen platziert werden.
+	 * 
+	 * Wenn receive oder receive_length 0 ist, so wird angenommen dass eine 
+	 * Broadcastübertragung gewünscht wird und statt der Geräteadresse 0 benutzt.
      */
     bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 
@@ -523,7 +546,12 @@ protected:
 	/**
 	 * \brief Enthält die Geräteadresse.
 	 */
-    const FeldbusAddressType myAddress;
+    const unsigned myAddress;
+	
+	/**
+	 * \brief Enthält, auf welche Adresslänge das Gerät konfiguriert ist.
+	 */
+	const unsigned myAddressLength;
 	
 	/**
 	 * \brief Wird von isAvailable() bei der ersten Auführung auf
@@ -558,105 +586,42 @@ private:
 
 
 
-/*
- * The following lines are required to hide the fact that Device and Bootloader
- * are different instantiations of the same template. 
- * Originally BaseDevice was not a template, but then the requirement to 
- * support devices with different address sizes at runtime came up. To reduce the 
- * amount of necessary changes it was deemed sufficient to separate between conventional 
- * devices and bootloader devices which could be configured to use different address lengths.
- * As a result we can develop independent object hierarchies, each with a different
- * address length.
- * 
- * To be able the keep function definitions separate from the header, we use explicit 
- * template instatiation.
- * 
- * Regarding the container templates: what we would actually need was partial
- * specialization of nested templates but this is not possible without dirty tricks.
- * So we declare the required specializations for each instance of BaseDevice
- * we want to support.
- * 
- * To hide all the template stuff, we use typedefs to make all this accessable to
- * the user in a simple manner. Inherited devices can use these typedefs as a base class
- * without worrying about the internal details - it should all just work.
- */
-
-// forbid implicit instantiations, because we explicitly instantiate it
-// in the source file.
-extern template class BaseDevice<uint8_t>;
-extern template class BaseDevice<uint16_t>;
-
-
 // specializations of the container templates
 
-/// for zero size requests/responces
+/**
+* \brief Struktur-Template zur Verwendung mit transceive().
+* 
+* Für Übertragungen, die nur aus Adresse, Broadcast-ID und Checksumme bestehen.
+*/
 template<>
-template<>
-struct BaseDevice<uint8_t>::Broadcast<void> {
-    uint8_t address; // must be 0
+struct Device::Broadcast<void> {
+	uint8_t address[2];
     uint8_t id;
     uint8_t checksum;
 } _packed;
 
-/// for zero size requests/responces
+/**
+* \brief Struktur-Template zur Verwendung mit transceive().
+* 
+* Für Übertragungen, die nur aus Adresse und Checksumme bestehen.
+*/
 template<>
-template<>
-struct BaseDevice<uint8_t>::Request<void> {
-    uint8_t address;
+struct Device::Request<void> {
+	uint8_t address[2];
     uint8_t checksum;
 } _packed;
-
-/// for zero size requests/responces
-template<>
-template<>
-struct BaseDevice<uint8_t>::Response<void> {
-    uint8_t address;
-    uint8_t checksum;
-} _packed;
-
-/// for zero size requests/responces
-template<>
-template<>
-struct BaseDevice<uint16_t>::Broadcast<void> {
-    uint8_t address; // must be 0
-    uint8_t id;
-    uint8_t checksum;
-} _packed;
-
-/// for zero size requests/responces
-template<>
-template<>
-struct BaseDevice<uint16_t>::Request<void> {
-    uint8_t address;
-    uint8_t checksum;
-} _packed;
-
-/// for zero size requests/responces
-template<>
-template<>
-struct BaseDevice<uint16_t>::Response<void> {
-    uint8_t address;
-    uint8_t checksum;
-} _packed;
-
 
 /**
- * \brief Typ für konventionelle Bus-Geräte
- * 
- * Diese Typdefinition stellt ein, mit welcher Adresslänge alle
- * konventionellen Busgeräte arbeiten sollen und sollte die Basis
- * für alle abgeleiteten Klassen konventioneller Geräte sein.
- */
-typedef BaseDevice<uint8_t> Device;
+* \brief Struktur-Template zur Verwendung mit transceive().
+* 
+* Für Übertragungen, die nur aus Adresse und Checksumme bestehen.
+*/
+template<>
+struct Device::Response<void> {
+	uint8_t address[2];
+    uint8_t checksum;
+} _packed;
 
-/**
- * \brief Typ für Bootloader-Geräte
- * 
- * Diese Typdefinition stellt ein, mit welcher Adresslänge alle
- * Bootloader-Geräte auf dem Bus arbeiten sollen und sollte die Basis
- * für alle abgeleiteten Klassen von Bootloader-Geräten sein.
- */
-typedef BaseDevice<uint8_t> Bootloader;
 
 
 } // namespace Feldbus

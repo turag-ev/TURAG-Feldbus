@@ -384,22 +384,21 @@ bool Aktor::getCommandName(uint8_t key, char* out_name) {
         return false;
     }
     
-    Request<AktorGetCommandInfo> request;
-    request.address = myAddress;
-    request.data.key = key;
-    request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
-    request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
-    request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	uint8_t request[myAddressLength + 4 + 1];
+	request[myAddressLength] = key;
+	request[myAddressLength + 1] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	request[myAddressLength + 2] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	request[myAddressLength + 3] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     
-    if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+    if (!transceive(request,
                     sizeof(request),
                     reinterpret_cast<uint8_t*>(out_name),
-                    name_length + sizeof(FeldbusAddressType) + 1)) {
+                    name_length + myAddressLength + 1)) {
         return false;
     }
 
     for (int i = 0; i < name_length; ++i) {
-        out_name[i] = out_name[i + sizeof(FeldbusAddressType)];
+        out_name[i] = out_name[i + myAddressLength];
     }
     out_name[name_length] = 0;
 
@@ -445,23 +444,17 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
         }
     }
     
-    uint8_t* request = new uint8_t[keys.size() + sizeof(FeldbusAddressType) + 3];
-    if (sizeof(FeldbusAddressType) == 1) {
-        request[0] = myAddress;
-    } else if (sizeof(FeldbusAddressType) == 2) {
-        request[0] = myAddress & 0xff;
-        request[1] = myAddress >> 8;
-    }
+    uint8_t* request = new uint8_t[keys.size() + myAddressLength + 3];
 
-    request[sizeof(FeldbusAddressType) + 0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
-    request[sizeof(FeldbusAddressType) + 1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
-    memcpy(request + sizeof(FeldbusAddressType) + 2, keys.data(), keys.size());
+    request[myAddressLength + 0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
+    request[myAddressLength + 1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
+    memcpy(request + myAddressLength + 2, keys.data(), keys.size());
     
     Response<uint8_t> response;
     
     if (transceive(
 			request, 
-			keys.size() + sizeof(FeldbusAddressType) + 3,
+			keys.size() + myAddressLength + 3,
 			reinterpret_cast<uint8_t*>(std::addressof(response)), 
 			sizeof(response))) {
         if (response.data == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
@@ -503,17 +496,16 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
         }
     }
 
-    Request<uint8_t> request;
-    request.address = myAddress;
-    request.data = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
+	uint8_t request[myAddressLength + 1 + 1];
+	request[myAddressLength] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
 
-    uint8_t* response = new uint8_t[data_size + sizeof(FeldbusAddressType) + 1];
+    uint8_t* response = new uint8_t[myAddressLength + data_size + 1];
 
-    if (transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+    if (transceive(request,
                    sizeof(request),
                    response,
-                   data_size + sizeof(FeldbusAddressType) + 1)) {
-        uint8_t* pValue = response + sizeof(FeldbusAddressType);
+                   myAddressLength + data_size + 1)) {
+        uint8_t* pValue = response + myAddressLength;
 
         for (unsigned int i = 0; i < structuredOutputTable.size(); ++i) {
             int32_t device_value;

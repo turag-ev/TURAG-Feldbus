@@ -21,6 +21,10 @@ namespace Feldbus {
  */
 class Farbsensor: public TURAG::Feldbus::Sensor {
 public:
+	// TODO: THAT'S CRAP!!!!!
+	// The color names should not be hard-coded in here. There must be 
+	// a better way.
+	
 	// do not specify numbers manually!
 	// topmost colors have higher priority than successive ones
 	// the order of this enum must match the order of the color strings (see below)
@@ -35,19 +39,19 @@ public:
 		Error			// couldn't receive color
 	};
 
-	typedef struct {
+	struct rgb_t {
 		uint8_t r, g, b;
-	} rgb_t;
+	};
 
-	typedef struct {
+	struct hsv_t {
 		uint8_t h,s,v;
-	} hsv_t;
+	};
 
-	typedef struct {
+	struct hsv_range_t {
 		uint8_t v_min, v_max;
 		uint16_t h_min, h_max, s_min, s_max;
 		bool initialized;
-	} hsv_range_t;
+	};
 
 protected:
 	static const int myNumberOfColors = (int)Color::Unknown;
@@ -60,8 +64,10 @@ protected:
 	bool initiateMeassurement(void);
 
 public:
-    Farbsensor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-            Sensor(name_, address, type), lastKnownColor(Color::Error) {
+    Farbsensor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+			const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+            Sensor(name_, address, type, addressLength), lastKnownColor(Color::Error) 
+	{
 		for (int i = 0; i < myNumberOfColors; i++)
 			myColorIndexTable[i].initialized = false;
 	}

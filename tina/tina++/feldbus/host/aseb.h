@@ -60,9 +60,11 @@ public:
 	 * \param[in] name_
 	 * \param[in] address
 	 * \param[in] type
+	 * \param[in] addressLength
 	 */
-	Aseb(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-                Device(name_, address, type),
+	Aseb(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+                Device(name_, address, type, addressLength),
                 analogInputs_(nullptr), analogInputSize_(-1),
                 pwmOutputs_(nullptr), pwmOutputSize_(-1),
                 digitalInputs_(0), digitalInputSize_(-1),
