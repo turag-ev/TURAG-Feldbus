@@ -14,8 +14,10 @@
 #ifndef TINA_FELDBUS_HOST_RS485_H
 #define TINA_FELDBUS_HOST_RS485_H
 
+#include <tina/tina.h>
 #include <tina/time.h>
 
+#if TURAG_USE_TURAG_FELDBUS_HOST
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,6 +68,10 @@ void turag_rs485_buffer_clear(void);
 
 #ifdef __cplusplus
 } // extern "C"
+#endif
+
+#else
+# error TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
 #endif
 
 #endif // TINA_FELDBUS_HOST_RS485_H

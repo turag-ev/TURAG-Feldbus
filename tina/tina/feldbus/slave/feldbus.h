@@ -38,7 +38,7 @@
 #include <tina/helper/static_assert.h>
 #include <feldbus_config.h>
 #include <tina/crc/xor_checksum.h>
-#include <tina/crc/crc8_icode/crc8_icode.h>
+#include <tina/crc/crc_checksum.h>
 #include <stdlib.h>
 #include <string.h>
 

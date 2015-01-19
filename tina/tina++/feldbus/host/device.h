@@ -17,6 +17,11 @@
 #include <tina++/thread.h>
 #include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
 
+#if !TURAG_USE_TURAG_FELDBUS_HOST
+# error TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
+#endif
+
+
 /**
  * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
  * 

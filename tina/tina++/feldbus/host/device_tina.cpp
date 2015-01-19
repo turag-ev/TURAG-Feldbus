@@ -11,7 +11,7 @@
 #include <tina++/thread.h>
 #include <tina++/time.h>
 #include <tina++/crc/xor.h>
-#include <tina++/crc/crc8.h>
+#include <tina++/crc/crc.h>
 #include <tina/debug/print.h>
 #include <tina/feldbus/host/rs485.h>
 #include <tina/math.h>
