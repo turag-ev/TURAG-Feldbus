@@ -54,7 +54,7 @@ void turag_feldbus_aseb_init(
 }
 
 
-uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response) {
+FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
     // the feldbus base implementation guarantees message_length >= 1 and message[0] >= 1 
 	// so we don't need to check that
 	

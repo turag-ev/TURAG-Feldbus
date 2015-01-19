@@ -27,7 +27,7 @@ struct DeviceInfoInternal {
     uint8_t deviceProtocolId;
     uint8_t deviceTypeId;
     uint8_t crcType;
-    uint8_t bufferSize;
+    uint32_t bufferSize;
     uint8_t nameLength;
     uint8_t versioninfoLength;
     uint16_t uptimeFrequency;

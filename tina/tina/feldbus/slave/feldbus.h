@@ -14,6 +14,12 @@
  * 
  * TURAG-Feldbus-Basisimplementierung. 
  * 
+ * Auf einem Atmega88 belegt die Basis-Implementierung minimal ca 1 KB Flash 
+ * zzgl. die Größe der Lookup-Table wenn eine tabellenbasierte 
+ * CRC-Checksumme verwendet wird. Der RAM-Verbrauch richtet sich
+ * nach der Größe des Übertragungspuffers. Auch die evt. CRC-Tabelle
+ * belegt RAM.
+ * 
  * \see \ref feldbus-slave
  * 
  * @section feldbus-slave-base-config Konfiguration
@@ -36,7 +42,97 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+// hide some uninteresting stuff from documentation
+#if (!defined(__DOXYGEN__))
 	
+#ifndef MY_ADDR
+# error MY_ADDR must be defined
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_NAME
+# define TURAG_FELDBUS_DEVICE_NAME "unnamed device"
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_VERSIONINFO
+# define TURAG_FELDBUS_DEVICE_VERSIONINFO __DATE__ " " __TIME__
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
+# error TURAG_FELDBUS_DEVICE_PROTOCOL must be defined
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
+# error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
+# error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be defined
+#else
+# if (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 1 ) && (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 2)
+#  error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be 1 or 2
+# endif
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE
+# error TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
+# error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+# error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
+#else
+# if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
+# endif
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
+# error TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY
+# error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be defined
+#else
+# if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<0) || (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>65535)
+#  error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be within the range of 0-65535
+# else
+#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 && !defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK)
+#   error TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK must be defined
+#  endif
+#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY==0 && defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK) && TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK != 0
+#   warning TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1, but TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY == 0. Led flashing feature depends on uptime feature.
+#  endif
+# endif
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
+# error TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE must be defined
+#endif
+
+
+#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 65535
+	typedef uint32_t FeldbusSize_t;
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xffffffff
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfffffffe
+# else
+#  error no option for address size
+# endif
+#elif TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 255
+	typedef uint16_t FeldbusSize_t;
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xffff
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfffe
+# else
+#  error no option for address size
+# endif
+#else
+	typedef uint8_t FeldbusSize_t;
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xff
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfe
+# else
+#  error no option for address size
+# endif
+#endif
+
+#endif
 
 /** @name Benötigte Hardware-Funktionen
  *  Hardware-Interface-Funktionen die von der Basis-Implementierung benutzt werden
@@ -194,9 +290,18 @@ TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void);
 ///@}
 
 
-/// Rückgabewert für turag_feldbus_slave_process_package(), mit dem angezeigt wird,
+/// \brief Rückgabewert für turag_feldbus_slave_process_package(), mit dem angezeigt wird,
 /// dass kein Antwortpaket zurückgesendet werden soll.
-#define TURAG_FELDBUS_IGNORE_PACKAGE		0xff
+#if defined(__DOXYGEN__)
+# define TURAG_FELDBUS_IGNORE_PACKAGE		<configuration-dependend>
+#endif
+
+/// \brief Typ, der für Offsets und Längen benutzt wird.
+/// Größe des tatsächlichen Integer-Typs hängt von der Größe
+/// des Puffers ab (\ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE)
+#if defined(__DOXYGEN__)
+typedef int FeldbusSize_t;
+#endif
 
 /** @name Benötigte Protokoll-Interface-Funktionen
  *  Protokoll-Interface-Funktionen die von der Basis-Implementierung
@@ -229,7 +334,7 @@ TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void);
  * @warning Keinesfalls dürfen in response mehr Daten geschrieben werden als 
  * \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - \ref TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH bytes.
  */
-extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response);
+extern FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
 
 
 /**
@@ -246,7 +351,7 @@ extern uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t mes
  *
  * \note Diese Funktion wird stets im main-Kontext aufgerufen.
  */
-extern void turag_feldbus_slave_process_broadcast(uint8_t* message, uint8_t message_length, uint8_t protocol_id);
+extern void turag_feldbus_slave_process_broadcast(uint8_t* message, FeldbusSize_t message_length, uint8_t protocol_id);
 ///@}
 
 
@@ -337,78 +442,18 @@ TURAG_INLINE void turag_feldbus_do_processing(void);
 	
 // hide some uninteresting stuff from documentation
 #if (!defined(__DOXYGEN__))
-	
-#ifndef MY_ADDR
-# error MY_ADDR must be defined
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_NAME
-# define TURAG_FELDBUS_DEVICE_NAME "unnamed device"
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_VERSIONINFO
-# define TURAG_FELDBUS_DEVICE_VERSIONINFO __DATE__ " " __TIME__
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
-# error TURAG_FELDBUS_DEVICE_PROTOCOL must be defined
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
-# error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
-# error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be defined
-#else
-# if (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 1 ) && (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 2)
-#  error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be 1 or 2
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE
-# error TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE must be defined
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
-# error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
-#else
-# if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 255
-#  error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be <= 255
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-# error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
-#else
-# if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-# error TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE must be defined
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY
-# error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be defined
-#else
-# if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<0) || (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>65535)
-#  error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be within the range of 0-65535
-# else
-#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 && !defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK)
-#   error TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK must be defined
-#  endif
-#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY==0 && defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK) && TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK != 0
-#   warning TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1, but TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY == 0. Led flashing feature depends on uptime feature.
-#  endif
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
-# error TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE must be defined
-#endif
-
+		
 typedef struct {
 	uint8_t txbuf[TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE];
 	uint8_t rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE];
 	// holds the number of bytes in txbuf
-	uint8_t transmitLength;
+	FeldbusSize_t transmitLength;
 	// offset in txbuf
-	uint8_t txOffset;
+	FeldbusSize_t txOffset;
 	// offset in rxBuf
-	uint8_t rxOffset;
+	FeldbusSize_t rxOffset;
 	// if not 0, then there is a package waiting for processsing
-	volatile uint8_t rx_length;
+	FeldbusSize_t rx_length;
 	// overflow detected
 	uint8_t overflow;
 	// holds the calculated checksum
@@ -670,7 +715,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 	
 	// we copy the value of rx_length because it is volatile and accessing
 	// it is expensive.
-	uint8_t length = turag_feldbus_slave_uart.rx_length;
+	FeldbusSize_t length = turag_feldbus_slave_uart.rx_length;
 	turag_feldbus_slave_uart.rx_length = 0;
 	
 	// we release the blinking to indicate that the user program is
@@ -728,11 +773,23 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 #else
 				turag_feldbus_slave_uart.txbuf[2 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
 #endif
-				turag_feldbus_slave_uart.txbuf[3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
-				turag_feldbus_slave_uart.txbuf[4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_NAME) - 1;
-				turag_feldbus_slave_uart.txbuf[5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1;
-				turag_feldbus_slave_uart.txbuf[6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY & 0xff;
-				turag_feldbus_slave_uart.txbuf[7 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >> 8;
+				turag_feldbus_slave_uart.txbuf[3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE & 0xff;
+#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 255				
+				turag_feldbus_slave_uart.txbuf[4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = (TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE >> 8) & 0xff;
+#else
+				turag_feldbus_slave_uart.txbuf[4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
+#endif
+#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 65535				
+				turag_feldbus_slave_uart.txbuf[5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = (TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE >> 16) & 0xff;
+				turag_feldbus_slave_uart.txbuf[6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = (TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE >> 24) & 0xff;
+#else
+				turag_feldbus_slave_uart.txbuf[5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
+				turag_feldbus_slave_uart.txbuf[6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
+#endif
+				turag_feldbus_slave_uart.txbuf[7 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_NAME) - 1;
+				turag_feldbus_slave_uart.txbuf[8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1;
+				turag_feldbus_slave_uart.txbuf[9 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY & 0xff;
+				turag_feldbus_slave_uart.txbuf[10 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >> 8;
 				turag_feldbus_slave_uart.transmitLength = 8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
 			} else if (length == 3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
 				switch (turag_feldbus_slave_uart.rxbuf[1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH]) {

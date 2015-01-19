@@ -125,7 +125,7 @@ extern void turag_feldbus_stellantriebe_value_changed(uint8_t key);
  * 
  * If you don't nedd this functionality you can simply leave the function body empty.
  */
-extern uint8_t turag_feldbus_stellantriebe_process_package(uint8_t* message, uint8_t message_length, uint8_t* response);
+extern FeldbusSize_t turag_feldbus_stellantriebe_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
 
 #endif
 
