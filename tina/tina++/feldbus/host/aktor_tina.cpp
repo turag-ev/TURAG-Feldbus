@@ -51,8 +51,8 @@ struct AktorGetCommandInfo {
 } _packed;
 
 struct AktorGetCommandInfoResponse {
-    AktorCommandWriteAccess writeAccess;
-    AktorCommandLength length;
+    Aktor::Command_t::WriteAccess writeAccess;
+    Aktor::Command_t::CommandLength length;
     float factor;
 } _packed;
 
@@ -80,7 +80,7 @@ unsigned int Aktor::getCommandsetLength(void) {
     }
 }
 
-bool Aktor::populateCommandSet(AktorCommand_t* commandSet_, unsigned int commandSetLength_) {
+bool Aktor::populateCommandSet(Command_t* commandSet_, unsigned int commandSetLength_) {
     if (!commandSet_) return false;
     
     unsigned int deviceCommandSetLength = getCommandsetLength();
@@ -88,6 +88,9 @@ bool Aktor::populateCommandSet(AktorCommand_t* commandSet_, unsigned int command
     
     if (deviceCommandSetLength > commandSetLength_) {
         commandSetLength = commandSetLength_;
+		// Because it is not unlikely that the user supplied a shorter buffer on purpose, 
+		// this message has debug level.
+        turag_debugf("%s: commandset will be truncated (buffer requires space for %d more elements)", name, deviceCommandSetLength - commandSetLength_);
     } else {
         commandSetLength = deviceCommandSetLength;
     }
@@ -106,8 +109,8 @@ bool Aktor::populateCommandSet(AktorCommand_t* commandSet_, unsigned int command
         if (!transceive(request, &response)) {
             return false;
         }
-        commandSet[i].writeAccess = static_cast<AktorCommandWriteAccess>(response.data.writeAccess);
-        commandSet[i].length = static_cast<AktorCommandLength>(response.data.length);
+        commandSet[i].writeAccess = static_cast<Command_t::WriteAccess>(response.data.writeAccess);
+        commandSet[i].length = static_cast<Command_t::CommandLength>(response.data.length);
         commandSet[i].factor = response.data.factor;
 
     }
@@ -125,9 +128,9 @@ bool Aktor::getValue(uint8_t key, float* value) {
         return false;
     }
 
-    AktorCommand_t* command = &commandSet[key-1];
+    Command_t* command = &commandSet[key-1];
     
-    if (command->length == AktorCommandLength::none) {
+    if (command->length == Command_t::CommandLength::none) {
         turag_errorf("%s: key not supported", name);
         return false;
     }
@@ -140,13 +143,13 @@ bool Aktor::getValue(uint8_t key, float* value) {
         Request<uint8_t> request;
         request.data = key;
 
-        if (command->length == AktorCommandLength::length_char) {
+        if (command->length == Command_t::CommandLength::length_char) {
             Response<int8_t> response;
             if (!transceive(request, &response)) {
                 return false;
             }
             command->buffer.floatValue = static_cast<float>(response.data) * command->factor;
-        } else if (command->length == AktorCommandLength::length_short) {
+        } else if (command->length == Command_t::CommandLength::length_short) {
             Response<AktorGetShort> response;
             if (!transceive(request, &response)) {
                 return false;
@@ -161,7 +164,7 @@ bool Aktor::getValue(uint8_t key, float* value) {
         }
 
         // protocol definition: writable values are bufferable
-        if (command->writeAccess == AktorCommandWriteAccess::write) {
+        if (command->writeAccess == Command_t::WriteAccess::write) {
             command->bufferValid = true;
         }
 
@@ -180,9 +183,9 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
         return false;
     }
 
-    AktorCommand_t* command = &commandSet[key-1];
+    Command_t* command = &commandSet[key-1];
 
-    if (command->length == AktorCommandLength::none) {
+    if (command->length == Command_t::CommandLength::none) {
         turag_errorf("%s: key not supported", name);
         return false;
     }
@@ -195,13 +198,13 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
         Request<uint8_t> request;
         request.data = key;
 
-        if (command->length == AktorCommandLength::length_char) {
+        if (command->length == Command_t::CommandLength::length_char) {
             Response<int8_t> response;
             if (!transceive(request, &response)) {
                 return false;
             }
             command->buffer.intValue = response.data;
-        } else if (command->length == AktorCommandLength::length_short) {
+        } else if (command->length == Command_t::CommandLength::length_short) {
             Response<AktorGetShort> response;
             if (!transceive(request, &response)) {
                 return false;
@@ -216,7 +219,7 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
         }
 
         // protocol definition: writable values are bufferable
-        if (command->writeAccess == AktorCommandWriteAccess::write) {
+        if (command->writeAccess == Command_t::WriteAccess::write) {
             command->bufferValid = true;
         }
 
@@ -236,13 +239,13 @@ bool Aktor::setValue(uint8_t key, float value) {
         return false;
     }
 
-    AktorCommand_t* command = &commandSet[key-1];
+    Command_t* command = &commandSet[key-1];
 
-    if (command->length == AktorCommandLength::none) {
+    if (command->length == Command_t::CommandLength::none) {
         turag_errorf("%s: key not supported", name);
         return false;
     }
-    if (command->writeAccess != AktorCommandWriteAccess::write) {
+    if (command->writeAccess != Command_t::WriteAccess::write) {
         turag_errorf("%s: key not writable", name);
         return false;
     }
@@ -254,7 +257,7 @@ bool Aktor::setValue(uint8_t key, float value) {
     command->bufferValid = false;
     Response<> response;
 
-    if (command->length == AktorCommandLength::length_char) {
+    if (command->length == Command_t::CommandLength::length_char) {
         Request<AktorSetChar> request;
         request.data.key = key;
         request.data.value = static_cast<int8_t>(value / command->factor);
@@ -262,7 +265,7 @@ bool Aktor::setValue(uint8_t key, float value) {
         if (!transceive(request, &response)) {
             return false;
         }
-    } else if (command->length == AktorCommandLength::length_short) {
+    } else if (command->length == Command_t::CommandLength::length_short) {
         Request<AktorSetShort> request;
         request.data.key = key;
         request.data.value = static_cast<int16_t>(value / command->factor);
@@ -292,13 +295,13 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
         return false;
     }
 
-    AktorCommand_t* command = &commandSet[key-1];
+    Command_t* command = &commandSet[key-1];
 
-    if (command->length == AktorCommandLength::none) {
+    if (command->length == Command_t::CommandLength::none) {
         turag_errorf("%s: key not supported", name);
         return false;
     }
-    if (command->writeAccess != AktorCommandWriteAccess::write) {
+    if (command->writeAccess != Command_t::WriteAccess::write) {
         turag_errorf("%s: key not writable", name);
         return false;
     }
@@ -310,7 +313,7 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
     command->bufferValid = false;
     Response<> response;
 
-    if (command->length == AktorCommandLength::length_char) {
+    if (command->length == Command_t::CommandLength::length_char) {
         Request<AktorSetChar> request;
         request.data.key = key;
         request.data.value = static_cast<int8_t>(value);
@@ -318,7 +321,7 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
         if (!transceive(request, &response)) {
             return false;
         }
-    } else if (command->length == AktorCommandLength::length_short) {
+    } else if (command->length == Command_t::CommandLength::length_short) {
         Request<AktorSetShort> request;
         request.data.key = key;
         request.data.value = static_cast<int16_t>(value);
@@ -348,9 +351,9 @@ unsigned int Aktor::getCommandNameLength(uint8_t key) {
         return false;
     }
 
-    AktorCommand_t* command = &commandSet[key-1];
+    Command_t* command = &commandSet[key-1];
 
-    if (command->length == AktorCommandLength::none) {
+    if (command->length == Command_t::CommandLength::none) {
         turag_errorf("%s: key not supported", name);
         return false;
     }
@@ -381,22 +384,21 @@ bool Aktor::getCommandName(uint8_t key, char* out_name) {
         return false;
     }
     
-    Request<AktorGetCommandInfo> request;
-    request.address = myAddress;
-    request.data.key = key;
-    request.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
-    request.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
-    request.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	uint8_t request[myAddressLength + 4 + 1];
+	request[myAddressLength] = key;
+	request[myAddressLength + 1] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	request[myAddressLength + 2] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	request[myAddressLength + 3] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     
-    if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+    if (!transceive(request,
                     sizeof(request),
                     reinterpret_cast<uint8_t*>(out_name),
-                    name_length + 2)) {
+                    name_length + myAddressLength + 1)) {
         return false;
     }
 
     for (int i = 0; i < name_length; ++i) {
-        out_name[i] = out_name[i+1];
+        out_name[i] = out_name[i + myAddressLength];
     }
     out_name[name_length] = 0;
 
@@ -406,8 +408,8 @@ bool Aktor::getCommandName(uint8_t key, char* out_name) {
 
 #if TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
 
-unsigned int Aktor::getStructuredOutputTableLength(void) {
-    if (structuredOutputTableLength != 0) {
+int Aktor::getStructuredOutputTableLength(void) {
+    if (structuredOutputTableLength != -1) {
         return structuredOutputTableLength;
     } else {
         Request<AktorGetStructuredOutputControl> request;
@@ -417,16 +419,16 @@ unsigned int Aktor::getStructuredOutputTableLength(void) {
         Response<uint8_t> response;
 
         if (!transceive(request, &response)) {
-            return 0;
+            return -1;
         }
-        structuredOutputTableLength = response.data;
+        structuredOutputTableLength = (int)response.data;
         return structuredOutputTableLength;
     }
 }
 
 
 bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
-    if (keys.size() > getStructuredOutputTableLength()) {
+    if ((int)keys.size() > getStructuredOutputTableLength()) {
         turag_errorf("%s: output table in device too small for number of provided keys", name);
         return false;
     }
@@ -436,30 +438,31 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
     }
     
     for (unsigned int i = 0; i < keys.size(); ++i) {
-        if (keys[i] > getCommandsetLength() || commandSet[keys[i] - 1].length == AktorCommandLength::none) {
+        if (keys[i] > getCommandsetLength() || commandSet[keys[i] - 1].length == Command_t::CommandLength::none) {
             turag_errorf("%s: requested keys invalid", name);
             return false;
         }
     }
     
-    uint8_t* request = new uint8_t[keys.size() + 4];
-    request[0] = myAddress;
-    request[1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
-    request[2] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
-    memcpy(request + 3, keys.data(), keys.size());
+    uint8_t request[keys.size() + myAddressLength + 3];
+
+    request[myAddressLength + 0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
+    request[myAddressLength + 1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
+    memcpy(request + myAddressLength + 2, keys.data(), keys.size());
     
-    Response<uint8_t> response;
+    uint8_t response[myAddressLength + 1 + 1];
     
-    if (transceive(request, keys.size() + 4,
-                   reinterpret_cast<uint8_t*>(std::addressof(response)), sizeof(response))) {
-        if (response.data == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
+    if (transceive(
+			request, 
+			keys.size() + myAddressLength + 3,
+            response,
+			sizeof(response))) {
+        if (response[myAddressLength] == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
             structuredOutputTable = keys;
-            delete[] request;
             return true;
         }
     }
     
-    delete[] request;
     return false;
 }
 
@@ -477,13 +480,13 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
     int data_size = 0;
     for (unsigned int i = 0; i < structuredOutputTable.size(); ++i) {
         switch (commandSet[structuredOutputTable[i] - 1].length) {
-        case AktorCommandLength::length_char:
+        case Command_t::CommandLength::length_char:
             data_size += 1;
             break;
-        case AktorCommandLength::length_short:
+        case Command_t::CommandLength::length_short:
             data_size += 2;
             break;
-        case AktorCommandLength::length_long:
+        case Command_t::CommandLength::length_long:
             data_size += 4;
             break;
         default:
@@ -491,31 +494,30 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
         }
     }
 
-    Request<uint8_t> request;
-    request.address = myAddress;
-    request.data = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
+	uint8_t request[myAddressLength + 1 + 1];
+	request[myAddressLength] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
 
-    uint8_t* response = new uint8_t[data_size + 2];
+    uint8_t* response = new uint8_t[myAddressLength + data_size + 1];
 
-    if (transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+    if (transceive(request,
                    sizeof(request),
                    response,
-                   data_size + 2)) {
-        uint8_t* pValue = response + 1;
+                   myAddressLength + data_size + 1)) {
+        uint8_t* pValue = response + myAddressLength;
 
         for (unsigned int i = 0; i < structuredOutputTable.size(); ++i) {
             int32_t device_value;
 
             switch (commandSet[structuredOutputTable[i] - 1].length) {
-            case AktorCommandLength::length_char:
+            case Command_t::CommandLength::length_char:
                 device_value = *(reinterpret_cast<int8_t*>(pValue));
                 pValue += 1;
                 break;
-            case AktorCommandLength::length_short:
+            case Command_t::CommandLength::length_short:
                 device_value = *(reinterpret_cast<int16_t*>(pValue));
                 pValue += 2;
                 break;
-            case AktorCommandLength::length_long:
+            case Command_t::CommandLength::length_long:
                 device_value = *(reinterpret_cast<int32_t*>(pValue));
                 pValue += 4;
                 break;

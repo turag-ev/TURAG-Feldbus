@@ -25,10 +25,16 @@
  * @name channel index range
  * @{
  */
+
+/// Maximale Anzahl der Channels pro Typ.
 #define TURAG_FELDBUS_ASEB_MAX_CHANNELS_PER_TYPE		16
+/// Channel-Offset für digitale Eingänge.
 #define TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT	1
+/// Channel-Offset für analoge Eingänge.
 #define TURAG_FELDBUS_ASEB_INDEX_START_ANALOG_INPUT		17
+/// Channel-Offset für digitale Ausgänge.
 #define TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_OUTPUT	33
+/// Channel-Offset für PWM-Ausgänge.
 #define TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT		49
 ///@}
 
@@ -38,7 +44,6 @@
  * @{
  */
 #define TURAG_FELDBUS_ASEB_SYNC							0xff
-#define TURAG_FELDBUS_ASEB_UPTIME						243
 #define TURAG_FELDBUS_ASEB_SYNC_SIZE					244
 #define TURAG_FELDBUS_ASEB_CHANNEL_NAME					245
 #define TURAG_FELDBUS_ASEB_CHANNEL_NAME_LENGTH			246

@@ -1,18 +1,37 @@
-/**
- *  @brief		Implements slave side TURAG feldbus support
- *  @file		feldbus.c
- *  @date		07.11.2013
- *  @author		Martin Oemus <martin@oemus.net>
- *  @ingroup    feldbus-slave-base
- * 
- */
 
 #include "feldbus.h"
 
-uint8_t turag_feldbus_slave_name_length = 0;
-char* turag_feldbus_slave_name = TURAG_FELDBUS_DEVICE_NAME;
+turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
+	.transmitLength = 0,
+	.txOffset = 0,
+	.rxOffset = 0,
+	.rx_length = 0,
+	.overflow = 0,
+#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
+	.package_lost_flag = 0,
+	.package_overflow_flag = 0,
+#endif
+#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+	.transmission_active = 0,
+#endif	
+#if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
+	.toggleLedBlocked = 0,
+#endif
+};
 
-turag_feldbus_slave_uart_t turag_feldbus_slave_uart;
+turag_feldbus_slave_info_t turag_feldbus_slave_info = {
+	.name = TURAG_FELDBUS_DEVICE_NAME,
+	.versioninfo = TURAG_FELDBUS_DEVICE_VERSIONINFO,
+#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
+	.packagecount_correct = 0,
+	.packagecount_buffer_overflow = 0,
+	.packagecount_lost = 0,
+	.packagecount_chksum_mismatch = 0,
+#endif
+#if (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY>0) && (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY<=65535)
+	.uptime_counter = 0
+#endif
+};
 
 
 void turag_feldbus_slave_init() {
@@ -23,14 +42,6 @@ void turag_feldbus_slave_init() {
 	turag_feldbus_slave_uart.txbuf[1] = (TURAG_FELDBUS_MASTER_ADDR_2|MY_ADDR) >> 8;
 #endif
 	
-	turag_feldbus_slave_uart.index = 0;
-	turag_feldbus_slave_uart.rx_length = 0;
-	turag_feldbus_slave_uart.overflow = 0;
-#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-	turag_feldbus_slave_uart.transmission_active = 0;
-#endif
-	turag_feldbus_slave_name_length = strlen(turag_feldbus_slave_name);
-
 	turag_feldbus_hardware_init();
 	
 	turag_feldbus_slave_rts_off();
@@ -67,7 +78,7 @@ void print_text(const char *buf) {
 			break;
 		}
 	}
-	turag_feldbus_slave_uart.length = i;
+	turag_feldbus_slave_uart.transmitLength = i;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }
@@ -80,7 +91,7 @@ void print_char(uint8_t x) {
 	turag_feldbus_slave_uart.txbuf[2] = digit_to_hex(x >> 4);
 	turag_feldbus_slave_uart.txbuf[3] = digit_to_hex(x);
 
-	turag_feldbus_slave_uart.length = 4;
+	turag_feldbus_slave_uart.transmitLength = 4;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }
@@ -97,7 +108,7 @@ void print_short(uint16_t x) {
 	turag_feldbus_slave_uart.txbuf[6] = '\r';
 	turag_feldbus_slave_uart.txbuf[7] = '\n';
 
-	turag_feldbus_slave_uart.length = 8;
+	turag_feldbus_slave_uart.transmitLength = 8;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }
@@ -111,7 +122,7 @@ void print_short_nn(uint16_t x) {
 	turag_feldbus_slave_uart.txbuf[4] = digit_to_hex(x >> 4);
 	turag_feldbus_slave_uart.txbuf[5] = digit_to_hex(x);
 
-	turag_feldbus_slave_uart.length = 6;
+	turag_feldbus_slave_uart.transmitLength = 6;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	turag_feldbus_slave_uart.transmission_active = 1;
 	start_transmission();
@@ -134,7 +145,7 @@ void print_sshort(int16_t x) {
 	turag_feldbus_slave_uart.txbuf[7] = '\r';
 	turag_feldbus_slave_uart.txbuf[8] = '\n';
 
-	turag_feldbus_slave_uart.length = 9;
+	turag_feldbus_slave_uart.transmitLength = 9;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }
@@ -153,7 +164,7 @@ void print_sshort_nn(int16_t x) {
 	turag_feldbus_slave_uart.txbuf[5] = digit_to_hex(x >> 4);
 	turag_feldbus_slave_uart.txbuf[6] = digit_to_hex(x);
 
-	turag_feldbus_slave_uart.length = 7;
+	turag_feldbus_slave_uart.transmitLength = 7;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }
@@ -175,7 +186,7 @@ void print_long(uint32_t x) {
 	turag_feldbus_slave_uart.txbuf[11] = '\n';
 
 
-	turag_feldbus_slave_uart.length = 12;
+	turag_feldbus_slave_uart.transmitLength = 12;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }
@@ -193,7 +204,7 @@ void print_short_d(int16_t x) {
 	turag_feldbus_slave_uart.txbuf[7] = '\n';
 	itoa(x, (char*)turag_feldbus_slave_uart.txbuf, 10);
 
-	turag_feldbus_slave_uart.length = 8;
+	turag_feldbus_slave_uart.transmitLength = 8;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }
@@ -219,7 +230,7 @@ void print_slong(int32_t x) {
 	turag_feldbus_slave_uart.txbuf[11] = '\r';
 	turag_feldbus_slave_uart.txbuf[12] = '\n';
 
-	turag_feldbus_slave_uart.length = 13;
+	turag_feldbus_slave_uart.transmitLength = 13;
 	turag_feldbus_slave_uart.chksum_required = 0;
 	start_transmission();
 }

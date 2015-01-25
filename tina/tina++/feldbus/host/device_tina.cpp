@@ -11,27 +11,56 @@
 #include <tina++/thread.h>
 #include <tina++/time.h>
 #include <tina++/crc/xor.h>
-#include <tina++/crc/crc8.h>
+#include <tina++/crc/crc.h>
 #include <tina/debug/print.h>
-#include <tina/rs485.h>
+#include <tina/feldbus/host/rs485.h>
+#include <tina/math.h>
 
 #include "device.h"
 
 namespace TURAG {
 namespace Feldbus {
 
-SystemTime Device::lastTransmission;
-unsigned int Device::globalTransmissionErrorCounter = 0;
+namespace {
 
+struct DeviceInfoInternal {
+    uint8_t deviceProtocolId;
+    uint8_t deviceTypeId;
+    uint8_t crcType;
+    uint32_t bufferSize;
+    uint8_t nameLength;
+    uint8_t versioninfoLength;
+    uint16_t uptimeFrequency;
+} _packed;
+
+}
+
+std::atomic_int Device::globalTransmissionErrorCounter{0};
+ 
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
-    if (hasReachedTransmissionErrorLimit()) {
-        static unsigned shit_displayed = 0;
-        if (shit_displayed < 5) {
+    if (isDysfunctional()) {
+        static unsigned dysfunctionalMessageDisplayed = 0;
+        if (dysfunctionalMessageDisplayed < 5) {
             turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
-            shit_displayed++;
+            dysfunctionalMessageDisplayed++;
         }
         return false;
     } else {
+		// we assume the caller wants to transmit a broadcast, if he does not supply means to store any answer.
+		// Thus we use zero rather than the device's address.
+		unsigned useAddress = !receive || !receive_length ? TURAG_FELDBUS_BROADCAST_ADDR : myAddress;
+		
+		switch (myAddressLength) {
+		case 1:
+			transmit[0] = useAddress;
+			break;
+			
+		case 2:
+			transmit[0] = useAddress & 0xff;
+			transmit[1] = useAddress >> 8;
+			break;
+		}
+		
         switch (myChecksumType) {
         case ChecksumType::xor_based:
             transmit[transmit_length - 1] = XOR::calculate(transmit, transmit_length - 1);
@@ -52,11 +81,16 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 
         bool success = false, checksum_correct = false;
         unsigned int attempt = 0;
+		
 
         // we try to transmit until the transmission succeeds and the checksum is correct
         // or the number of transmission attempts is exceeded.
         while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
-            success = turag_rs485_transceive(transmit, transmit_length, receive, receive_length);
+            int transmit_length_copy = transmit_length;
+            int receive_length_copy = receive_length;
+
+			turag_rs485_buffer_clear();
+            success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy);
 
             if (success) {
                 if (!receive || receive_length == 0) {
@@ -74,12 +108,28 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
                         checksum_correct = CRC8::check(receive, receive_length-1, receive[receive_length-1]);
                         break;
                     }
+                    
+                    if (!checksum_correct) {
+						++myTotalChecksumErrors;
+						
+						++globalTransmissionErrorCounter;
+						if (!(globalTransmissionErrorCounter.load() % 25)) {
+							turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter.load());
+						}
+                    }
                 }
             } else {
+                if (transmit_length_copy < transmit_length) {
+					++myTotalTransmitErrors;
+                } else if (receive_length_copy == 0) {
+					++myTotalNoAnswerErrors;
+				} else {
+					++myTotalMissingDataErrors;
+				}
+				
                 ++globalTransmissionErrorCounter;
-                ++myTotalTransmissionErrors;
-                if (!(globalTransmissionErrorCounter % 25)) {
-                    turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
+                if (!(globalTransmissionErrorCounter.load() % 25)) {
+                    turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter.load());
                 }
             }
             ++attempt;
@@ -97,85 +147,248 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             // if we had a successful transmission, we reset the error counter
             // but resetting the error only makes sense if we got a response from the device
             if (receive && receive_length != 0) {
-                myTransmissionErrorCounter = 0;
+                myCurrentErrorCounter = 0;
             }
             return true;
         } else {
             turag_warningf("%s: rs485 transceive failed", name);
-            myTransmissionErrorCounter += attempt;
+            myCurrentErrorCounter += attempt;
             return false;
         }
     }
 }
 
+bool Device::sendPing(void) {
+	Request<> request;
+	Response<> response;
 
-bool Device::isAvailable(void) {
-	if (!hasCheckedAvailabilityYet) {
-		Request<> request;
-		Response<> response;
+	return transceive(request, &response);
+}
 
-		while (!hasReachedTransmissionErrorLimit()) {
-			if (transceive(request, &response)) {
-				hasCheckedAvailabilityYet = true;
-				return true;
+bool Device::isAvailable(bool forceUpdate) {
+		if (!hasCheckedAvailabilityYet || forceUpdate) {
+		while (!isDysfunctional()) {
+			if (sendPing()) {
+				break;
 			}
 		}
 	}
 
-	return !hasReachedTransmissionErrorLimit();
+    hasCheckedAvailabilityYet = true;
+    return !isDysfunctional();
 }
 
 bool Device::getDeviceInfo(DeviceInfo* device_info) {
     if (myDeviceInfo.bufferSize == 0) {
         Request<uint8_t> request;
-        Response<DeviceInfo> response;
+        Response<DeviceInfoInternal> response;
 
         request.data = 0;
 
         if (!transceive(request, &response)) {
             return false;
         }
-        myDeviceInfo = response.data;
+        myDeviceInfo.deviceProtocolId = response.data.deviceProtocolId;
+        myDeviceInfo.deviceTypeId = response.data.deviceTypeId;
+        myDeviceInfo.crcType = response.data.crcType & 0x7f;
+        myDeviceInfo.bufferSize = response.data.bufferSize;
+        myDeviceInfo.nameLength = response.data.nameLength;
+        myDeviceInfo.versioninfoLength = response.data.versioninfoLength;
+        myDeviceInfo.uptimeFrequency = response.data.uptimeFrequency;
+        myDeviceInfo.packageStatisticsAvailable = response.data.crcType & 0x80 ? true : false;
     }
     if (device_info) *device_info = myDeviceInfo;
     return true;
 }
 
-bool Device::receiveDeviceRealName(char* out_real_name) {
-    if (!out_real_name) {
-	return false;
-    }
-    
+bool Device::receiveDeviceRealName(char* out_string) {
+    // It is possible that nobody called getDeviceInfo() yet,
+    // so our device info would be empty. Because the device
+    // info contains the length of the string we are about 
+    // to receive, we make sure getDeviceInfo() get called.
     if (myDeviceInfo.bufferSize == 0) {
         if (!getDeviceInfo(nullptr)) {
             return false;
         }
     }
+    
+    return receiveString(
+		TURAG_FELDBUS_SLAVE_COMMAND_DEVICE_NAME, 
+		myDeviceInfo.nameLength,
+		out_string);
+}
+
+bool Device::receiveVersionInfo(char* out_string) {
+    // It is possible that nobody called getDeviceInfo() yet,
+    // so our device info would be empty. Because the device
+    // info contains the length of the string we are about 
+    // to receive, we make sure getDeviceInfo() get called.
+    if (myDeviceInfo.bufferSize == 0) {
+        if (!getDeviceInfo(nullptr)) {
+            return false;
+        }
+    }
+    
+    return receiveString(
+		TURAG_FELDBUS_SLAVE_COMMAND_VERSIONINFO, 
+		myDeviceInfo.versioninfoLength,
+		out_string);
+}
+
+bool Device::receiveString(uint8_t command, uint8_t stringLength, char* out_string) {
+    if (!out_string) {
+		return false;
+    }
+    
+    // because we receive a packet including address and checksum
+    // we need a slightly bigger array.
+    char recvBuffer[stringLength + myAddressLength + 1];
 
     struct cmd {
         uint8_t a;
         uint8_t b;
     };
 
-    Request<cmd> request;
-    request.address = myAddress;
-    request.data.a = 0;
-    request.data.b = 0;
-
-    if (!transceive(reinterpret_cast<uint8_t*>(std::addressof(request)),
+	uint8_t request[myAddressLength + 2 + 1];
+	request[myAddressLength] = 0;
+	request[myAddressLength + 1] = command;
+	
+    if (!transceive(request,
                       sizeof(request),
-                      reinterpret_cast<uint8_t*>(out_real_name),
-                      myDeviceInfo.nameLength + 2)) {
+                      reinterpret_cast<uint8_t*>(recvBuffer),
+                      stringLength + myAddressLength + 1)) {
         return false;
     }
 
-    for (int i = 0; i < myDeviceInfo.nameLength; ++i) {
-        out_real_name[i] = out_real_name[i+1];
+    for (int i = 0; i < stringLength; ++i) {
+        out_string[i] = recvBuffer[i + myAddressLength];
     }
-    out_real_name[myDeviceInfo.nameLength] = 0;
+    out_string[stringLength] = 0;
 
+    return true;	
+}
+
+bool Device::receiveUptime(float* uptime) {
+	if (!uptime) {
+		return false;
+	}
+	
+	if (!getDeviceInfo(nullptr)) {
+		return false;
+	}
+	
+	if (myDeviceInfo.uptimeFrequency == 0) {
+        *uptime = NAN;
+        return true;
+	}
+	
+	uint32_t count = 0;
+	
+	if (!receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_UPTIME_COUNTER, &count)) {
+		return false;
+	}
+
+    *uptime = (float)count / (float)myDeviceInfo.uptimeFrequency;
     return true;
 }
+
+bool Device::receiveNumberOfAcceptedPackages(uint32_t* packageCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CORRECT, packageCount);
+}
+
+bool Device::receiveNumberOfOverflows(uint32_t* overflowCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_BUFFEROVERFLOW, overflowCount);
+}
+
+bool Device::receiveNumberOfLostPackages(uint32_t* lostPackagesCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_LOST, lostPackagesCount);
+}
+
+bool Device::receiveNumberOfChecksumErrors(uint32_t* checksumErrorCount) {
+	return receiveErrorCount(TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CHKSUM_MISMATCH, checksumErrorCount);
+}
+
+bool Device::receiveErrorCount(uint8_t command, uint32_t* buffer) {
+	if (!buffer) {
+		return false;
+	}
+	
+	struct cmd {
+		uint8_t a;
+		uint8_t b;
+	};
+
+	Request<cmd> request;
+	request.data.a = 0;
+	request.data.b = command;
+	
+	// this seems to be required for proper alignment
+	struct Value {
+		uint32_t value;
+	} _packed;
+
+	Response<Value> response;
+	
+	if (!transceive(request, &response)) {
+		return false;
+	}
+	
+	*buffer = response.data.value;
+	
+	return true;
+}
+
+bool Device::receiveAllSlaveErrorCount(uint32_t* counts) {
+	if (!counts) {
+		return false;
+	}
+	
+	struct cmd {
+		uint8_t a;
+		uint8_t b;
+	};
+
+	Request<cmd> request;
+	request.data.a = 0;
+	request.data.b = TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_ALL;
+	
+	struct Value {
+		uint32_t packageCount;
+		uint32_t overflowCount;
+		uint32_t lostPackagesCount;
+		uint32_t checksumErrorCount;
+	} _packed;
+
+	Response<Value> response;
+	
+	if (!transceive(request, &response)) {
+		return false;
+	}
+
+	counts[0] = response.data.packageCount;
+	counts[1] = response.data.overflowCount;
+	counts[2] = response.data.lostPackagesCount;
+	counts[3] = response.data.checksumErrorCount;
+	
+	return true;
+}
+
+bool Device::resetSlaveErrors(void) {
+	struct cmd {
+		uint8_t a;
+		uint8_t b;
+	};
+
+	Request<cmd> request;
+	request.data.a = 0;
+	request.data.b = TURAG_FELDBUS_SLAVE_COMMAND_RESET_PACKAGE_COUNT;
+
+	Response<> response;
+	
+	return transceive(request, &response);
+}
+
+
 
 } // namespace Feldbus
 } // namespace TURAG

@@ -64,4 +64,40 @@
 ///@}
 
 
+/**
+ * @name Reservierte Pakete
+ * @{
+ */
+ 
+/// @brief Ausgeben des Gerätenamens
+#define TURAG_FELDBUS_SLAVE_COMMAND_DEVICE_NAME						0x00
+
+/// @brief Ausgeben des Uptime-Counters
+#define TURAG_FELDBUS_SLAVE_COMMAND_UPTIME_COUNTER					0x01
+
+/// @brief Ausgeben des Versionsinfo-Strings
+#define TURAG_FELDBUS_SLAVE_COMMAND_VERSIONINFO						0x02
+
+/// @brief Ausgabe der Anzahl korrekt empfangener Pakete
+#define TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CORRECT			0x03
+
+/// @brief Ausgabe der Anzahl von Pufferüberläufen
+#define TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_BUFFEROVERFLOW	0x04
+
+/// @brief Ausgabe der Anzahl verlorener Pakete
+#define TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_LOST				0x05
+
+/// @brief Ausgabe der Anzahl von Checksummenfehlern
+#define TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CHKSUM_MISMATCH	0x06
+
+/// @brief Ausgabe aller vier Paketanzahlen in folgender Reihenfolge: korrekte Pakete, Pufferüberläufe, verlorene Pakete, Checksummenfehler
+#define TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_ALL				0x07
+
+/// @brief Alle 4 Paketanzahlen werden auf 0 zurückgesetzt
+#define TURAG_FELDBUS_SLAVE_COMMAND_RESET_PACKAGE_COUNT				0x08
+
+
+///@}
+
+
 #endif

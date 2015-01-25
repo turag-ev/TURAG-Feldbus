@@ -19,10 +19,21 @@ namespace TURAG {
 namespace Feldbus {
 
 class Bootloader : public TURAG::Feldbus::Device {
-
 public:
-    Bootloader(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) :
-        Device(name_, address, type) {}
+	/**
+	 * \brief Konstruktor.
+	 * \param[in] name_
+	 * \param[in] address
+	 * \param[in] type
+	 * \param[in] addressLength
+	 */
+    Bootloader(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+        Device(name_, address, type, addressLength)
+    {
+    }
+    
+    bool sendEnterBootloaderBroadcast(void);
 
     bool transceiveBoot (uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
 };

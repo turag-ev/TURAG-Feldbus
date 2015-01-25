@@ -1,11 +1,3 @@
-/**
- *  @brief		Implements slave side TURAG feldbus für ASEB support
- *  @file		feldbus_aseb.c
- *  @date		11.01.2014
- *  @author		Martin Oemus <martin@oemus.net>
- *  @ingroup 	feldbus-slave-aseb
- *
- */
 
 #include "feldbus_aseb.h"
 
@@ -14,6 +6,15 @@
 
 #ifndef TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
 # error TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM must be defined
+#endif
+
+// Unfortunately we can not use the size information in the
+// init function for static_asserts. So we have to require enough
+// buffer to can handle the largest possible package: sync with
+// all digital and analog inputs with 2-byte address.
+// The output of the labels are capped to what we can handle.
+#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 36
+# error Buffer overflow. TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 36, must be bigger.
 #endif
 
 
@@ -31,17 +32,14 @@ static feldbus_aseb_pwm_t* pwm_outputs;
 static uint8_t pwm_outputs_size;
 static uint8_t analog_resolution;
 
-static uint32_t uptime_counter = 0;
-
-
 
 
 void turag_feldbus_aseb_init(
-    feldbus_aseb_digital_io_t* digital_inputs_, uint8_t digital_inputs_size_,
-    feldbus_aseb_digital_io_t* digital_outputs_, uint8_t digital_outputs_size_,
-    feldbus_aseb_analog_t* analog_inputs_, uint8_t analog_inputs_size_,
-	feldbus_aseb_pwm_t* pwm_outputs_, uint8_t pwm_outputs_size_, uint8_t analog_resolution_) {
-
+    feldbus_aseb_digital_io_t* digital_inputs_, const uint8_t digital_inputs_size_,
+    feldbus_aseb_digital_io_t* digital_outputs_, const uint8_t digital_outputs_size_,
+    feldbus_aseb_analog_t* analog_inputs_, const uint8_t analog_inputs_size_,
+	feldbus_aseb_pwm_t* pwm_outputs_, const uint8_t pwm_outputs_size_, const uint8_t analog_resolution_) {
+	
 	digital_inputs = digital_inputs_;
 	digital_inputs_size = digital_inputs_size_;
 	digital_outputs = digital_outputs_;
@@ -56,7 +54,7 @@ void turag_feldbus_aseb_init(
 }
 
 
-uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response) {
+FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
     // the feldbus base implementation guarantees message_length >= 1 and message[0] >= 1 
 	// so we don't need to check that
 	
@@ -222,7 +220,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 			return TURAG_FELDBUS_IGNORE_PACKAGE;
 		}
 	} else if (message[0] == TURAG_FELDBUS_ASEB_CHANNEL_NAME) {
-		char* name = 0;
+		const char* name = 0;
 		uint8_t index = 0;
 		
 		if (message[1] < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT + TURAG_FELDBUS_ASEB_MAX_CHANNELS_PER_TYPE) {
@@ -244,15 +242,22 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 
 #if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
         length = strlen_PF((uint_farptr_t)((uint16_t)name));
-        memcpy_PF(response, (uint_farptr_t)((uint16_t)name), length);
 #else
         length = strlen(name);
+#endif		
+		if (length + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
+			length = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+		}
+		
+#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
+        memcpy_PF(response, (uint_farptr_t)((uint16_t)name), length);
+#else
         memcpy(response, name, length);
 #endif
         return length;
 		
 	} else if (message[0] == TURAG_FELDBUS_ASEB_CHANNEL_NAME_LENGTH) {
-		char* name = 0;
+		const char* name = 0;
 		uint8_t index = 0;
 		
 		if (message[1] < TURAG_FELDBUS_ASEB_INDEX_START_DIGITAL_INPUT + TURAG_FELDBUS_ASEB_MAX_CHANNELS_PER_TYPE) {
@@ -271,10 +276,15 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		if (!name) return TURAG_FELDBUS_IGNORE_PACKAGE;
 		
 #if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
-        response[0] = strlen_PF((uint_farptr_t)((uint16_t)name));
+        uint8_t length = strlen_PF((uint_farptr_t)((uint16_t)name));
 #else
-        response[0] = strlen(name);
+        uint8_t length = strlen(name);
 #endif
+		if (length + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
+			length = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+		}
+		
+		response[0] = length;
 		return 1;
 	} else if (message[0] == TURAG_FELDBUS_ASEB_SYNC_SIZE) {
 		uint8_t size = 0;
@@ -285,35 +295,10 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 		if (analog_inputs && analog_inputs_size > 0) {
 			size += analog_inputs_size * 2;
 		}
-		response[0] = size + 2;
+		response[0] = size + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1;
 		return 1;
-	} else if (message[0] == TURAG_FELDBUS_ASEB_UPTIME) {
-		response[0] = ((uint8_t*)(&uptime_counter))[0];
-		response[1] = ((uint8_t*)(&uptime_counter))[1];
-		response[2] = ((uint8_t*)(&uptime_counter))[2];
-		response[3] = ((uint8_t*)(&uptime_counter))[3];
-		return 4;
 	}
 	return TURAG_FELDBUS_IGNORE_PACKAGE;
-}
-
-
-void turag_feldbus_aseb_periodic_function(void) {
-	static uint8_t count = 0;
-	static uint8_t subcount = 0;
-	
-	++count;
-	if (count > 5) {
-		if (subcount == 0) {
-			turag_feldbus_aseb_toggle_status_led();
-		} else if (subcount == 1) {
-			turag_feldbus_aseb_toggle_status_led();
-		}
-		subcount = (subcount+1) & 7;
-		count = 0;
-	}
-	
-	++uptime_counter;
 }
 
 

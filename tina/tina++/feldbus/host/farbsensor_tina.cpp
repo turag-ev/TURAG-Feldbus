@@ -16,17 +16,13 @@ namespace TURAG {
 namespace Feldbus {
 
 struct hsvMsg_t {
-	uint8_t address;
 	uint8_t h;
 	uint8_t s;
 	uint8_t v;
-	uint8_t chksum;
 } _packed;
 
 struct rgbMsg_t {
-	uint8_t ID;
 	uint8_t r,g,b;
-	uint8_t chksum;
 } _packed;
 
 
@@ -82,9 +78,7 @@ void Farbsensor::setColorThresholds(Color color_index, uint16_t h_min, uint16_t 
 }
 
 bool Farbsensor::initiateMeassurement() {
-	uint8_t msg[2];
-	msg[0] = TURAG_FELDBUS_BROADCAST_ADDR;
-
+	uint8_t msg[myAddressLength + 1];
 	return transceive(msg, sizeof(msg), 0, 0);
 }
 
@@ -95,18 +89,18 @@ bool Farbsensor::getRGB(rgb_t* rgb) {
 
 //#warning Thrad delay still implemented, test for necessity!
 	Thread_delay(10_ms);
+	
+	Request<uint8_t> request;
+	request.data = CMD_CLR_RGB;
+	
+	Response<rgbMsg_t> response;
 
-	unsigned char msg[3];
-	msg[0] = myAddress;
-	msg[1] = CMD_CLR_RGB;
-
-	rgbMsg_t rgbMsg;
-	bool success = transceive(msg, sizeof(msg), (unsigned char*) &rgbMsg, sizeof(rgbMsg_t));
+	bool success = transceive(request, &response);
 
 	if (success) {
-		rgb->r = rgbMsg.r;
-		rgb->g = rgbMsg.g;
-		rgb->b = rgbMsg.b;
+		rgb->r = response.data.r;
+		rgb->g = response.data.g;
+		rgb->b = response.data.b;
 		return true;
 	} else {
 		return false;
@@ -121,17 +115,17 @@ bool Farbsensor::getHSV(hsv_t* hsv) {
 //#warning Thrad delay still implemented, test for necessity!
 	Thread_delay(10_ms);
 
-	unsigned char msg[3];
-	msg[0] = myAddress;
-	msg[1] = CMD_CLR_HSV;
+	Request<uint8_t> request;
+	request.data = CMD_CLR_HSV;
+	
+	Response<hsvMsg_t> response;
 
-	hsvMsg_t hsvMsg;
-	bool success = transceive(msg, sizeof(msg), (unsigned char*) &hsvMsg, sizeof(hsvMsg_t));
+	bool success = transceive(request, &response);
 
 	if (success) {
-		hsv->h = hsvMsg.h;
-		hsv->s = hsvMsg.s;
-		hsv->v = hsvMsg.v;
+		hsv->h = response.data.h;
+		hsv->s = response.data.s;
+		hsv->v = response.data.v;
 		return true;
 	} else {
 		return false;

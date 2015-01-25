@@ -2,22 +2,10 @@
 #define DYNAMIXELDEVICE_H
 
 #include <tina/feldbus/dynamixel/dynamixel.h>
+#include <tina++/feldbus/host/device.h>
 
 namespace TURAG {
 namespace Feldbus {
-
-// -------------------------------------------------------------
-// - config
-// -------------------------------------------------------------
-// these values could be relocated to an external header to make
-// the whole thing configurable.
-
-// number of trials before we let the transmission fail
-#define TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS		5
-
-// specifies how many unsuccessful transmission attempts in a row are accepted
-// before defining the device as dysfunctional
-#define TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS		35
 
 
 class DynamixelDevice
@@ -35,8 +23,8 @@ public:
 
     //Konstruktor für die Klasse DynamixelDevice
     DynamixelDevice(const char* name_, int id,
-                    unsigned int max_transmission_attempts = TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
-                    unsigned int max_transmission_errors = TURAG_DYNAMIXEL_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
+                    unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
+                    unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
         /*Initialisierungen */
         name(name_), myId(id), maxTransmissionAttempts(max_transmission_attempts), maxTransmissionErrors(max_transmission_errors),
         myTransmissionErrorCounter(0), myTotalTransmissionErrors(0), myTotalTransmissions(0), hasCheckedAvailabilityYet(false),

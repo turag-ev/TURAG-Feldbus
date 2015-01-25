@@ -1,16 +1,6 @@
-/**
- *  @brief		Implements slave side TURAG feldbus für Stellantriebe support
- *  @file		feldbus_stellantriebe.c
- *  @date		17.11.2013
- *  @author		Martin Oemus <martin@oemus.net>
- *  @ingroup	feldbus-slave-stellantriebe
- *
- */
 
 #include <tina/tina.h>
 #include "feldbus_stellantriebe.h"
-#include "feldbus.h"
-#include <feldbus_config.h>
 #include <string.h>
 
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(__DOXYGEN__)
@@ -50,7 +40,7 @@ void turag_feldbus_stellantriebe_init(feldbus_stellantriebe_command_t* command_s
 }
 
 
-uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_length, uint8_t* response) {
+FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
     // the feldbus base implementation guarantees message_length >= 1 and message[0] >= 1 
 	// so we don't need to check that
 
@@ -159,6 +149,7 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 
             } else if (message[1] == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET) {
                 // command info request
+				_Static_assert(6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
                 feldbus_stellantriebe_command_t* command = commmand_set + index;
                 memcpy(response, &command->write_access, 6);
                 return 6;
@@ -186,9 +177,16 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
 
 #if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
                 length = strlen_PF((uint_farptr_t)((uint16_t)command_names[index]));
-                memcpy_PF(response, (uint_farptr_t)((uint16_t)command_names[index]), length);
 #else
                 length = strlen(command_names[index]);
+#endif				
+				if (length + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
+					length = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+				}
+				
+#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
+                memcpy_PF(response, (uint_farptr_t)((uint16_t)command_names[index]), length);
+#else
                 memcpy(response, command_names[index], length);
 #endif
                 return length;
@@ -207,6 +205,8 @@ uint8_t turag_feldbus_slave_process_package(uint8_t* message, uint8_t message_le
             // we do not check whether command->value is a valid pointer
             // because we check for validity of the requested values
             // when the table is generated
+			// There is also a check done whether the output will fit
+			// into the bufer, so there is no check required either.
             for (i = 0; i < structured_output_table_length; ++i) {
 				command = structured_output_table[i];
 				
