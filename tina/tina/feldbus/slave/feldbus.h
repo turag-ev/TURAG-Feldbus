@@ -790,7 +790,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 				turag_feldbus_slave_uart.txbuf[8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1;
 				turag_feldbus_slave_uart.txbuf[9 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY & 0xff;
 				turag_feldbus_slave_uart.txbuf[10 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY >> 8;
-				turag_feldbus_slave_uart.transmitLength = 8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+				turag_feldbus_slave_uart.transmitLength = 11 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
 			} else if (length == 3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
 				switch (turag_feldbus_slave_uart.rxbuf[1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH]) {
 				case TURAG_FELDBUS_SLAVE_COMMAND_DEVICE_NAME: {

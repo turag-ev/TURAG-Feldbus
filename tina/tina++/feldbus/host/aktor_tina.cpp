@@ -444,27 +444,25 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
         }
     }
     
-    uint8_t* request = new uint8_t[keys.size() + myAddressLength + 3];
+    uint8_t request[keys.size() + myAddressLength + 3];
 
     request[myAddressLength + 0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
     request[myAddressLength + 1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
     memcpy(request + myAddressLength + 2, keys.data(), keys.size());
     
-    Response<uint8_t> response;
+    uint8_t response[myAddressLength + 1 + 1];
     
     if (transceive(
 			request, 
 			keys.size() + myAddressLength + 3,
-			reinterpret_cast<uint8_t*>(std::addressof(response)), 
+            response,
 			sizeof(response))) {
-        if (response.data == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
+        if (response[myAddressLength] == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
             structuredOutputTable = keys;
-            delete[] request;
             return true;
         }
     }
     
-    delete[] request;
     return false;
 }
 
