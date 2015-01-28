@@ -453,7 +453,7 @@ typedef struct {
 	// offset in rxBuf
 	FeldbusSize_t rxOffset;
 	// if not 0, then there is a package waiting for processsing
-	FeldbusSize_t rx_length;
+	volatile FeldbusSize_t rx_length;
 	// overflow detected
 	uint8_t overflow;
 	// holds the calculated checksum
@@ -469,7 +469,7 @@ typedef struct {
 	uint8_t chksum_required;
 #endif
 #if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
-	uint8_t toggleLedBlocked;
+	volatile uint8_t toggleLedBlocked;
 #endif
 } turag_feldbus_slave_uart_t;
 
