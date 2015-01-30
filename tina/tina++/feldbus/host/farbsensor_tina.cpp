@@ -10,7 +10,6 @@
 #include "farbsensor.h"
 #include <tina/feldbus/protocol/turag_feldbus_fuer_lokalisierungssensoren.h>
 #include <tina++/thread.h>
-#include <tina/debug.h>
 
 namespace TURAG {
 namespace Feldbus {
