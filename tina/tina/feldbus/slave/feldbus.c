@@ -28,7 +28,7 @@ turag_feldbus_slave_info_t turag_feldbus_slave_info = {
 	.packagecount_lost = 0,
 	.packagecount_chksum_mismatch = 0,
 #endif
-#if (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY>0) && (TURAG_FELDBUS_SLAVE_UPTIME_FREQUENCY<=65535)
+#if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>0) && (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<=65535)
 	.uptime_counter = 0
 #endif
 };
