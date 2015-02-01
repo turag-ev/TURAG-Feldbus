@@ -411,7 +411,7 @@ bool Aseb::getPwmFrequency(unsigned key, uint32_t* frequency) {
 
 unsigned int Aseb::getCommandNameLength(unsigned key) {
     if (!syncSize_) {
-        errorf("%s: tried to call Aseb::getCommandNameLength prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getCommandNameLength prior to initialization", name);
         return false;
     }
 

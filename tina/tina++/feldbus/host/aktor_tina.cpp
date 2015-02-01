@@ -454,7 +454,7 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
     
     if (transceive(
 			request, 
-			keys.size() + myAddressLength + 3,
+			sizeof(request),
             response,
 			sizeof(response))) {
         if (response[myAddressLength] == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
