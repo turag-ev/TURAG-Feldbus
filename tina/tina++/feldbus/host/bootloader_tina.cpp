@@ -301,6 +301,7 @@ const char* BootloaderAtmega::errorName(BootloaderAtmega::ErrorCode errorCode) {
 		case ErrorCode::transceive_error: return "Übertragung fehlgeschlagen."; break;
 		case ErrorCode::preconditions_not_met: return "Voraussetzungen nicht erfüllt."; break;
 	}
+	return "";
 }
 
 const char* BootloaderAtmega::errorDescription(BootloaderAtmega::ErrorCode errorCode) {
@@ -313,6 +314,7 @@ const char* BootloaderAtmega::errorDescription(BootloaderAtmega::ErrorCode error
 		case ErrorCode::transceive_error: return "Die Übertragung der Daten zum Gerät schlug fehl."; break;
 		case ErrorCode::preconditions_not_met: return "Einige zum Ausführen dieses Befehls nötigen Kommandos scheiterten."; break;
 	}
+	return "";
 }
 
 
