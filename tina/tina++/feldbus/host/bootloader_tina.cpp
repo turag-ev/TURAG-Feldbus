@@ -252,10 +252,10 @@ BootloaderAtmega::ErrorCode BootloaderAtmega::readFlash(uint32_t byteAddress, ui
 		return ErrorCode::invalid_args;
 	}
 	
-	unsigned packetSize = myDeviceInfo.bufferSize - myAddressLength - 1 - 1;
+	uint32_t packetSize = myDeviceInfo.bufferSize - myAddressLength - 1 - 1;
 	
 	// We are conservative because the transmission is only secured with an 8 bit CRC.
-	packetSize = std::min(packetSize, 64U);
+	packetSize = std::min(packetSize, (uint32_t)64);
 	
 	unsigned packets = length / packetSize;
 	if (length % packetSize) {
