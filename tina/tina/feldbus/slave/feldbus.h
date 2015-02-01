@@ -522,11 +522,9 @@ TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
 #endif
 	}
 
-	// accessing the buffer as an array is more effective than using a pointer
-	// and increasing it.
-	turag_feldbus_slave_uart.rxbuf[turag_feldbus_slave_uart.rxOffset] = data;
-	++turag_feldbus_slave_uart.rxOffset;
-
+	// We need to check for overflow before actually storing the received
+	// byte. Otherwise we always get an overflow when the last byte in the
+	// buffer gets filled.
 	if (turag_feldbus_slave_uart.rxOffset >= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
 		turag_feldbus_slave_uart.rxOffset = 0;
 		
@@ -559,6 +557,11 @@ TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
 		turag_feldbus_slave_uart.overflow = 1;
 #endif
 	}
+
+	// accessing the buffer as an array is more effective than using a pointer
+	// and increasing it.
+	turag_feldbus_slave_uart.rxbuf[turag_feldbus_slave_uart.rxOffset] = data;
+	++turag_feldbus_slave_uart.rxOffset;
 
 	// activate timer to recognize end of command
 	turag_feldbus_slave_start_receive_timeout();
