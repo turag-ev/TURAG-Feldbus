@@ -1,5 +1,6 @@
+#define TURAG_DEBUG_LOG_SOURCE "B"
+
 #include <tina/thread.h>
-#include <tina/debug/print.h>
 
 #include "dxl_hal.h"
 #include "dynamixel.h"
