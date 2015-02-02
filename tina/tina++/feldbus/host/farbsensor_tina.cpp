@@ -76,7 +76,7 @@ void Farbsensor::setColorThresholds(Color color_index, uint16_t h_min, uint16_t 
 	myColorIndexTable[(int)color_index].initialized = true;
 }
 
-bool Farbsensor::initiateMeassurement() {
+bool Farbsensor::initiateMeasurement() {
 	uint8_t msg[myAddressLength + 1];
 	return transceive(msg, sizeof(msg), 0, 0);
 }
@@ -84,14 +84,14 @@ bool Farbsensor::initiateMeassurement() {
 bool Farbsensor::getRGB(rgb_t* rgb) {
 	if (!rgb) return false;
 
-	if (!initiateMeassurement()) return false;
+	if (!initiateMeasurement()) return false;
 
 //#warning Thrad delay still implemented, test for necessity!
 	Thread_delay(10_ms);
-	
+
 	Request<uint8_t> request;
 	request.data = CMD_CLR_RGB;
-	
+
 	Response<rgbMsg_t> response;
 
 	bool success = transceive(request, &response);
@@ -109,14 +109,14 @@ bool Farbsensor::getRGB(rgb_t* rgb) {
 bool Farbsensor::getHSV(hsv_t* hsv) {
 	if (!hsv) return false;
 
-	if (!initiateMeassurement()) return false;
+	if (!initiateMeasurement()) return false;
 
 //#warning Thrad delay still implemented, test for necessity!
 	Thread_delay(10_ms);
 
 	Request<uint8_t> request;
 	request.data = CMD_CLR_HSV;
-	
+
 	Response<hsvMsg_t> response;
 
 	bool success = transceive(request, &response);

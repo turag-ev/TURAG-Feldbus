@@ -3,7 +3,7 @@
  *  @file		farbsensor.h
  *  @date		24.03.2013
  *  @author		Martin Oemus
- * 
+ *
  */
 
 
@@ -22,9 +22,9 @@ namespace Feldbus {
 class Farbsensor: public TURAG::Feldbus::Sensor {
 public:
 	// TODO: THAT'S CRAP!!!!!
-	// The color names should not be hard-coded in here. There must be 
+	// The color names should not be hard-coded in here. There must be
 	// a better way.
-	
+
 	// do not specify numbers manually!
 	// topmost colors have higher priority than successive ones
 	// the order of this enum must match the order of the color strings (see below)
@@ -61,12 +61,12 @@ protected:
 	hsv_range_t myColorIndexTable[myNumberOfColors];
 	Color lastKnownColor;
 
-	bool initiateMeassurement(void);
+	bool initiateMeasurement(void);
 
 public:
     Farbsensor(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 			const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-            Sensor(name_, address, type, addressLength), lastKnownColor(Color::Error) 
+            Sensor(name_, address, type, addressLength), lastKnownColor(Color::Error)
 	{
 		for (int i = 0; i < myNumberOfColors; i++)
 			myColorIndexTable[i].initialized = false;
