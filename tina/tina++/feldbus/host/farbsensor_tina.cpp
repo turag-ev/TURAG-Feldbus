@@ -87,7 +87,7 @@ bool Farbsensor::getRGB(rgb_t* rgb) {
 	if (!initiateMeasurement()) return false;
 
 //#warning Thrad delay still implemented, test for necessity!
-	Thread_delay(10_ms);
+    Thread_delay(20_ms);
 
 	Request<uint8_t> request;
 	request.data = CMD_CLR_RGB;
@@ -112,7 +112,7 @@ bool Farbsensor::getHSV(hsv_t* hsv) {
 	if (!initiateMeasurement()) return false;
 
 //#warning Thrad delay still implemented, test for necessity!
-	Thread_delay(10_ms);
+    Thread_delay(20_ms);
 
 	Request<uint8_t> request;
 	request.data = CMD_CLR_HSV;
