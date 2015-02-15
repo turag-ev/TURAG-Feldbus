@@ -137,6 +137,11 @@
 
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /** @name Benötigte Hardware-Funktionen
  *  Hardware-Interface-Funktionen die von der Basis-Implementierung benutzt werden
  * und die für die Zielplattform bereitgestellt werden müssen.
@@ -442,6 +447,9 @@ TURAG_INLINE void turag_feldbus_do_processing(void);
 # 	define print_short_nn(x)
 #endif
 	
+#ifdef __cplusplus
+}
+#endif
 	
 // hide some uninteresting stuff from documentation
 #if (!defined(__DOXYGEN__))
@@ -494,6 +502,10 @@ extern turag_feldbus_slave_uart_t turag_feldbus_slave_uart;
 extern turag_feldbus_slave_info_t turag_feldbus_slave_info;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 TURAG_INLINE void start_transmission(void) {
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 		turag_feldbus_slave_uart.transmission_active = 1;
@@ -505,10 +517,17 @@ TURAG_INLINE void start_transmission(void) {
 	turag_feldbus_slave_rts_on();
 	turag_feldbus_slave_activate_dre_interrupt();
 }
+#ifdef __cplusplus
+}
+#endif
 
 #endif // (!defined(__DOXYGEN__))
 
 	
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
 	// if at this point rx_length is not 0, obviously the last 
 	// received package was not processed yet. This package
@@ -940,6 +959,10 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 #endif
 	turag_feldbus_slave_activate_rx_interrupt();
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* TINA_FELDBUS_SLAVE_FELDBUS_H_ */
