@@ -82,6 +82,7 @@ bool Bootloader::unlockBootloader(void) {
 		return false;
 	} else {
 		if (response.data == TURAG_FELDBUS_BOOTLOADER_RESPONSE_UNLOCKED) {
+			unlocked = true;
 			return true;
 		} else {
 			turag_infof("%s: bootloader unlock rejected", name);
@@ -91,29 +92,14 @@ bool Bootloader::unlockBootloader(void) {
 }
 
 
-
-bool BootloaderAtmega::readFuses(Fuses* fuseBuffer) {
-	Device::Request<uint8_t> request;
-	request.data = TURAG_FELDBUS_BOOTLOADER_ATMEGA_GET_FUSES;
-	
-	Device::Response<Fuses> response;
-	
-	if (!transceive(request, &response)) {
-		return false;
-	} else {
-		*fuseBuffer = response.data;
-		return true;
-	}
-}
-
-uint16_t BootloaderAtmega::getPageSize(void) {
+uint16_t BootloaderAvrBase::getPageSize(void) {
 	if (myPageSize == 0) {
 		struct PageSize {
 			uint16_t size;
 		} _packed;
 
 		Device::Request<uint8_t> request;
-		request.data = TURAG_FELDBUS_BOOTLOADER_ATMEGA_GET_PAGE_SIZE;
+		request.data = TURAG_FELDBUS_BOOTLOADER_AVR_GET_PAGE_SIZE;
 		
 		Device::Response<PageSize> response;
 		
@@ -124,7 +110,7 @@ uint16_t BootloaderAtmega::getPageSize(void) {
 	return myPageSize;
 }
 
-uint32_t BootloaderAtmega::getFlashSize(bool writable) {
+uint32_t BootloaderAvrBase::getFlashSize(bool writable) {
 	struct GetFlashSize {
 		uint8_t key;
 		uint8_t writable;
@@ -137,7 +123,7 @@ uint32_t BootloaderAtmega::getFlashSize(bool writable) {
 			} _packed;
 
 			Device::Request<GetFlashSize> request;
-			request.data.key = TURAG_FELDBUS_BOOTLOADER_ATMEGA_GET_FLASH_SIZE;
+			request.data.key = TURAG_FELDBUS_BOOTLOADER_AVR_GET_FLASH_SIZE;
 			request.data.writable = 1;
 			
 			Device::Response<FlashSize> response;
@@ -154,7 +140,7 @@ uint32_t BootloaderAtmega::getFlashSize(bool writable) {
 			} _packed;
 
 			Device::Request<GetFlashSize> request;
-			request.data.key = TURAG_FELDBUS_BOOTLOADER_ATMEGA_GET_FLASH_SIZE;
+			request.data.key = TURAG_FELDBUS_BOOTLOADER_AVR_GET_FLASH_SIZE;
 			request.data.writable = 0;
 			
 			Device::Response<FlashSize> response;
@@ -167,7 +153,7 @@ uint32_t BootloaderAtmega::getFlashSize(bool writable) {
 	}
 }
 
-BootloaderAtmega::ErrorCode BootloaderAtmega::writeFlash(uint32_t byteAddress, uint32_t length, uint8_t* data) {
+BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress, uint32_t length, uint8_t* data) {
 	if (!data) {
 		return ErrorCode::invalid_args;
 	}
@@ -196,7 +182,7 @@ BootloaderAtmega::ErrorCode BootloaderAtmega::writeFlash(uint32_t byteAddress, u
 	}
 	
 	uint8_t request[myAddressLength + 1 + 4 + myPageSize + 1];
-	request[myAddressLength] = TURAG_FELDBUS_BOOTLOADER_ATMEGA_PAGE_WRITE;
+	request[myAddressLength] = TURAG_FELDBUS_BOOTLOADER_AVR_PAGE_WRITE;
 	
 	uint8_t response[myAddressLength + 1 + 1];
 	
@@ -213,9 +199,9 @@ BootloaderAtmega::ErrorCode BootloaderAtmega::writeFlash(uint32_t byteAddress, u
 			if (!transceive(request, sizeof(request), response, sizeof(response))) {
 				return ErrorCode::transceive_error;
 			}
-			if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_ATMEGA_RESPONSE_SUCCESS) {
+			if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_SUCCESS) {
 				break;
-			} else if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_ATMEGA_RESPONSE_FAIL_CONTENT) {
+			} else if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_CONTENT) {
 				continue;
 			} else {
 				return static_cast<ErrorCode>(response[myAddressLength]);
@@ -233,7 +219,7 @@ BootloaderAtmega::ErrorCode BootloaderAtmega::writeFlash(uint32_t byteAddress, u
 	return ErrorCode::success;
 }
 
-BootloaderAtmega::ErrorCode BootloaderAtmega::readFlash(uint32_t byteAddress, uint32_t length, uint8_t* buffer) {
+BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, uint32_t length, uint8_t* buffer) {
 	if (!buffer) {
 		return ErrorCode::invalid_args;
 	}
@@ -263,7 +249,7 @@ BootloaderAtmega::ErrorCode BootloaderAtmega::readFlash(uint32_t byteAddress, ui
 	}
 
 	uint8_t request[myAddressLength + 1 + 4 + 2 + 1];
-	request[myAddressLength] = TURAG_FELDBUS_BOOTLOADER_ATMEGA_DATA_READ;
+	request[myAddressLength] = TURAG_FELDBUS_BOOTLOADER_AVR_DATA_READ;
 	
 	uint32_t targetAddress = byteAddress;
 	
@@ -279,7 +265,7 @@ BootloaderAtmega::ErrorCode BootloaderAtmega::readFlash(uint32_t byteAddress, ui
 			return ErrorCode::transceive_error;
 		}
 		// this shouldn't happen
-		if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_ATMEGA_RESPONSE_FAIL_ADDRESS) {
+		if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_ADDRESS) {
 			return ErrorCode::invalid_address;
 		}
 		
@@ -291,7 +277,7 @@ BootloaderAtmega::ErrorCode BootloaderAtmega::readFlash(uint32_t byteAddress, ui
 	return ErrorCode::success;
 }
 
-const char* BootloaderAtmega::errorName(BootloaderAtmega::ErrorCode errorCode) {
+const char* BootloaderAvrBase::errorName(BootloaderAvrBase::ErrorCode errorCode) {
 	switch (errorCode) {
 		case ErrorCode::success: return "Erfolgreich."; break;
 		case ErrorCode::invalid_size: return "Ungültige Größe."; break;
@@ -304,11 +290,11 @@ const char* BootloaderAtmega::errorName(BootloaderAtmega::ErrorCode errorCode) {
 	return "";
 }
 
-const char* BootloaderAtmega::errorDescription(BootloaderAtmega::ErrorCode errorCode) {
+const char* BootloaderAvrBase::errorDescription(BootloaderAvrBase::ErrorCode errorCode) {
 	switch (errorCode) {
 		case ErrorCode::success: return "Keine Fehler."; break;
 		case ErrorCode::invalid_size: return "Das Gerät meldet, dass die vom Host angeforderte Datenmenge ungültig ist."; break;
-		case ErrorCode::invalid_address: return "Das Gerät meldet, dass die vom Host angegebene Adresse ungültig ist.."; break;
+		case ErrorCode::invalid_address: return "Das Gerät meldet, dass die vom Host angegebene Adresse ungültig ist."; break;
 		case ErrorCode::content_mismatch: return "Das Gerät meldet, dass die geschriebenen Daten nicht den gelesenen entsprechen."; break;
 		case ErrorCode::invalid_args: return "Einige der übergebenen Argumente sind nicht gültig."; break;
 		case ErrorCode::transceive_error: return "Die Übertragung der Daten zum Gerät schlug fehl."; break;
@@ -317,6 +303,108 @@ const char* BootloaderAtmega::errorDescription(BootloaderAtmega::ErrorCode error
 	return "";
 }
 
+
+bool BootloaderAtmega::readFuses(Fuses* fuseBuffer) {
+	Device::Request<uint8_t> request;
+	request.data = TURAG_FELDBUS_BOOTLOADER_ATMEGA_GET_FUSES;
+
+	Device::Response<Fuses> response;
+
+	if (!transceive(request, &response)) {
+		return false;
+	} else {
+		*fuseBuffer = response.data;
+		return true;
+	}
+}
+
+
+bool BootloaderXmega::readFuses(Fuses* fuseBuffer) {
+	Device::Request<uint8_t> request;
+	request.data = TURAG_FELDBUS_BOOTLOADER_XMEGA_GET_FUSES;
+
+	struct FusesRaw {
+		uint8_t mask;
+		uint8_t fuse0;
+		uint8_t fuse1;
+		uint8_t fuse2;
+		uint8_t fuse3;
+		uint8_t fuse4;
+		uint8_t fuse5;
+		uint8_t fuse6;
+	} _packed;
+
+	Device::Response<FusesRaw> response;
+
+	if (!transceive(request, &response)) {
+		return false;
+	} else {
+		if (response.data.mask & (1 << 0)) {
+			fuseBuffer->fuse0.available = true;
+			fuseBuffer->fuse0.value = response.data.fuse0;
+		} else {
+			fuseBuffer->fuse0.available = false;
+		}
+
+		if (response.data.mask & (1 << 1)) {
+			fuseBuffer->fuse1.available = true;
+			fuseBuffer->fuse1.value = response.data.fuse1;
+		} else {
+			fuseBuffer->fuse1.available = false;
+		}
+
+		if (response.data.mask & (1 << 2)) {
+			fuseBuffer->fuse2.available = true;
+			fuseBuffer->fuse2.value = response.data.fuse2;
+		} else {
+			fuseBuffer->fuse2.available = false;
+		}
+
+		if (response.data.mask & (1 << 3)) {
+			fuseBuffer->fuse3.available = true;
+			fuseBuffer->fuse3.value = response.data.fuse3;
+		} else {
+			fuseBuffer->fuse3.available = false;
+		}
+
+		if (response.data.mask & (1 << 4)) {
+			fuseBuffer->fuse4.available = true;
+			fuseBuffer->fuse4.value = response.data.fuse4;
+		} else {
+			fuseBuffer->fuse4.available = false;
+		}
+
+		if (response.data.mask & (1 << 5)) {
+			fuseBuffer->fuse5.available = true;
+			fuseBuffer->fuse5.value = response.data.fuse5;
+		} else {
+			fuseBuffer->fuse5.available = false;
+		}
+
+		if (response.data.mask & (1 << 6)) {
+			fuseBuffer->fuse6.available = true;
+			fuseBuffer->fuse6.value = response.data.fuse6;
+		} else {
+			fuseBuffer->fuse6.available = false;
+		}
+
+		return true;
+	}
+}
+
+char BootloaderXmega::getRevisionId(void) {
+	if (revisionId == 0) {
+		Device::Request<uint8_t> request;
+		request.data = TURAG_FELDBUS_BOOTLOADER_XMEGA_GET_REVISION;
+
+		Device::Response<uint8_t> response;
+
+		if (transceive(request, &response)) {
+			revisionId = response.data;
+		}
+	}
+	return revisionId;
+}
 
 } // namespace Feldbus
 } // namespace TURAG

@@ -29,7 +29,7 @@ public:
 	 */
     Bootloader(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-        Device(name_, address, type, addressLength), myMcuId(TURAG_FELDBUS_BOOTLOADER_MCU_ID_INVALID)
+		Device(name_, address, type, addressLength), myMcuId(TURAG_FELDBUS_BOOTLOADER_MCU_ID_INVALID), unlocked(false)
     {
     }
     
@@ -38,28 +38,24 @@ public:
 
 	uint16_t getMcuId(void);
 	bool unlockBootloader(void);
+	bool isUnlocked(void) const { return unlocked; }
 	
 private:
 	uint16_t myMcuId;
+	bool unlocked;
 };
 
 
-class BootloaderAtmega : public Bootloader {
+class BootloaderAvrBase : public Bootloader {
 public:
 	enum class ErrorCode {
-		success = TURAG_FELDBUS_BOOTLOADER_ATMEGA_RESPONSE_SUCCESS,
-		invalid_size = TURAG_FELDBUS_BOOTLOADER_ATMEGA_RESPONSE_FAIL_SIZE,
-		invalid_address = TURAG_FELDBUS_BOOTLOADER_ATMEGA_RESPONSE_FAIL_ADDRESS,
-		content_mismatch = TURAG_FELDBUS_BOOTLOADER_ATMEGA_RESPONSE_FAIL_CONTENT,
+		success = TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_SUCCESS,
+		invalid_size = TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_SIZE,
+		invalid_address = TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_ADDRESS,
+		content_mismatch = TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_CONTENT,
 		invalid_args,
 		transceive_error,
 		preconditions_not_met
-	};
-	
-	struct Fuses {
-		uint8_t low;
-		uint8_t high;
-		uint8_t extended;
 	};
 	
 	static constexpr unsigned maxTriesForWriting = 3;
@@ -71,18 +67,11 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	BootloaderAtmega(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	BootloaderAvrBase(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
 		Bootloader(name_, address, type, addressLength), myPageSize(0), myFlashSize(0), myWritableFlashSize(0)
     {
     }
-	
-	/**
-	 * \brief Liest die 3 Fuse-Bytes des Gerätes aus.
-	 * \param[out] fuseBuffer Ausgabepuffer-
-	 * \return True bei Erfolg, ansonsten false.
-	 */
-	bool readFuses(Fuses* fuseBuffer);
 	
 	/**
 	 * \brief Liest die Größe einer Flashseite aus.
@@ -99,7 +88,7 @@ public:
 	uint32_t getFlashSize(bool writable);
 	
 	/**
-	 * \brief Beschreibt eine den Flash des Gerätes.
+	 * \brief Beschreibt den Flash des Gerätes.
 	 * \param[in] byteAddress Zieladresse im Gerät. Muss ein Vielfaches der Pagegröße sein.
 	 * \param[in] length Menge der zu schreibenden Daten.
 	 * \param[in] data Pointer zu den Daten.
@@ -124,6 +113,87 @@ private:
 	uint32_t myFlashSize;
 	uint32_t myWritableFlashSize;
 };
+
+
+class BootloaderAtmega : public BootloaderAvrBase {
+public:
+	struct Fuses {
+		uint8_t low;
+		uint8_t high;
+		uint8_t extended;
+	};
+
+	/**
+	 * \brief Konstruktor.
+	 * \param[in] name_
+	 * \param[in] address
+	 * \param[in] type
+	 * \param[in] addressLength
+	 */
+	BootloaderAtmega(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+		BootloaderAvrBase(name_, address, type, addressLength)
+	{
+	}
+
+	/**
+	 * \brief Liest die 3 Fuse-Bytes des Gerätes aus.
+	 * \param[out] fuseBuffer Ausgabepuffer.
+	 * \return True bei Erfolg, ansonsten false.
+	 */
+	bool readFuses(Fuses* fuseBuffer);
+
+};
+
+
+class BootloaderXmega : public BootloaderAvrBase {
+public:
+	struct Fusebyte {
+		bool available;
+		uint8_t value;
+	};
+
+	struct Fuses {
+		Fusebyte fuse0;
+		Fusebyte fuse1;
+		Fusebyte fuse2;
+		Fusebyte fuse3;
+		Fusebyte fuse4;
+		Fusebyte fuse5;
+		Fusebyte fuse6;
+	};
+
+	/**
+	 * \brief Konstruktor.
+	 * \param[in] name_
+	 * \param[in] address
+	 * \param[in] type
+	 * \param[in] addressLength
+	 */
+	BootloaderXmega(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+		BootloaderAvrBase(name_, address, type, addressLength), revisionId(0)
+	{
+	}
+
+	/**
+	 * \brief Liest die Fuse-Bytes des Gerätes aus.
+	 * \param[out] fuseBuffer Ausgabepuffer.
+	 * \return True bei Erfolg, ansonsten false.
+	 */
+	bool readFuses(Fuses* fuseBuffer);
+
+	/**
+	 * @brief Gibt die Revision ID des Controllers zurück.
+	 * @return 0 bei einem Fehler, ansonsten eine Zahl zwischen
+	 * 65 und 80 (Buchstaben A...P).
+	 */
+	char getRevisionId(void);
+
+private:
+	char revisionId;
+};
+
 
 } // namespace Feldbus
 } // namespace TURAG
