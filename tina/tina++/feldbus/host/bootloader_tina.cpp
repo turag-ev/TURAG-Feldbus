@@ -400,7 +400,7 @@ char BootloaderXmega::getRevisionId(void) {
 		Device::Response<uint8_t> response;
 
 		if (transceive(request, &response)) {
-			revisionId = response.data;
+			revisionId = response.data + 65;
 		}
 	}
 	return revisionId;
