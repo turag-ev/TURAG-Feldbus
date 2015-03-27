@@ -283,6 +283,7 @@ const char* BootloaderAvrBase::errorName(BootloaderAvrBase::ErrorCode errorCode)
 		case ErrorCode::invalid_size: return "Ungültige Größe."; break;
 		case ErrorCode::invalid_address: return "Ungültige Adresse."; break;
 		case ErrorCode::content_mismatch: return "Schreibvorgang fehlgeschlagen."; break;
+		case ErrorCode::unsupported: return "Nicht unterstützt."; break;
 		case ErrorCode::invalid_args: return "Ungültige Argumente."; break;
 		case ErrorCode::transceive_error: return "Übertragung fehlgeschlagen."; break;
 		case ErrorCode::preconditions_not_met: return "Voraussetzungen nicht erfüllt."; break;
@@ -296,6 +297,7 @@ const char* BootloaderAvrBase::errorDescription(BootloaderAvrBase::ErrorCode err
 		case ErrorCode::invalid_size: return "Das Gerät meldet, dass die vom Host angeforderte Datenmenge ungültig ist."; break;
 		case ErrorCode::invalid_address: return "Das Gerät meldet, dass die vom Host angegebene Adresse ungültig ist."; break;
 		case ErrorCode::content_mismatch: return "Das Gerät meldet, dass die geschriebenen Daten nicht den gelesenen entsprechen."; break;
+		case ErrorCode::unsupported: return "Das Gerät meldet, dass die angeforderte Operation nicht unterstützt wird."; break;
 		case ErrorCode::invalid_args: return "Einige der übergebenen Argumente sind nicht gültig."; break;
 		case ErrorCode::transceive_error: return "Die Übertragung der Daten zum Gerät schlug fehl."; break;
 		case ErrorCode::preconditions_not_met: return "Einige zum Ausführen dieses Befehls nötigen Kommandos scheiterten."; break;
