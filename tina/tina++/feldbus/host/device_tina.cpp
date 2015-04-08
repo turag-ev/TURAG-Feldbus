@@ -72,11 +72,11 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         }
 
 
-        // 	turag_infof("%s: transceive tx [", name);
-        // 	for (int i = 0; i < transmit_length; ++i) {
-        // 		turag_infof("%.2x", transmit[i]);
-        // 	}
-        // 	info("]\n");
+//            turag_infof("%s: transceive tx [", name);
+//            for (int i = 0; i < transmit_length; ++i) {
+//                turag_infof("%.2x", transmit[i]);
+//            }
+//            turag_info("]\n");
 
 
         bool success = false, checksum_correct = false;
@@ -135,11 +135,11 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             ++attempt;
         }
 
-        // 	turag_infof("%s: transceive rx success(%x|%x) [", name, success, checksum_correct);
-        // 	for (int j = 0; j < receive_length; ++j) {
-        // 		turag_infof("%.2x", receive[j]);
-        // 	}
-        // 	info("]\n");
+//            turag_infof("%s: transceive rx success(%x|%x) [", name, success, checksum_correct);
+//            for (int j = 0; j < receive_length; ++j) {
+//                turag_infof("%.2x", receive[j]);
+//            }
+//            turag_info("]\n");
 
         myTotalTransmissions += attempt;
 
