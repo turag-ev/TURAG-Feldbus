@@ -63,15 +63,17 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
 
 
     if (analogInputs) {
-        analogInputs_ = analogInputs;
-        analogInputSize_ = analogInputSize;
-
         if (!getAnalogInputSize(&sizeBuffer)) return false;
-        if (analogInputSize_ > sizeBuffer) analogInputSize_ = sizeBuffer;
-
-        if (analogInputSize_ < sizeBuffer) {
-            turag_warningf("%s: initialized with %d analog inputs (device has %d analog inputs)", name, analogInputSize_, sizeBuffer);
+        if (sizeBuffer > static_cast<int>(analogInputSize)) {
+			turag_errorf("%s: analogInputSize must be %d (is %d)", name, sizeBuffer, analogInputSize);
+			return false;
+		}
+			
+        if (static_cast<int>(analogInputSize) > sizeBuffer) {
+            turag_warningf("%s: analog input buffer larger than required (%d > %d)", name, analogInputSize, sizeBuffer);
         }
+
+        analogInputs_ = analogInputs;
 
         Request<AsebGetInfo> request;
         request.data.command = TURAG_FELDBUS_ASEB_ANALOG_INPUT_FACTOR;
@@ -86,18 +88,23 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
         }
     } else {
         analogInputSize_ = 0;
+		if (analogInputSize != 0) {
+			turag_warningf("%s: analogInputs is null, but analogInputSize != 0", name);
+		}
     }
 
     if (pwmOutputs) {
-        pwmOutputs_ = pwmOutputs;
-        pwmOutputSize_ = pwmOutputSize;
-
         if (!getPwmOutputSize(&sizeBuffer)) return false;
-        if (pwmOutputSize_ > sizeBuffer) pwmOutputSize_ = sizeBuffer;
+        if (sizeBuffer > static_cast<int>(pwmOutputSize)) {
+			turag_errorf("%s: pwmOutputSize must be %d (is %d)", name, sizeBuffer, pwmOutputSize);
+			return false;
+		}
 
-        if (pwmOutputSize_ < sizeBuffer) {
-            turag_warningf("%s: initialized with %d pwm outputs (device has %d pwm outputs)", name, pwmOutputSize_, sizeBuffer);
+        if (static_cast<int>(pwmOutputSize) > sizeBuffer) {
+            turag_warningf("%s: pwm output buffer larger than required (%d > %d)", name, pwmOutputSize, sizeBuffer);
         }
+
+        pwmOutputs_ = pwmOutputs;
 
         Request<AsebGetInfo> request;
         request.data.command = TURAG_FELDBUS_ASEB_PWM_OUTPUT_MAX_VALUE;
@@ -112,15 +119,24 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
         }
     } else {
         pwmOutputSize_ = 0;
+		if (pwmOutputSize != 0) {
+			turag_warningf("%s: pwmOutputs is null, but pwmOutputSize != 0", name);
+		}
     }
 
+    if (!sync_buffer) {
+		turag_errorf("%s: sync_buffer is null", name);
+		return false;
+    }
     if (!getSyncSize(&sizeBuffer)) return false;
     if (static_cast<int>(sync_buffer_size) < sizeBuffer) {
         turag_errorf("%s: sync buffer size must be %d (is %d)", name, sizeBuffer, sync_buffer_size);
         return false;
     }
+    if (static_cast<int>(sync_buffer_size) > sizeBuffer) {
+		turag_warningf("%s: sync buffer larger than required (%d > %d)", name, sync_buffer_size, sizeBuffer);
+    }
     syncBuffer_ = sync_buffer;
-    syncSize_ = sizeBuffer;
 
     if (!initDigitalOutputBuffer()) return false;
     if (!initPwmOutputBuffer()) return false;
