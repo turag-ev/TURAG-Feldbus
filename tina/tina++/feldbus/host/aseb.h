@@ -25,10 +25,13 @@ namespace Feldbus {
  * Vor Verwendung einer Instanz dieser Klasse muss initialize() 
  * aufgerufen werden.
  * 
- * Für jede verbaute ASEB-Platine sollte eine spezialisierte Klasse 
- * von dieser abgeleitet werden, die eine parameterlose Überladung 
- * von initialize() definiert und alle notwendigen Puffer mit den
- * richtigen Größen mitbringt.
+ * Diese Klasse verwaltet die notwendigen Puffer nicht selbst. Diese
+ * müssen bei der Initialisierung mit den richtigen Größen übergeben
+ * werden.
+ * 
+ * \note Diese Klasse ist nicht zur direkten Verwendung vorgesehen.
+ * Stattdessen sollte \ref AsebTemplate benutzt werden.
+ * 
  */
 class Aseb : public TURAG::Feldbus::Device {
 public:
@@ -295,6 +298,53 @@ private:
     bool initPwmOutputBuffer(void);
 	
 };
+
+/**
+ * \brief Vereinfacht die Benutzung der Klasse Aseb.
+ * 
+ * Diese Klasse verwaltet ihre benötigten Puffer
+ * selbst. Die Größe kann mit den Template-Parametern 
+ * eingestellt werden.
+ * 
+ * Für jede verbaute ASEB-Platine muss dadurch lediglich eine
+ * Instanz dieses Klassen-Templates mit den richtigen
+ * Puffergrößen gebildet werden, alles Weitere geschieht im 
+ * Hintergrund.
+ */
+template<std::size_t syncSize, std::size_t analogInputSize, std::size_t pwmOutputSize>
+class AsebTemplate : public Aseb {
+public:
+	/**
+	 * \brief Konstruktor
+	 * \param[in] name_
+	 * \param[in] address
+	 * \param[in] type
+	 * \param[in] addressLength
+	 */
+	AsebTemplate(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+			   const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
+		Aseb(name_, address, type, addressLength)  { }
+	
+	/**
+	 * \brief Initialisiert das Gerät.
+	 * \return True bei Erfolg, ansonsten false.
+	 */
+    bool initialize(void) {
+        return Aseb::initialize(syncBuffer.get(), syncSize, analog.get(), analogInputSize, pwm.get(), pwmOutputSize);
+    }
+
+private:
+	template<typename T, std::size_t size>
+	struct ConditionalArray { T data[size]; T* get() { return data;} };
+	
+	template<typename T>
+	struct ConditionalArray<T, 0> { T* get() { return nullptr;} };
+	
+	ConditionalArray<uint8_t, syncSize> syncBuffer;
+	ConditionalArray<Analog_t, analogInputSize> analog;
+	ConditionalArray<Pwm_t, pwmOutputSize> pwm;
+};
+
 
 } // namespace Feldbus
 } // namespace TURAG
