@@ -9,8 +9,6 @@
 #ifndef TINAPP_CRC_XOR_H
 #define TINAPP_CRC_XOR_H
 
-#include <memory>
-
 #include <tina++/tina.h>
 #include <tina/crc/xor_checksum.h>
 
@@ -37,7 +35,7 @@ namespace XOR {
  */
 template <typename T> _always_inline
 uint8_t calculate(const T& data) {
-	return xor_checksum_calculate(std::addressof(data), sizeof(T));
+	return xor_checksum_calculate(&(data), sizeof(T));
 }
 
 /**
@@ -70,7 +68,7 @@ uint8_t calculate(const void* data, std::size_t length) {
  */
 template <typename T> _always_inline
 bool check(const T& data, uint8_t chksum) {
-	return xor_checksum_check(std::addressof(data), sizeof(T), chksum);
+	return xor_checksum_check(&(data), sizeof(T), chksum);
 }
 
 /**

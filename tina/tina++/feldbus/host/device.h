@@ -10,7 +10,6 @@
 #ifndef TURAGFELDBUSDEVICE_H_
 #define TURAGFELDBUSDEVICE_H_
 
-#include <memory>
 #include <atomic>
 
 #include <tina++/tina.h>
@@ -479,7 +478,7 @@ s	 */
 	 */
 	template<typename T, typename U> _always_inline
 	bool transceive(Request<T>& transmit, Response<U>* receive) {
-	return transceive(reinterpret_cast<uint8_t*>(std::addressof(transmit)) + sizeof(Request<T>::address) - myAddressLength,
+	return transceive(reinterpret_cast<uint8_t*>(&(transmit)) + sizeof(Request<T>::address) - myAddressLength,
 										sizeof(Request<T>) + myAddressLength - sizeof(Request<T>::address),
 										reinterpret_cast<uint8_t*>(receive) + sizeof(Response<T>::address) - myAddressLength,
 										sizeof(Response<U>) + myAddressLength - sizeof(Response<T>::address));
@@ -495,7 +494,7 @@ s	 */
 	 */
     template<typename T> _always_inline
 	bool transceive(Broadcast<T>& transmit) {
-		return transceive(reinterpret_cast<uint8_t*>(std::addressof(transmit)) + sizeof(Broadcast<T>::address) - myAddressLength,
+		return transceive(reinterpret_cast<uint8_t*>(&(transmit)) + sizeof(Broadcast<T>::address) - myAddressLength,
 											sizeof(Broadcast<T>) + myAddressLength - sizeof(Broadcast<T>::address), 
 											nullptr, 
 											0);
