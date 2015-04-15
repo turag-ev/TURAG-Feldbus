@@ -385,7 +385,10 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
         turag_errorf("%s: Wrong arguments to setPwmOutput. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
-    } else {
+	} else if (duty_cycle < 0.0f || duty_cycle > 100.0f) {
+		turag_errorf("%s: Wrong arguments to setPwmOutput: %.2f not within valid range (0 ... 100 %%)", name, duty_cycle);
+		return false;
+	} else {
         Request<AsebSet> request;
         request.data.index = key + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
         request.data.value = static_cast<uint16_t>(duty_cycle / 100.0f * pwmOutputs_[key].max_value + 0.5f);
