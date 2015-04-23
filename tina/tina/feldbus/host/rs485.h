@@ -40,7 +40,9 @@ bool turag_rs485_init(uint32_t baud_rate, TuragSystemTime timeout);
  * Enthält nach Rückkehr der Funktion die Größe der tatsächlich gesendeten Daten.
  * \param[in,out] receive Pointer auf den Empfangspuffer.
  * \param[in,out] receive_length Pointer auf die Größe der zu empfangenden Daten.
- * Enthält nach Rückkehr der Funcktion die Größe der tatsächlich empfangenen Daten.
+ * Enthält nach Rückkehr der Funktion die Größe der tatsächlich empfangenen Daten.
+ * \param[in] delayTransmission Fügt vor Beginn der Transmission ein Delay von 15 Frames ein,
+ * um die korrekte Erkennung von Paketen in den Slaves zu ermöglichen.
  * \return True wenn die korrekte Menge Daten gesendet und empfangen wurden, ansonsten false.
  * 
  * Diese Funktion sendet blockierend einen Satz Daten auf den Bus und empfängt
@@ -57,7 +59,7 @@ bool turag_rs485_init(uint32_t baud_rate, TuragSystemTime timeout);
  * Rückkehr der Funktion tatsächlich 0 in receive_length stehen.
  * 
  */
-bool turag_rs485_transceive(uint8_t* transmit, int* transmit_length, uint8_t* receive, int* receive_length);
+bool turag_rs485_transceive(uint8_t* transmit, int* transmit_length, uint8_t* receive, int* receive_length, bool delayTransmission);
 
 
 /**

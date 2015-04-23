@@ -90,7 +90,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             int receive_length_copy = receive_length;
 
 			turag_rs485_buffer_clear();
-            success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy);
+			success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, false);
 
             if (success) {
                 if (!receive || receive_length == 0) {

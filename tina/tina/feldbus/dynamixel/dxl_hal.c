@@ -20,7 +20,7 @@ void turag_dxl_hal_clear(void) {
 }
 
 int turag_dxl_hal_tx( unsigned char *pPacket, int numPacket ) {
-    if (turag_rs485_transceive (pPacket, &numPacket, 0, 0)) {
+    if (turag_rs485_transceive (pPacket, &numPacket, 0, 0, false)) {
         return numPacket;
     } else {
         return 0;
@@ -28,7 +28,7 @@ int turag_dxl_hal_tx( unsigned char *pPacket, int numPacket ) {
 }
 
 int turag_dxl_hal_rx( unsigned char *pPacket, int numPacket ) {
-    if (turag_rs485_transceive (0, 0, pPacket, &numPacket)) {
+    if (turag_rs485_transceive (0, 0, pPacket, &numPacket, false)) {
         return numPacket;
     } else {
         return 0;
