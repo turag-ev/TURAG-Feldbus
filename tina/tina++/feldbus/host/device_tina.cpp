@@ -35,7 +35,10 @@ struct DeviceInfoInternal {
 
 }
 
-std::atomic_int Device::globalTransmissionErrorCounter{0};
+int Device::globalTransmissionErrorCounter{0};
+unsigned Device::addressOfLastTransmission{TURAG_FELDBUS_BROADCAST_ADDR};
+Mutex Device::mutex;
+
  
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
     if (isDysfunctional()) {
@@ -83,14 +86,32 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         unsigned int attempt = 0;
 		
 
-        // we try to transmit until the transmission succeeds and the checksum is correct
+		// protect globalTransmissionErrorCounter and addressOfLastTransmission
+		Mutex::Lock lock(mutex);
+
+		// we try to transmit until the transmission succeeds and the checksum is correct
         // or the number of transmission attempts is exceeded.
         while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
             int transmit_length_copy = transmit_length;
             int receive_length_copy = receive_length;
 
+
+			// we need to delay the transmission for protocol compliance reasons in the following
+			// cases:
+			// - our last transmission was a broadcast
+			// - the last transmission was sent to a different slave
+			bool insertTransmissionDelay;
+			if (addressOfLastTransmission == TURAG_FELDBUS_BROADCAST_ADDR ||
+					addressOfLastTransmission != useAddress) {
+				insertTransmissionDelay = true;
+			} else {
+				insertTransmissionDelay = false;
+			}
+
 			turag_rs485_buffer_clear();
-			success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, false);
+			success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, insertTransmissionDelay);
+
+			addressOfLastTransmission = useAddress;
 
             if (success) {
                 if (!receive || receive_length == 0) {
@@ -113,8 +134,8 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 						++myTotalChecksumErrors;
 						
 						++globalTransmissionErrorCounter;
-						if (!(globalTransmissionErrorCounter.load() % 25)) {
-							turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter.load());
+						if (!(globalTransmissionErrorCounter % 25)) {
+							turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
 						}
                     }
                 }
@@ -128,12 +149,14 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 				}
 				
                 ++globalTransmissionErrorCounter;
-                if (!(globalTransmissionErrorCounter.load() % 25)) {
-                    turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter.load());
+				if (!(globalTransmissionErrorCounter % 25)) {
+					turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
                 }
             }
             ++attempt;
         }
+
+		lock.unlock();
 
 //            turag_infof("%s: transceive rx success(%x|%x) [", name, success, checksum_correct);
 //            for (int j = 0; j < receive_length; ++j) {

@@ -586,7 +586,9 @@ private:
 	unsigned int myTotalMissingDataErrors;
 	unsigned int myTotalTransmitErrors;
 
-	static std::atomic_int globalTransmissionErrorCounter;
+	static int globalTransmissionErrorCounter;
+	static unsigned addressOfLastTransmission;
+	static Mutex mutex;
 };
 
 
