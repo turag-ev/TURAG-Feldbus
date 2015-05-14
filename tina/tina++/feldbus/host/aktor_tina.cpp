@@ -135,7 +135,7 @@ bool Aktor::getValue(uint8_t key, float* value) {
         return false;
     }
     if (command->factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        turag_errorf("%s: value not floating point", name);
+		turag_errorf("%s: value with key %u is not floating point, which was requested", name, key);
         return false;
     }
     
@@ -250,7 +250,7 @@ bool Aktor::setValue(uint8_t key, float value) {
         return false;
     }
     if (command->factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        turag_errorf("%s: value not floating point", name);
+		turag_errorf("%s: value with key %u is not floating point, but float shall be set", name, key);
         return false;
     }
 

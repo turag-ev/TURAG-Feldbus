@@ -94,14 +94,14 @@ public:
 
 class Servo : public ServoBase {
 protected:
-	Aktor::Command_t command_set[18];
+	Aktor::Command_t command_set[24];
 
 public:
     Servo(const char* name_, int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
         ServoBase(name_, address, type, addressLength) {}
 
-	bool initialize(void) { return populateCommandSet(command_set, 18); }
+	bool initialize(void) { return populateCommandSet(command_set, 24); }
 
 	bool getCurrentFeedForward(float* feedForward) { return getValue(RS485_STELLANTRIEBE_KEY_CTRL_CUR_STATIC_FF, feedForward); }
 	bool setCurrentFeedForward(float feedForward) { return setValue(RS485_STELLANTRIEBE_KEY_CTRL_CUR_STATIC_FF, feedForward); }
