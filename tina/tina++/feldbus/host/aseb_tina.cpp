@@ -8,10 +8,11 @@
 
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
+#include <tina++/tina.h>
+#if TURAG_USE_TURAG_FELDBUS_HOST
 
 #include "aseb.h"
 
-#include <tina++/tina.h>
 #include <tina/debug.h>
 
 
@@ -496,3 +497,4 @@ bool Aseb::getAnalogResolution(unsigned* resolution) {
 } // namespace Feldbus
 } // namespace TURAG
 
+#endif // TURAG_USE_TURAG_FELDBUS_HOST

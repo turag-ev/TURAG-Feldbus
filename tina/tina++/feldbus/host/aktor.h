@@ -31,7 +31,7 @@ namespace Feldbus {
  * die die grundlegende Funktionalität der getValue()- und setValue()-Funktionen
  * um benannte Funktionen erweitern, die jeweils einen Eintrag der Gerätetabelle
  * des speziellen Gerätes widerspiegeln. In einer solchen Klasse kann auch 
- * das Command_t-Array Platz finden, dass beim Aufruf von populateCommandSet()
+ * das Command_t Array Platz finden, dass beim Aufruf von populateCommandSet()
  * benötigt wird.
  * 
  */
@@ -117,7 +117,7 @@ public:
 
 
 	/**
-	 * \brief Liest einen physiaklischen Gerätewert aus.
+	 * \brief Liest einen physikalischen Gerätewert aus.
 	 * \param[in] key Werte-Schlüssel.
 	 * \param[out] value Puffer in dem der ausgelesene Wert gespeichert wird.
 	 * \return Bei true enthält value den ausgelesenen Wert, bei false trat ein Fehler auf.
@@ -177,6 +177,9 @@ public:
 	 * Diese Funktion füllt die interne Gerätewert-Tabelle mit Daten vom Gerät. Ihre
 	 * erfolgreiche Ausführung ist die Voraussetzung für das Funktionieren der meisten
 	 * anderen Funktionen.
+	 *
+	 * Der Aufrufer hat dafür zu sorgen, dass in commandSet_ genügend Platz für die in
+	 * commandSetLength_ angegebene Anzahl von Elementen ist.
 	 */
     bool populateCommandSet(Command_t* commandSet_, unsigned int commandSetLength_);
 	

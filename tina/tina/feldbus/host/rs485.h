@@ -9,6 +9,7 @@
  * für die RS485-Hardwareschnittstelle bereit, die von den 
  * Host-Klassen des %TURAG-Feldbus benötigt werden. Die
  * Implementierung ist plattform-spezifisch.
+ *
  */
 
 #ifndef TINA_FELDBUS_HOST_RS485_H
@@ -17,7 +18,10 @@
 #include <tina/tina.h>
 #include <tina/time.h>
 
-#if TURAG_USE_TURAG_FELDBUS_HOST
+#if !TURAG_USE_TURAG_FELDBUS_HOST
+# warning TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,8 +77,5 @@ void turag_rs485_buffer_clear(void);
 } // extern "C"
 #endif
 
-#else
-# error TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
-#endif
 
 #endif // TINA_FELDBUS_HOST_RS485_H

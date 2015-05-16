@@ -6,6 +6,8 @@
  *
  */
 
+#include <tina++/tina.h>
+#if TURAG_USE_TURAG_FELDBUS_HOST
 
 #include "farbsensor.h"
 #include <tina/feldbus/protocol/turag_feldbus_fuer_lokalisierungssensoren.h>
@@ -134,3 +136,4 @@ bool Farbsensor::getHSV(hsv_t* hsv) {
 } // namespace Feldbus
 } // ns TURAG
 
+#endif // TURAG_USE_TURAG_FELDBUS_HOST

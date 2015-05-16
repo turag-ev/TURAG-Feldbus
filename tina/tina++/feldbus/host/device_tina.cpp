@@ -8,6 +8,10 @@
 
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
+#include <tina++/tina.h>
+
+#if TURAG_USE_TURAG_FELDBUS_HOST
+
 #include <tina++/thread.h>
 #include <tina++/time.h>
 #include <tina++/crc/xor.h>
@@ -71,8 +75,8 @@ Device::Device(const char* name_, unsigned address, ChecksumType type,
 }
 
  
-bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
-    if (isDysfunctional()) {
+bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length, bool ignoreDysfunctional) {
+	if (isDysfunctional() && !ignoreDysfunctional) {
         static unsigned dysfunctionalMessageDisplayed = 0;
         if (dysfunctionalMessageDisplayed < 5) {
             turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
@@ -217,11 +221,11 @@ bool Device::sendPing(void) {
 	Request<> request;
 	Response<> response;
 
-	return transceive(request, &response);
+	return transceive(request, &response, true);
 }
 
 bool Device::isAvailable(bool forceUpdate) {
-		if (!hasCheckedAvailabilityYet || forceUpdate) {
+	if (!hasCheckedAvailabilityYet || forceUpdate) {
 		while (!isDysfunctional()) {
 			if (sendPing()) {
 				break;
@@ -443,8 +447,14 @@ bool Device::resetSlaveErrors(void) {
 	return transceive(request, &response);
 }
 
+int Device::getGlobalTransmissionErrors(void) const {
+	Mutex::Lock lock(mutex);
+	return globalTransmissionErrorCounter;
+}
+
 
 
 } // namespace Feldbus
 } // namespace TURAG
 
+#endif // TURAG_USE_TURAG_FELDBUS_HOST

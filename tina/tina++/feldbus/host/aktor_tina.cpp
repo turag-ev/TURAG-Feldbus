@@ -8,10 +8,13 @@
 
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
+#include <tina++/tina.h>
+
+#if TURAG_USE_TURAG_FELDBUS_HOST
+
 
 #include "aktor.h"
 
-#include <tina++/tina.h>
 #include <tina/debug/print.h>
 
 #include <cstring>
@@ -548,3 +551,4 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
 } // namespace Feldbus
 } // namespace TURAG
 
+#endif // TURAG_USE_TURAG_FELDBUS_HOST

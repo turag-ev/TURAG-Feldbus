@@ -1,4 +1,3 @@
-/* Servodokumentation verfügbar unter http://support.robotis.com/en/techsupport_eng.htm#product/dynamixel/rx_series/rx-10.htm */
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
 #include <tina++/debug.h>
@@ -461,6 +460,8 @@ bool DynamixelDevice::getPresentVoltage(float* u) {
 bool DynamixelDevice::setID(int address) {
     // more strictly limited due to restrictions of
     // TURAG feldbus than what the device could handle
+	//
+	// WHY??? Doesn't make sense to me...
     if (address >= 1 && address <= 127) {
         writeByte(TURAG_DXL_ADDRESS_ID, address);
         myId = address;

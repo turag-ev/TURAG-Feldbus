@@ -1,8 +1,10 @@
 #define TURAG_DEBUG_LOG_SOURCE "B"
 //#define TURAG_DEBUG_LEVEL       5
 
+#include <tina++/tina.h>
+#if TURAG_USE_TURAG_FELDBUS_HOST
+
 #include "servo.h"
-#include <tina/tina.h>
 #include <tina/debug/print.h>
 
 namespace TURAG {
@@ -66,3 +68,5 @@ bool ServoBase::setHold(void) {
 
 } // namespace Feldbus
 } // namespace TURAG
+
+#endif // TURAG_USE_TURAG_FELDBUS_HOST

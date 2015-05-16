@@ -221,6 +221,58 @@
  * @defgroup feldbus-host Host Implementierungen [C++]
  * @ingroup feldbus
  * 
+ * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
+ * 
+ * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::Device, das masterseitigen 
+ * Support für das Basis-Protokoll bereitstellt.
+ * 
+ * Das Verhalten des Masters kann mit einigen Definitionen angepasst werden, für die
+ * sinnvolle Standardwerte eingestellt sind. Bei Bedarf können diese über die TinA-Konfiguration
+ * entsprechend überschrieben werden.
+ *
+ * Die plattformabhängige Schnittstelle zur Hardware ist in rs485.h definiert.
+ *
+ * \section feldbus-host-configurability Konfigurierbarkeit
+ * - \ref TURAG_USE_TURAG_FELDBUS_HOST muss auf 1 definiert sein.
+ * - \ref TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE ist optional.
+ *
+ * 
+ * \section feldbus-host-threadsafety Thread-Safety
+ * \note Generell ist aus Gründen der Einfachheit zu empfehlen, alle Host-Klassen
+ * exklusiv von einem einzigen %Thread aus zu benutzen und den Austausch von Daten
+ * über andere Mechanismen zu gewährleisten. Dadurch ist der Zugriff auf den 
+ * Bus geordnet und die Komplexität des System wird nicht unnnötig gesteigert.
+ * Die folgenden Informationen sind der Vollständigkeit halber angegeben.
+ * 
+ * Damit der Buszugriff mit mehreren Threads reibungslos funktioniert, sind
+ * folgende Voraussetzungen zu erfüllen:
+ * - Host-Klassen müssen mindestens reentrant sein
+ * - Zugriff auf die Bus-Hardware muss synchronisert sein
+ * - Bus-Transaktionen müssen atomaren Charakter besitzen.
+ * 
+ * Die Host-Klassen sind reentrant, aber nicht thread-safe. Das heißt, der Zugriff 
+ * auf eine Instanz einer Klasse muss manuell synchronisiert werden. Unproblematisch 
+ * ist hingegen die Verwendung verschiedener Instanzen einer Klasse in verschiedenen Threads.
+ * Dies ist eine übliche Einschränkung, da die Gewährleistung von Threadsicherheit
+ * für jede Funktion einen zu großen Overhead mit sich bringen würde. Soll ein Busgerät
+ * von mehreren Threads angesprochen werden, so müssen entweder zwei Instanzen 
+ * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-immutable Funktionen muss
+ * synchronisert werden. Welche Variante sinnvoller ist, hängt stark von den Details
+ * der entsprechenden Klasse ab.
+ * 
+ * Die Synchronisierung des Zugriffs auf die Bus-Hardware obliegt der Platform-Implementierung
+ * der Funktion turag_rs485_transceive(), welche das Versenden und den Empfang einer bestimmten 
+ * Datenmenge bereitstellt.
+ * 
+ * Atomizität der Bus-Transaktionen bedeutet, dass zu einem Befehl gehörende 
+ * Datenübertragungen nicht von fremden unterbrochen werden können. Dies wird zu einem
+ * großen Teil schon von der Anforderung gewährleistet, dass alle Protokolle zustandslos
+ * sein müssen, wodurch es unproblematisch ist, wenn Pakete zwischeneinander gemischt werden.
+ * In der Praxis bedeutet das üblicherweise, dass eine Funktion einer Hostklasse maximal 
+ * einmal turag_rs485_transceive() aufrufen kann. 
+ * 
+ * 
+ * 
  * 
  * @defgroup feldbus-protocol Protokoll-Definitionen [C/C++]
  * @ingroup feldbus

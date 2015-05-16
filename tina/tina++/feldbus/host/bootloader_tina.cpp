@@ -8,10 +8,11 @@
 
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
+#include <tina++/tina.h>
+#if TURAG_USE_TURAG_FELDBUS_HOST
 
 #include "bootloader.h"
 
-#include <tina++/tina.h>
 #include <tina/debug.h>
 
 #include <algorithm>
@@ -411,3 +412,4 @@ char BootloaderXmega::getRevisionId(void) {
 } // namespace Feldbus
 } // namespace TURAG
 
+#endif // TURAG_USE_TURAG_FELDBUS_HOST

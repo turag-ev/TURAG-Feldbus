@@ -18,61 +18,16 @@
 #include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
 
 #if !TURAG_USE_TURAG_FELDBUS_HOST
-# error TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
+# warning TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
 #endif
 
 
 /**
- * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
- * 
- * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::Device, das masterseitigen 
- * Support für das Basis-Protokoll bereitstellt.
- * 
- * Das Verhalten des Masters kann mit einigen Definitionen angepasst werden, für die
- * sinnvolle Standardwerte eingestellt sind. Bei Bedarf können diese über die TinA-Konfiguration
- * entsprechend überschrieben werden.
- * 
- * \section feldbus-host-threadsafety Thread-Safety
- * \note Generell ist aus Gründen der Einfachheit zu empfehlen, alle Host-Klassen
- * exklusiv von einem einzigen %Thread aus zu benutzen und den Austausch von Daten
- * über andere Mechanismen zu gewährleisten. Dadurch ist der Zugriff auf den 
- * Bus geordnet und die Komplexität des System wird nicht unnnötig gesteigert.
- * Die folgenden Informationen sind der Vollständigkeit halber angegeben.
- * 
- * Damit der Buszugriff mit mehreren Threads reibungslos funktioniert, sind
- * folgende Voraussetzungen zu erfüllen:
- * - Host-Klassen müssen mindestens reentrant sein
- * - Zugriff auf die Bus-Hardware muss synchronisert sein
- * - Bus-Transaktionen müssen atomaren Charakter besitzen.
- * 
- * Die Host-Klassen sind reentrant, aber nicht thread-safe. Das heißt, der Zugriff 
- * auf eine Instanz einer Klasse muss manuell synchronisiert werden. Unproblematisch 
- * ist hingegen die Verwendung verschiedener Instanzen einer Klasse in verschiedenen Threads.
- * Dies ist eine übliche Einschränkung, da die Gewährleistung von Threadsicherheit
- * für jede Funktion einen zu großen Overhead mit sich bringen würde. Soll ein Busgerät
- * von mehreren Threads angesprochen werden, so müssen entweder zwei Instanzen 
- * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-immutable Funktionen muss
- * synchronisert werden. Welche Variante sinnvoller ist, hängt stark von den Details
- * der entsprechenden Klasse ab.
- * 
- * Die Synchronisierung des Zugriffs auf die Bus-Hardware obliegt der Platform-Implementierung
- * der Funktion turag_rs485_transceive(), welche das Versenden und den Empfang einer bestimmten 
- * Datenmenge bereitstellt.
- * 
- * Atomizität der Bus-Transaktionen bedeutet, dass zu einem Befehl gehörende 
- * Datenübertragungen nicht von fremden unterbrochen werden können. Dies wird zu einem
- * großen Teil schon von der Anforderung gewährleistet, dass alle Protokolle zustandslos
- * sein müssen, wodurch es unproblematisch ist, wenn Pakete zwischeneinander gemischt werden.
- * In der Praxis bedeutet das üblicherweise, dass eine Funktion einer Hostklasse maximal 
- * einmal turag_rs485_transceive() aufrufen kann. 
- * 
- * 
- * 
  * \addtogroup feldbus-host
  * @{
  */
 
-/// Definiert, wie oft eine Übertragung wiederholt wird, bis mit einem Fehler 
+/// Definiert, wie oft eine Übertragung wiederholt wird, bis mit einem Fehler
 /// abgebrochen wird, falls im Konstruktor kein anderer Wert übergeben wird.
 #if !defined(TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS) || defined(__DOXYGEN__)
 # define TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS		5
@@ -104,14 +59,9 @@
 
 namespace TURAG {
 
-/** 
- * @addtogroup feldbus-host
- * @{
- */
- 
-	
 /**
  * @brief TURAG-Feldbus host classes
+ * @ingroup feldbus-host
  */	
 namespace Feldbus {
 
@@ -257,13 +207,15 @@ public:
 	 * Funktion bestens geeignet, wenn eine Verfügbarkeitsinformation 
 	 * mit einer großen Häufiigkeit, doch mittleren Verlässlichkeit benötigt wird. Ist eine
 	 * besonders aktuelle Information nötig, so kann das Verhalten des ersten
-	 * Aufrufs mit dem forceUpdate-Parameter erzwungen werden.
+	 * Aufrufs mit dem forceUpdate-Parameter erzwungen werden - in diesem Fall
+	 * wird stets mindestens ein Paket gesendet.
 	 * 
 	 * Gibt die Funktion einmal false zurück, so wird sich daran von selbst
 	 * nichts mehr ändern, weil zu diesem Zeitpunkt sämtliche Pakete verworfen
-	 * werden. Ist man der Meinung, dass das Gerät wieder funktionieren könnte,
-	 * können die internen Fehlerzustände mit clearTransmissionCounters()
-	 * zurückgesetzt werden.
+	 * werden, außer wenn forceUpdate benutzt wird. Gibt diese Funktion false zurück
+	 * obwohl das Gerät funktionieren sollte, so kann entweder mit clearTransmissionCounters()
+	 * der interne Fehler-Counter zurückgesetzt oder diese Funktion mit ForceUpdate
+	 * benutzt werden um das erneute Versenden von Paketen zu erzwingen.
 	 */
     bool isAvailable(bool forceUpdate = false);
 	
@@ -387,6 +339,10 @@ public:
 	 * \brief Sendet ein Ping-Paket.
 	 * \return True, wenn des Gerät erwartungsgemäß geantwortet hat, false
 	 * im Fehlerfall.
+	 *
+	 * Diese Funktion sendet immer ein Paket, auch wenn das Gerät dysfunktional ist.
+	 * Ist die Übertragung erfolgreich, so wird das Gerät wieder als funktionieren
+	 * betrachtet.
 	 */
 	bool sendPing(void);
 
@@ -449,11 +405,19 @@ public:
 		hasCheckedAvailabilityYet = false;
 	}
 
+	/**
+	 * @brief Anzahl aller am Bus aufgetretenen Übertragungsfehler zurückgeben
+	 * @return Anzahl der Fehler.
+	 */
+	int getGlobalTransmissionErrors(void) const;
+
     /*!
 	 * \brief Blockierende Standard-Datenüberträgung.
 	 * \param[in] transmit Zu sendende Daten, verpackt in einer Request-Struktur.
 	 * \param[out] receive Pointer auf eine Response-Struktur, die nach dem Aufruf die
 	 * Antwortdaten enthält.
+	 * \param[in] ignoreDysfunctional Sendet das Paket auch, wenn das Gerät dysfunktional
+	 * ist.
 	 * \return True bei erfolgreicher Übertragung.
 	 * 
 	 * Sendet ein Datenpaket an das Slavegerät und blockiert solange, bis entweder 
@@ -463,27 +427,31 @@ public:
 	 * deren Implementierung bestimmt, wie die Übertragung im Detail stattfindet.
 	 */
 	template<typename T, typename U> _always_inline
-	bool transceive(Request<T>& transmit, Response<U>* receive) {
+	bool transceive(Request<T>& transmit, Response<U>* receive, bool ignoreDysfunctional = false) {
 	return transceive(reinterpret_cast<uint8_t*>(&(transmit)) + sizeof(Request<T>::address) - myAddressLength,
-										sizeof(Request<T>) + myAddressLength - sizeof(Request<T>::address),
-										reinterpret_cast<uint8_t*>(receive) + sizeof(Response<T>::address) - myAddressLength,
-										sizeof(Response<U>) + myAddressLength - sizeof(Response<T>::address));
+					  sizeof(Request<T>) + myAddressLength - sizeof(Request<T>::address),
+					  reinterpret_cast<uint8_t*>(receive) + sizeof(Response<T>::address) - myAddressLength,
+					  sizeof(Response<U>) + myAddressLength - sizeof(Response<T>::address),
+					  ignoreDysfunctional);
 	}
 
 	/*!
 	 * \brief Versendet einen Broadcast.
 	 * \param[out] transmit Zu sendende Daten, verpackt in eine Broadcast-Struktur.
+	 * \param[in] ignoreDysfunctional Sendet das Paket auch, wenn das Gerät dysfunktional
+	 * ist.
 	 * \return True bei erfolgreicher Übertragung.
 	 * 
 	 * Sendet einen %Broadcast an die in transmit eingestellte Gerätegruppe und
 	 * kehrt zurück, sobald alle Daten geschrieben wurden.
 	 */
     template<typename T> _always_inline
-	bool transceive(Broadcast<T>& transmit) {
+	bool transceive(Broadcast<T>& transmit, bool ignoreDysfunctional = false) {
 		return transceive(reinterpret_cast<uint8_t*>(&(transmit)) + sizeof(Broadcast<T>::address) - myAddressLength,
-											sizeof(Broadcast<T>) + myAddressLength - sizeof(Broadcast<T>::address), 
-											nullptr, 
-											0);
+						  sizeof(Broadcast<T>) + myAddressLength - sizeof(Broadcast<T>::address),
+						  nullptr,
+						  0,
+						  ignoreDysfunctional);
 	}
 
 	/**
@@ -527,6 +495,8 @@ protected:
      * \param[in] transmit_length Länge des Puffers.
      * \param[out] receive Puffer für die Empfangsdaten.
      * \param[in] receive_length Länge des Empfangspuffers/der erwarteten Daten.
+	 * \param[in] ignoreDysfunctional Sendet das Paket auch, wenn das Gerät dysfunktional
+	 * ist.
      * \return True bei erfolgreicher Übertragung.
 	 * 
 	 * Diese Funktion kann benutzt werden, um High-Level-Zugriffsfunktionen in
@@ -541,7 +511,7 @@ protected:
 	 * Wenn receive oder receive_length 0 ist, so wird angenommen dass eine 
 	 * Broadcastübertragung gewünscht wird und statt der Geräteadresse 0 benutzt.
      */
-    bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length);
+	bool transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length, bool ignoreDysfunctional = false);
 
 	/**
 	 * \brief Gibt zurück, ob das Gerät als dysfunktional betrachtet wird.
@@ -644,11 +614,6 @@ struct Device::Response<void> {
 
 
 } // namespace Feldbus
-
-/**
- * @}
- */
-
 } // namespace TURAG
 
 #endif /* TURAGFELDBUSDEVICE_H_ */

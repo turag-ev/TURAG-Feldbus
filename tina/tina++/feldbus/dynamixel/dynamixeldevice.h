@@ -7,7 +7,23 @@
 namespace TURAG {
 namespace Feldbus {
 
-
+/**
+ * @brief Dynamixel Communication 1.0-Implementierung.
+ *
+ * Diese Klasse kann benutzt werden, um mit Dynamixel-Servos zu
+ * kommunizieren, die das Communication 1.0-Protokoll benutzen.
+ *
+ * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus;dynamixel-servos
+ * \see http://support.robotis.com/en/techsupport_eng.htm#product/dynamixel/dxl_communication.htm
+ * \see http://support.robotis.com/en/techsupport_eng.htm#product/dynamixel/rx_series/rx-10.htm
+ *
+ * \note Die aktuelle Implementierung wurde für Servos der RX-Reihe entwickelt,
+ * sollte aber problemlos erweiterbar sein.
+ *
+ * \bug nicht thread-safe
+ * \bug der globalTransmissionErrorCounter von Device wird nicht hochgezählt, obwohl das sinnvoll wäre.
+ *
+ */
 class DynamixelDevice
 {
 public:
@@ -22,6 +38,13 @@ public:
     };
 
     //Konstruktor für die Klasse DynamixelDevice
+	/**
+	 * @brief Konstruktor
+	 * @param name_ Bezeichnung des Gerätes
+	 * @param id Adresse
+	 * @param max_transmission_attempts
+	 * @param max_transmission_errors
+	 */
     DynamixelDevice(const char* name_, int id,
                     unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
                     unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
@@ -112,10 +135,15 @@ public:
 
 	const char* name;
 
-
-	
 protected:
-    int myId;
+	bool readByte(int address, int* byte);
+	bool readWord(int address, int* word);
+	bool writeByte(int address, int byte);
+	bool writeWord(int address, int word);
+	void printLastDeviceError(void);
+	bool hasDeviceError(DynamixelDevice::Error index);
+
+	int myId;
     unsigned int maxTransmissionAttempts;
     const unsigned int maxTransmissionErrors;
     unsigned int myTransmissionErrorCounter;
@@ -127,13 +155,6 @@ protected:
     int modelNumber_;
     int firmwareVersion_;
     int servoID_;
-
-    bool readWord(int address, int* word);
-    bool readByte(int address, int* byte);
-    bool writeWord(int address, int word);
-    bool writeByte(int address, int byte);
-    void printLastDeviceError(void);
-    bool hasDeviceError(DynamixelDevice::Error index);
 
     int targetPosition;
 };
