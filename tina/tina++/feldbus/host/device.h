@@ -184,7 +184,7 @@ public:
 	 * \brief Struktur-Template zur Verwendung mit transceive().
 	 * 
 	 * address und checksum werden dann automatisch befüllt.
-s	 */
+	 */
     template<typename T = void>
     struct Response {
 		uint8_t address[2];
@@ -233,21 +233,7 @@ s	 */
     Device(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
            const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH,
 		   unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
-           unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS) :
-        name(name_),
-        myAddress(address),
-        myAddressLength(static_cast<unsigned>(addressLength)),
-        hasCheckedAvailabilityYet(false),
-        maxTransmissionAttempts(max_transmission_attempts),
-        maxTransmissionErrors(max_transmission_errors),
-        myChecksumType(type),
-		myCurrentErrorCounter(0),
-		myTotalTransmissions(0),
-		myTotalChecksumErrors(0),
-		myTotalNoAnswerErrors(0),
-		myTotalMissingDataErrors(0),
-		myTotalTransmitErrors(0)
-    { }
+		   unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS);
 
 #if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
     virtual ~Device() { }
@@ -500,6 +486,29 @@ s	 */
 											0);
 	}
 
+	/**
+	 * @brief Gibt das erste Feldbus-Device zurück.
+	 * @return Zeiger auf das erste Feldbus-Device im System.
+	 *
+	 * Über alle Instanzen von Device wird eine List geführt,
+	 * über die zu Informationszwecken iteriert werden kann.
+	 *
+	 * \see getNextDevice()
+	 */
+	static Device* getFirstDevice(void) {
+		return firstDevice;
+	}
+
+	/**
+	 * @brief Gibt das nächste Feldbus-Device zurück.
+	 * @return Zeiger auf das nächste Feldbus-Device im System.
+	 *
+	 * \see getFirstDevice()
+	 */
+	Device* getNextDevice(void) const {
+		return myNextDevice;
+	}
+
     /*!
      * \brief Gerätename.
 	 * 
@@ -589,6 +598,9 @@ private:
 	static int globalTransmissionErrorCounter;
 	static unsigned addressOfLastTransmission;
 	static Mutex mutex;
+
+	Device* myNextDevice;
+	static Device* firstDevice;
 };
 
 

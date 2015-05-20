@@ -38,6 +38,37 @@ struct DeviceInfoInternal {
 int Device::globalTransmissionErrorCounter{0};
 unsigned Device::addressOfLastTransmission{TURAG_FELDBUS_BROADCAST_ADDR};
 Mutex Device::mutex;
+Device* Device::firstDevice(nullptr);
+
+
+Device::Device(const char* name_, unsigned address, ChecksumType type,
+	   const AddressLength addressLength,
+	   unsigned int max_transmission_attempts,
+	   unsigned int max_transmission_errors) :
+	name(name_),
+	myAddress(address),
+	myAddressLength(static_cast<unsigned>(addressLength)),
+	hasCheckedAvailabilityYet(false),
+	maxTransmissionAttempts(max_transmission_attempts),
+	maxTransmissionErrors(max_transmission_errors),
+	myChecksumType(type),
+	myCurrentErrorCounter(0),
+	myTotalTransmissions(0),
+	myTotalChecksumErrors(0),
+	myTotalNoAnswerErrors(0),
+	myTotalMissingDataErrors(0),
+	myTotalTransmitErrors(0),
+	myNextDevice(nullptr)
+{
+	Mutex::Lock lock(mutex);
+
+	if (firstDevice == nullptr) {
+		firstDevice = this;
+	} else {
+		myNextDevice = firstDevice;
+		firstDevice = this;
+	}
+}
 
  
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length) {
