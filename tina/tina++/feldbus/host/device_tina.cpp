@@ -132,14 +132,14 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 			// - our last transmission was a broadcast
 			// - the last transmission was sent to a different slave
 			bool insertTransmissionDelay;
-			// addressOfLastTransmission != useAddress  --> usually not necessary
-			if (addressOfLastTransmission == TURAG_FELDBUS_BROADCAST_ADDR /*||
-					addressOfLastTransmission != useAddress*/) {
+			if (addressOfLastTransmission == TURAG_FELDBUS_BROADCAST_ADDR ||
+					addressOfLastTransmission != useAddress) {
 				insertTransmissionDelay = true;
 			} else {
 				insertTransmissionDelay = false;
 			}
 
+			// clear buffer from any previous failed transmissions
 			turag_rs485_buffer_clear();
 			success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, insertTransmissionDelay);
 
