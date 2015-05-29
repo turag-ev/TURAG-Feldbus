@@ -5,9 +5,8 @@
  *  @author		Martin Oemus <martin@oemus.net>
  *  @ingroup	feldbus-host
  * 
- * Dieser Header deklariert stellt Zugriffsfunktionen
- * für die RS485-Hardwareschnittstelle bereit, die von den 
- * Host-Klassen des %TURAG-Feldbus benötigt werden. Die
+ * Dieser Header definiert die RS485-Hardwareschnittstelle,
+ * die von den Host-Klassen des %TURAG-Feldbus benutzt wird. Die
  * Implementierung ist plattform-spezifisch.
  *
  */
