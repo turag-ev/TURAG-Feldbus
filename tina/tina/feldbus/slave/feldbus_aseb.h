@@ -13,7 +13,7 @@
  * @defgroup   feldbus-slave-aseb ASEBs
  * @ingroup	feldbus-slave
  * 
- * [ASEBs](https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus;turag_feldbus_io-boards/)
+ * [ASEBs](https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus;turag_feldbus_io-boards/)
  * sind kleine und simple  Boards, die zum Verteilen von Ein- und Ausgängen im Roboter benutzt werden.
  * 
  * Das Interface des ASEB-Protokolls ist ebenfalls sehr simpel: 

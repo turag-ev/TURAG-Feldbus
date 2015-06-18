@@ -289,7 +289,7 @@ public:
 	 * \brief Fragt die Anzahl korrekt empfangener Pakete vom Slave ab.
 	 * \param[out] packageCount Puffer in dem der Wert gespeichert wird.
 	 * \return True bei Erfolg, ansonsten false.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	bool receiveNumberOfAcceptedPackages(uint32_t* packageCount);
 	
@@ -297,7 +297,7 @@ public:
 	 * \brief Fragt die Anzahl aufgetretener Pufferüberlaufe vom Slave ab.
 	 * \param[out] overflowCount Puffer in dem der Wert gespeichert wird.
 	 * \return True bei Erfolg, ansonsten false.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	bool receiveNumberOfOverflows(uint32_t* overflowCount);
 	
@@ -305,7 +305,7 @@ public:
 	 * \brief Fragt die Anzahl verlorener Pakete vom Slave ab.
 	 * \param[out] lostPackagesCount Puffer in dem der Wert gespeichert wird.
 	 * \return True bei Erfolg, ansonsten false.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	bool receiveNumberOfLostPackages(uint32_t* lostPackagesCount);
 	
@@ -313,7 +313,7 @@ public:
 	 * \brief Fragt die Anzahl aufgetretener Checksummenfehler vom Slave ab.
 	 * \param[out] checksumErrorCount Puffer in dem der Wert gespeichert wird.
 	 * \return True bei Erfolg, ansonsten false.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	bool receiveNumberOfChecksumErrors(uint32_t* checksumErrorCount);
 	
@@ -322,7 +322,7 @@ public:
 	 * aufgetretener Checksummenfehler vom Slave ab.
 	 * \param[out] counts Puffer in dem der Wert gespeichert wird.
 	 * \return True bei Erfolg, ansonsten false.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 * 
 	 * Es werden mit einem Mal alle 4 Werte abgefragt, der Puffer muss also eine
 	 * entsprechende Größe aufweisen.
@@ -349,28 +349,28 @@ public:
 	/**
 	 * \brief Gibt die Anzahl der im Master aufgetretenen Checksummenfehler zurück.
 	 * \return Anzahl der Checksummenfehler.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	unsigned int getChecksumErrors(void) const { return myTotalChecksumErrors; }
 	
 	/**
 	 * \brief Gibt die Anzahl der im Master aufgetretenen Antwortfehler zurück.
 	 * \return Anzahl der Antwortfehler.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	unsigned int getNoAnswerErrors(void) const { return myTotalNoAnswerErrors; }
 	
 	/**
 	 * \brief Gibt die Anzahl der im Master aufgetretenen Datenfehler zurück.
 	 * \return Anzahl der Datenfehler.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	unsigned int getMissingDataErrors(void) const { return myTotalMissingDataErrors; }
 
 	/**
 	 * \brief Gibt die Anzahl der im Master aufgetretenen Sendefehler zurück.
 	 * \return Anzahl der Sendefehler.
-	 * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
+	 * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/#fehlerzustaende
 	 */
 	unsigned int getTransmitErrors(void) const { return myTotalTransmitErrors; }
 

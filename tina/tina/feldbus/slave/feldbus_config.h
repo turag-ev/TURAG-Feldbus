@@ -16,7 +16,7 @@
  * Definitionen verlangt.
  * 
  * Die Definitionen spiegeln die Fähigkeiten des Basis-Protokolls wieder. Nähere
- * Infos gibt es im Wiki: https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/
+ * Infos gibt es im Wiki: https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus/
  * 
  * Für manche Definitionen sind mögliche Werte aufgelistet. Diese Auflistung
  * ist nicht notwendigerweise vollständig, insbesondere wenn in der Zukunft

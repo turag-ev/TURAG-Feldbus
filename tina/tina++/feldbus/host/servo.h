@@ -121,7 +121,7 @@ protected:
  *
  * Diese Klasse bildet einen vollwertigen RS485-Servo ab.
  *
- * \see https://www.turag.de/wiki/doku.php/id,03_elektronik;turag_feldbus;servoregler
+ * \see https://intern.turag.de/wiki/doku.php/id,03_elektronik;turag_feldbus;servoregler
  */
 class Servo : public ServoBase {
 protected:

@@ -13,7 +13,7 @@ namespace Feldbus {
  * Diese Klasse kann benutzt werden, um mit Dynamixel-Servos zu
  * kommunizieren, die das Communication 1.0-Protokoll benutzen.
  *
- * \see https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus;dynamixel-servos
+ * \see https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus;dynamixel-servos
  * \see http://support.robotis.com/en/techsupport_eng.htm#product/dynamixel/dxl_communication.htm
  * \see http://support.robotis.com/en/techsupport_eng.htm#product/dynamixel/rx_series/rx-10.htm
  *

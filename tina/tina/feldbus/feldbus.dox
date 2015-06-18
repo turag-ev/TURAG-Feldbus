@@ -7,7 +7,7 @@
  * Eigenschaften definieren.
  * 
  * Die Spezifikation von Basis- und Anwendungsprotokollen ist im 
- * [Wiki](https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus) zu finden.
+ * [Wiki](https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus) zu finden.
  * 
  * Dieses Modul enthält in seinen jeweiligen Submodulen fertige Quellcodes
  * für Slave- und Hostseite, die konform zu den Spezifikationen des Basis- und
@@ -201,7 +201,7 @@
  * neue Gerätegruppe entwickelt werden soll. Die Entwicklung eines neuen
  * Anwendungsprotokolls umfasst mehrere Schritte:
  * 
- * 1. Im [Wiki](https://www.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus#anwendungs-protokolle) 
+ * 1. Im [Wiki](https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus#anwendungs-protokolle) 
  * eine Seite mit den Spezifikationsdetails des Anwendungsprotokolls anlegen und auf der 
  * Hauptseite verlinken
  * 2. In turag_feldbus_bus_protokoll.h wird die ID des neuen Protokolls eingetragen
