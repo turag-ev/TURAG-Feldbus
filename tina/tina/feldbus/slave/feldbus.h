@@ -473,7 +473,7 @@ typedef struct {
 	// package loss detected and counter must be increased
 	uint8_t package_lost_flag;
 	// overflow detected and counter must be increased
-	uint8_t package_overflow_flag;
+	uint8_t buffer_overflow_flag;
 #endif
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 	volatile uint8_t transmission_active;
@@ -568,7 +568,7 @@ TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
 #  endif
 # endif		
 			{
-				turag_feldbus_slave_uart.package_overflow_flag = 1;
+				turag_feldbus_slave_uart.buffer_overflow_flag = 1;
 			}
 			turag_feldbus_slave_uart.overflow = 1;
 		}
@@ -624,9 +624,9 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 		turag_feldbus_slave_uart.package_lost_flag = 0;
 	}
 	
-	if (turag_feldbus_slave_uart.package_overflow_flag) {
+	if (turag_feldbus_slave_uart.buffer_overflow_flag) {
 		++turag_feldbus_slave_info.packagecount_buffer_overflow;
-		turag_feldbus_slave_uart.package_overflow_flag = 0;
+		turag_feldbus_slave_uart.buffer_overflow_flag = 0;
 	}
 #endif
 
@@ -663,7 +663,7 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 #endif
 	}
 
-	// reset rxOffset and offset-flag to ensure correct
+	// reset rxOffset and overflow-flag to ensure correct
 	// receiving of future packages
 	turag_feldbus_slave_uart.rxOffset = 0;
 	turag_feldbus_slave_uart.overflow = 0;
@@ -915,7 +915,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 				turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
 				
 			// this happens if the device protocol or the user code returned TURAG_FELDBUS_IGNORE_PACKAGE.
-			if (turag_feldbus_slave_uart.transmitLength == (uint8_t)(TURAG_FELDBUS_IGNORE_PACKAGE + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH)) {
+			if (turag_feldbus_slave_uart.transmitLength == 0) {
 				turag_feldbus_slave_activate_rx_interrupt();
 				return;
 			}

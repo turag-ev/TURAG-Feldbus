@@ -9,7 +9,7 @@ turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
 	.overflow = 0,
 #if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	.package_lost_flag = 0,
-	.package_overflow_flag = 0,
+	.buffer_overflow_flag = 0,
 #endif
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 	.transmission_active = 0,
