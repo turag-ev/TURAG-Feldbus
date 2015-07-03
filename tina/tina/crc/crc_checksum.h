@@ -8,6 +8,10 @@
 
 #include <tina/tina.h>
 
+#if !TURAG_CRC_CRC8_ALGORITHM && !TURAG_CRC_CRC16_ALGORITHM
+# warning Either TURAG_CRC_CRC8_ALGORITHM or TURAG_CRC_CRC16_ALGORITHM must be defined to non-zero
+#endif
+
 
 /*
  * documentation
