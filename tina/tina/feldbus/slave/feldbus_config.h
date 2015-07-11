@@ -2,7 +2,7 @@
  *  @file		feldbus_config.h
  *  @date		09-2014
  *  @author		Martin Oemus <martin@oemus.net>
- *  @ingroup feldbus-slave-base
+ *  @ingroup    feldbus-slave-base
  * 
  * @brief Beispiel für den Config-Header eines Feldbus Slave-Gerätes. Diese Datei kann in das Quellverzeichnis des Gerätes kopiert und angepasst werden.
  * 
@@ -24,7 +24,7 @@
  * 
  * 
  */
-#error THIS FILE IS INTENDED FOR DOCUMUNTATIONAL PURPOSES ONLY.
+#error THIS FILE IS INTENDED FOR DOCUMENTATIONAL PURPOSES ONLY.
 
 #ifndef FELDBUS_CONFIG_H_
 #define FELDBUS_CONFIG_H_
