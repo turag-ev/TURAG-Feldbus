@@ -140,7 +140,7 @@ uint8_t turag_crc8_mow_calculate(const void* data, size_t length) {
 #endif
 
 
-#if TURAG_CRC_CRC8_ALGORITHM == 3
+#if TURAG_CRC_CRC8_MOW_ALGORITHM == 3
 # if !TURAG_CRC_INLINED_CALCULATION
 #  error not implemented
 # endif
