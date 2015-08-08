@@ -20,25 +20,30 @@
  * @defgroup checksums-crc CRC checksums
  * @ingroup checksums
  * 
- * A CRC is an error-detecting code whose advantages make it particularly useful 
- * in embedded applications.
+ * Eine CRC-Summe ist ein fehlererkennender Code, dessen Vorteile ihn für 
+ * eingebettete Systeme besonders geeignet machen:
+ *  - einfach zu implementieren
+ *  - leicht mathematisch zu analysieren
+ *  - gut zur Erkennung der üblichen Übertragungsfehler in rauschbelasteten 
+ * Umgebungen
  * 
- * CRCs are so called because the checksum is a redundancy and the algorithm is 
- * based on cyclic codes. CRCs are popular because they are simple to implement 
- * in binary hardware, easy to analyze mathematically, and particularly good at 
- * detecting common errors caused by noise in transmission channels.
- * 
- * CRC checksums come in different widths - the longer the checkum the more data 
- * can be securely transferred or stored. A very rough rule of thumb as to what 
- * CRC-length is required is: *data size* < 2^(*n*+1) / 8 where *data size* is 
- * the length of the data stream in bytes and *n* the length of the CRC in bit. 
- * So a CRC-8 would be sufficient to secure data streams up to the length of 63 
- * Bytes, including the checksum.
+ * CRC-Checksummen können verschiedene Wortbreiten haben. Über je mehr Bits 
+ * die Checksumme verfügt, umso größer können die mit ihr abgesicherten Datenpakete
+ * sein. Als Faustregel kann benutzt werden: *data size* < 2^(*n*+1) / 8 wobei
+ * *data size* die Länge des Datenpaketes in Byte und *n* die Breite der 
+ * CRC-Checksumme in Bit ist. Ein CRC-8 wäre also ausreichend um bis zu 63 Byte
+ * an Daten abzusichern, die Checksumme eingeschlossen.
  *
- * Die Implementierung kann mit den folgenden Makros konfiguriert werden:
+ * TinA verfügt über verschiedene CRC-Algorithmen unterschiedlicher Breite,
+ * jeweils in verschiedenen Optimierungsvarianten. Die gewünschte 
+ * Variante kann für jeden Algorithmus konfiguriert werden:
+ *
  *  - \ref TURAG_CRC_CRC8_ALGORITHM
+ *  - \ref TURAG_CRC_CRC8_MOW_ALGORITHM
  *  - \ref TURAG_CRC_CRC16_ALGORITHM
- *  - \ref TURAG_CRC_INLINED_CALCULATION
+ *
+ * Wird \ref TURAG_CRC_INLINED_CALCULATION auf 1 definiert, so werden alle
+ * Funktionen soweit möglich inlined ausgegeben.
  * 
  * \see config_tina_default.h
  * \see http://en.wikipedia.org/wiki/Cyclic_redundancy_check

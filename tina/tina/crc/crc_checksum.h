@@ -24,7 +24,7 @@
  * @{
  */
  
-/** Calculates a CRC8-checksum
+/** Calculates a CRC8-checksum (using CRC-8/I-CODE)
  * @param		data	pointer to data that is to be included in the calculation
  * @param		length	length in bytes of the given data pointer
  * @return		checksum
@@ -32,13 +32,29 @@
 uint8_t turag_crc8_calculate(const void* data, size_t length);
 
 
-/** Checks data with a given CRC8-checksum
+/** Checks data with a given CRC8-checksum (using CRC-8/I-CODE)
  * @param		data	pointer to data that is to be checked
  * @param		length	length in bytes of the given data pointer
  * @param		chksum	checksum used to check the data
  * @return		true on data correct, otherwise false
  */
 bool turag_crc8_check(const void* data, size_t length, uint8_t chksum);
+
+/** Calculates a CRC8-checksum (using Maxim 1-Wire CRC)
+ * @param		data	pointer to data that is to be included in the calculation
+ * @param		length	length in bytes of the given data pointer
+ * @return		checksum
+ */
+uint8_t turag_crc8_mow_calculate(const void* data, size_t length);
+
+
+/** Checks data with a given CRC8-checksum (using Maxim 1-Wire CRC)
+ * @param		data	pointer to data that is to be checked
+ * @param		length	length in bytes of the given data pointer
+ * @param		chksum	checksum used to check the data
+ * @return		true on data correct, otherwise false
+ */
+bool turag_crc8_mow_check(const void* data, size_t length, uint8_t chksum);
 
 /** Calculates a CRC16_MCRF4-checksum.
  * @param[in]	data	pointer to data that is to be included in the calculation
@@ -181,6 +197,68 @@ TURAG_INLINE bool turag_crc8_check(const void* data, size_t length, uint8_t chks
     return chksum == turag_crc8_calculate(data, length);
 }
 #endif
+
+
+
+
+
+/*
+ * CRC8 Maxim 1-Wire CRC implementation
+ */	
+#if TURAG_CRC_INLINED_CALCULATION
+
+# if TURAG_CRC_CRC8_MOW_ALGORITHM == 1
+/* Generated on Sat Aug  8 01:03:18 2015,
+ * by pycrc v0.8.2, http://www.tty1.net/pycrc/
+ * using the configuration:
+ *    Width        = 8
+ *    Poly         = 0x31
+ *    XorIn        = 0x00
+ *    ReflectIn    = True
+ *    XorOut       = 0x00
+ *    ReflectOut   = True
+ *    Algorithm    = table-driven
+ */
+extern const uint8_t turag_crc_crc8_mow_table[256];
+
+TURAG_INLINE uint8_t turag_crc8_mow_calculate(const void* data, size_t length) {
+	uint8_t crc = 0x00;
+
+    while (length--) {
+        crc = turag_crc_crc8_mow_table[crc ^ *(uint8_t*)data];
+		data = (uint8_t*)data + 1;
+	}
+    return crc;
+}
+# endif
+
+
+#if TURAG_CRC_CRC8_ALGORITHM == 2
+# error not implemented
+# endif
+
+
+#if TURAG_CRC_CRC8_ALGORITHM == 3
+# error not implemented
+# endif
+
+#else
+# if TURAG_CRC_CRC8_MOW_ALGORITHM != 0
+uint8_t turag_crc8_mow_calculate(const void* data, size_t length);
+# endif
+#endif
+
+
+#if TURAG_CRC_CRC8_MOW_ALGORITHM != 0
+// the check function is always inline
+TURAG_INLINE bool turag_crc8_mow_check(const void* data, size_t length, uint8_t chksum) {
+    return chksum == turag_crc8_mow_calculate(data, length);
+}
+#endif
+
+
+
+
 
 /*
  * CRC16-implementation

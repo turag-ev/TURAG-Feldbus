@@ -14,7 +14,7 @@ namespace TURAG {
  */
 	
 /** 
- * @brief C++-Interface for CRC-based checksums module
+ * @brief C++-Interface for CRC-8 checksums (CRC-8/I-CODE)
  * @copydetails checksums-crc
  */
 namespace CRC8 {
@@ -62,13 +62,72 @@ bool check(const void* data, std::size_t length, uint16_t chksum) {
  */
 
 
+
+
+/**
+ * @addtogroup checksums-crc
+ * @{
+ */
+	
+/** 
+ * @brief C++-Interface for CRC-8 checksums (Maxim 1-Wire CRC)
+ * @copydetails checksums-crc
+ */
+namespace CRC8_MOW {
+
+#if TURAG_CRC_CRC8_MOW_ALGORITHM != 0 || defined(__DOXYGEN__)	
+	
+template <typename T> _always_inline
+uint16_t calculate(const T& data) {
+  return turag_crc8_mow_calculate(std::addressof(data), sizeof(T));
+}
+
+template <typename T, std::size_t N> _always_inline
+uint16_t calculate(const T (&data)[N]) {
+  return turag_crc8_mow_calculate(data, N * sizeof(T));
+}
+
+_always_inline
+uint16_t calculate(const void* data, std::size_t length) {
+  return turag_crc8_mow_calculate(data, length);
+}
+
+
+
+template <typename T> _always_inline
+bool check(const T& data, uint16_t chksum) {
+  return turag_crc8_mow_check(std::addressof(data), sizeof(T), chksum);
+}
+
+template <typename T, std::size_t N> _always_inline
+bool check(const T (&data)[N], uint16_t chksum) {
+  return turag_crc8_mow_check(data, N * sizeof(T), chksum);
+}
+
+_always_inline
+bool check(const void* data, std::size_t length, uint16_t chksum) {
+  return turag_crc8_mow_check(data, length, chksum);
+}
+
+#endif
+
+} // namespace CRC8_MOW
+
+/**
+ * @}
+ */
+
+
+
+
+
 /**
  * @addtogroup checksums-crc
  * @{
  */
 
 /** 
- * @brief C++-Interface for CRC-based checksums module
+ * @brief C++-Interface for CRC-16 checksums
  * @copydetails checksums-crc
  */
 namespace CRC16 {
