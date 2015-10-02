@@ -10,8 +10,6 @@
 #ifndef TURAGFELDBUSDEVICE_H_
 #define TURAGFELDBUSDEVICE_H_
 
-#include <atomic>
-
 #include <tina++/tina.h>
 #include <tina++/thread.h>
 #include <tina++/time.h>
