@@ -153,7 +153,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_
 		uint8_t pwm_output_index = message[0] - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
 		
 		if (pwm_outputs && pwm_output_index < pwm_outputs_size) {
-			uint8_t* value = (uint8_t*)&pwm_outputs[pwm_output_index].value;
+			uint8_t* value = (uint8_t*)&pwm_outputs[pwm_output_index].target_value;
 			if (message_length == 3) {
 				value[0] = message[1];
 				value[1] = message[2];
@@ -166,7 +166,23 @@ FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_
 		} else {
 			return TURAG_FELDBUS_IGNORE_PACKAGE;
 		}
-		
+    }else if(message[0] == TURAG_FELDBUS_ASEB_PWM_SPEED){
+        uint8_t pwm_output_index = message[1] - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
+
+        if (pwm_outputs && pwm_output_index < pwm_outputs_size) {
+            uint8_t* value = (uint8_t*)&pwm_outputs[pwm_output_index].speed;
+            if (message_length == 4) {
+                value[0] = message[2];
+                value[1] = message[3];
+                return 0;
+            } else {
+                response[0] = value[0];
+                response[1] = value[1];
+                return 2;
+            }
+        } else {
+            return TURAG_FELDBUS_IGNORE_PACKAGE;
+        }
 	} else if (message[0] == TURAG_FELDBUS_ASEB_NUMBER_OF_DIGITAL_INPUTS) {
 		response[0] = digital_inputs_size;
 		return 1;

@@ -80,6 +80,8 @@ typedef struct {
 	const uint32_t frequency;		///< Gibt die PWM-Frequenz des Ausgangs an.
 	const uint16_t max_value;		///< Gibt den maximal einstellbaren Ausgangswert an.
 	uint16_t value;					///< Speichert den aktuellen Ausgangswert.
+	uint16_t target_value; 			///<Speichert den Zielwert
+    uint16_t speed;                 ///<Speichert die Geschwindigkeit, welche als zu addierender/subtrahierender Wert zu value dargestellt ist
 	const char* name;				///< Bezeichnung.
 } feldbus_aseb_pwm_t;
 
