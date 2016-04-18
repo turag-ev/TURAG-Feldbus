@@ -379,6 +379,58 @@ bool Aseb::initPwmOutputBuffer() {
     return true;
 }
 
+uint16_t Aseb::getPwmSpeed(unsigned key) {
+    if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
+        turag_errorf("%s: tried to call Aseb::getPwmSpeed prior to initialization", name);
+        return false;
+    } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
+        turag_errorf("%s: Wrong arguments to getPwmSpeed. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        return false;
+    }
+    struct AsebGetSpeed {
+        uint8_t command;
+        uint8_t index;
+    };
+
+    Request<AsebGetSpeed> request;
+    request.data.command = TURAG_FELDBUS_ASEB_PWM_SPEED;
+    request.data.index = key + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
+    Response<uint16_t> response;
+    if (!transceive(request, &response)) {
+        turag_errorf("%s: Aseb getPWMSpeed transceive failed", name);
+        return 0;
+    }
+    return response.data;
+
+}
+
+bool Aseb::setPwmSpeed(unsigned key, uint16_t speed) {
+    if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
+        turag_errorf("%s: tried to call Aseb::setPwmSpeed prior to initialization", name);
+        return false;
+    } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
+        turag_errorf("%s: Wrong arguments to setPwmSpeed. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        return false;
+    }
+    struct AsebSetSpeed {
+        uint8_t command;
+        uint8_t index;
+        uint16_t value;
+    };
+
+    Request<AsebSetSpeed> request;
+    request.data.command = TURAG_FELDBUS_ASEB_PWM_SPEED;
+    request.data.index = key + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
+    request.data.value = speed;
+
+    Response<> response;
+    if (!transceive(request, &response)) {
+        turag_errorf("%s: Aseb setPWMSpeed transceive failed", name);
+        return false;
+    }
+    return true;
+}
+
 bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
     if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
         turag_errorf("%s: tried to call Aseb::setPwmOutput prior to initialization", name);

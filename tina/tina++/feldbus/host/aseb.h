@@ -161,6 +161,9 @@ public:
 	 */
     bool setDigitalOutput(unsigned key, bool value);
 	
+    uint16_t getPwmSpeed(unsigned key);
+    bool setPwmSpeed(unsigned key, uint16_t speed);
+
 	/**
 	 * \brief Gibt den duty cycle eines PWM-Channels zurück.
 	 * \param[in] key Key das auszugebenden Channels (0-15).
