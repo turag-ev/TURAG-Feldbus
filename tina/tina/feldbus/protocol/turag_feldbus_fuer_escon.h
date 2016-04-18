@@ -21,5 +21,6 @@ struct TuragEsconStatus_t {
 //status bytes
 #define TURAG_FELDBUS_ESCON_READY 0
 #define TURAG_FELDBUS_ESCON_FAILURE 1
+#define TURAG_FELDBUS_ESCON_HARDFAULT 2
 
 #endif
