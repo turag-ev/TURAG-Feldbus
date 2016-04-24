@@ -63,6 +63,13 @@
 #include "feldbus.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+
 #if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(__DOXYGEN__)
 
 // do not change this structure!!! Otherwise the device will send 
@@ -127,6 +134,12 @@ extern void turag_feldbus_stellantriebe_value_changed(uint8_t key);
  */
 extern FeldbusSize_t turag_feldbus_stellantriebe_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
 
+#endif
+
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_ */

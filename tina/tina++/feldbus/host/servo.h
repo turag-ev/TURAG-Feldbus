@@ -150,13 +150,13 @@ public:
 	 * @param feedForward
 	 * @return
 	 */
-	bool getCurrentFeedForward(float* feedForward) { return getValue(RS485_STELLANTRIEBE_KEY_CTRL_CUR_STATIC_FF, feedForward); }
+	bool getCurrentFeedForward(float* feedForward) { return getValue(RS485_STELLANTRIEBE_SERVO_KEY_CTRL_CUR_STATIC_FF, feedForward); }
 	/**
 	 * @brief setCurrentFeedForward
 	 * @param feedForward
 	 * @return
 	 */
-	bool setCurrentFeedForward(float feedForward) { return setValue(RS485_STELLANTRIEBE_KEY_CTRL_CUR_STATIC_FF, feedForward); }
+	bool setCurrentFeedForward(float feedForward) { return setValue(RS485_STELLANTRIEBE_SERVO_KEY_CTRL_CUR_STATIC_FF, feedForward); }
 };
 
 } // namespace Feldbus

@@ -21,6 +21,7 @@
 #define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_SERVO		0x02
 ///@}
 
+
 /**
  * @name special values for command factors
  * @{
@@ -44,10 +45,11 @@
  * davon abhängt.
  * @{
  */
-#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE		0x00
-#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_CHAR		0x01
-#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_SHORT	0x02
-#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG		0x04
+#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE			0x00
+#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_CHAR			0x01
+#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_SHORT		0x02
+#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG			0x04
+#define TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE_TEXT	0x05
 ///@}
 
 
@@ -78,32 +80,29 @@
 
 
 /**
- * @name command keys for servo device
+ * @name Command Keys für alle Stellantriebe
  * @{
  */
 #define RS485_STELLANTRIEBE_KEY_CURRENT_ANGLE		(0x01)	// current angle
 #define RS485_STELLANTRIEBE_KEY_DESIRED_ANGLE		(0x02)
 #define RS485_STELLANTRIEBE_KEY_MAX_ANGLE           (0x03)
 #define RS485_STELLANTRIEBE_KEY_MIN_ANGLE           (0x04)
+
 #define RS485_STELLANTRIEBE_KEY_CURRENT_VELOCITY    (0x05)	// current velocity
 #define RS485_STELLANTRIEBE_KEY_DESIRED_VELOCITY    (0x06)	// current velocity
 #define RS485_STELLANTRIEBE_KEY_MAX_VELOCITY		(0x07)	// current velocity
+
 #define RS485_STELLANTRIEBE_KEY_CURRENT_CURRENT		(0x08)	// current motor current
 #define RS485_STELLANTRIEBE_KEY_DESIRED_CURRENT		(0x09)	// current motor current
 #define RS485_STELLANTRIEBE_KEY_MAX_CURRENT         (0x0A)	// current motor current
+
 #define RS485_STELLANTRIEBE_KEY_CURRENT_PWM         (0x0B)	// current PWM ratio
 #define RS485_STELLANTRIEBE_KEY_DESIRED_PWM         (0x0C)	// current PWM ratio
 #define RS485_STELLANTRIEBE_KEY_MAX_PWM             (0x0D)	// current PWM ratio
+
 #define RS485_STELLANTRIEBE_KEY_VOLTAGE             (0x0E)	// current supply voltage
 #define RS485_STELLANTRIEBE_KEY_STATUS              (0x0F)	// current status, see details below
 #define RS485_STELLANTRIEBE_KEY_CONTROL_STATE	    (0x10)	// control state
-#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_P     (0x11)	// P-Gain for Position control
-#define RS485_STELLANTRIEBE_KEY_CTRL_POS_GAIN_I     (0x12)	// I-Gain Position control
-#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_P     (0x13)	// P-Gain Velocity
-#define RS485_STELLANTRIEBE_KEY_CTRL_VEL_GAIN_I     (0x14)	// I-Gain Velocity
-#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_P     (0x15)	// P-Gain Current control
-#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_GAIN_I     (0x16)	// I-Gain Current control
-#define RS485_STELLANTRIEBE_KEY_CTRL_CUR_STATIC_FF  (0x17)	// current static feed forward
 
 ///@}
 													
@@ -135,13 +134,28 @@
 // ----------------------------------------------
 // ----------------------------------------------
 /**
- * @name DC motor command keys
+ * @name Command Keys für Servo
+ * @{
+ */
+#define RS485_STELLANTRIEBE_SERVO_KEY_CTRL_POS_GAIN_P     (0x11)	// P-Gain for Position control
+#define RS485_STELLANTRIEBE_SERVO_KEY_CTRL_POS_GAIN_I     (0x12)	// I-Gain Position control
+#define RS485_STELLANTRIEBE_SERVO_KEY_CTRL_CUR_GAIN_P     (0x13)	// P-Gain Current control
+#define RS485_STELLANTRIEBE_SERVO_KEY_CTRL_CUR_GAIN_I     (0x14)	// I-Gain Current control
+#define RS485_STELLANTRIEBE_SERVO_KEY_CTRL_CUR_STATIC_FF  (0x15)	// current static feed forward
+
+///@}
+
+
+
+
+/**
+ * @name Command Keys für DC Motor
  * @{
  */
 #define RS485_STELLANTRIEBE_DC_KEY_SWITCH_STATUS    (0x11)
 #define RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME	(0x12)	// requests the slave to return to some defined position where it adjusts 
-///@}														// its current angle appropriately, takes velocity as argument
-
+                                                            // its current angle appropriately, takes velocity as argument
+///@}
 
 
 #endif
