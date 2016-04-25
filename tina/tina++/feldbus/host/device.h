@@ -14,6 +14,7 @@
 #include <tina++/thread.h>
 #include <tina++/time.h>
 #include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
+#include "feldbusabstraction.h"
 
 #if !TURAG_USE_TURAG_FELDBUS_HOST
 # warning TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
@@ -173,12 +174,15 @@ public:
 	 * \brief Konstruktor.
 	 * \param[in] name_
 	 * \param[in] address
+     * \param[in] feldbus Pointer auf eine FeldbusAbstraction-Instanz, an die die
+     * eigentliche Datenübertragung delegiert wird.
 	 * \param[in] type
 	 * \param[in] max_transmission_attempts
 	 * \param[in] max_transmission_errors
 	 * \param[in] addressLength
 	 */
-    Device(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+    Device(const char* name_, unsigned address, FeldbusAbstraction* feldbus,
+           ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
            const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH,
 		   unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
 		   unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS);
@@ -569,6 +573,8 @@ private:
 
 	Device* myNextDevice;
 	static Device* firstDevice;
+
+    FeldbusAbstraction* bus;
 };
 
 
