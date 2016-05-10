@@ -4,10 +4,14 @@
 #include "turag_feldbus_bus_protokoll.h"
 
 //command bytes
-#define TURAG_FELDBUS_ESCON_SET_RPM 0x01
-
+#define TURAG_FELDBUS_ESCON_SET_RPM     0x01
+#define TURAG_FELDBUS_ESCON_SET_CURRENT 0x02
 //command structures
 struct TuragEsconSetRPM_t {
+    int16_t value[2];
+};
+
+struct TuragEsconSetCurrent_t {
     int16_t value[2];
 };
 
