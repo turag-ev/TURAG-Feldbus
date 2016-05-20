@@ -138,7 +138,7 @@ bool DynamixelDevice::writeByte(int address, int byte) {
 }
 
 bool DynamixelDevice::hasDeviceError(DynamixelDevice::Error index) {
-    return (bool)turag_dxl_get_rxpacket_error((int)index);
+	return static_cast<bool>(turag_dxl_get_rxpacket_error(static_cast<int>(index)));
 }
 
 void DynamixelDevice::printLastDeviceError() {
@@ -321,7 +321,7 @@ bool DynamixelDevice::getCcwAngleLimit(float* limit) {
     if (!limit) return false;
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, &tempLimit)){
-        *limit=(float)tempLimit*TURAG_DXL_FACTOR_DEGREE;
+		*limit=static_cast<float>(tempLimit)*TURAG_DXL_FACTOR_DEGREE;
     } else{
         return false;
     }
@@ -331,7 +331,7 @@ bool DynamixelDevice::getCcwAngleLimit(float* limit) {
 bool DynamixelDevice::setCcwAngleLimit(float limit) {
     if((150<=limit)&&(limit<=300)){
         int temp_Limit=0;
-        temp_Limit=limit/TURAG_DXL_FACTOR_DEGREE;
+		temp_Limit = limit/TURAG_DXL_FACTOR_DEGREE;
         return writeWord(TURAG_DXL_ADDRESS_CCW_ANGLE_LIMIT, temp_Limit);
     } else {
        return false;
@@ -343,7 +343,7 @@ bool DynamixelDevice::getCwAngleLimit(float* limit) {
     if (!limit) return false;
     int tempLimit=0;
     if (readWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, &tempLimit)){
-        *limit=(float)tempLimit*TURAG_DXL_FACTOR_DEGREE;
+		*limit = static_cast<float>(tempLimit)*TURAG_DXL_FACTOR_DEGREE;
     } else{
         return false;
     }
@@ -353,7 +353,7 @@ bool DynamixelDevice::getCwAngleLimit(float* limit) {
 bool DynamixelDevice::setCwAngleLimit(float limit) {
     if((0<=limit)&&(limit<=150)){
     int temp_Limit=0;
-    temp_Limit=limit/TURAG_DXL_FACTOR_DEGREE;
+	temp_Limit = limit/TURAG_DXL_FACTOR_DEGREE;
     return writeWord(TURAG_DXL_ADDRESS_CW_ANGLE_LIMT, temp_Limit);
     } else {
             return false;
@@ -449,7 +449,7 @@ bool DynamixelDevice::getPresentVoltage(float* u) {
     if (!u) return false;
     int voltage = 0;
     if (readByte(TURAG_DXL_ADDRESS_PRESENT_VOLTAGE, &voltage)) {
-        *u = (float)(voltage / TURAG_DXL_FACTOR_VOLTAGE);
+		*u = static_cast<float>(voltage / TURAG_DXL_FACTOR_VOLTAGE);
         return true;
     } else {
         return false;
@@ -477,14 +477,14 @@ bool DynamixelDevice::getBaudRate(float* rate) {
     int baud_data = 0;
     if (!readByte(TURAG_DXL_ADDRESS_BAUDRATE, &baud_data)) return false;
 
-    *rate = 2000000.0f/((float)baud_data+1.0f);
+	*rate = 2000000.0f / (static_cast<float>(baud_data)+1.0f);
 
     return true;
 }
 
 bool DynamixelDevice::setBaudRate(float targetRate) {
     int data = (2000000 + targetRate / 2) / targetRate - 1;
-    float setRate= 2000000.0f / ((float)data + 1.0f);
+	float setRate = 2000000.0f / (static_cast<float>(data) + 1.0f);
     float tolerance = (targetRate - setRate) / targetRate;
     if ((tolerance >= -0.03) && (tolerance<=0.03)) {
         return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, data);
@@ -599,7 +599,7 @@ bool DynamixelDevice::getCurrentPosition(float* position) {
 
     int presentPosition = 0;
     if (readWord(TURAG_DXL_ADDRESS_PRESENT_POSITION, &presentPosition)) {
-        *position = (float)presentPosition * TURAG_DXL_FACTOR_DEGREE;
+		*position = static_cast<float>(presentPosition) * TURAG_DXL_FACTOR_DEGREE;
         return true;
     } else {
         return false;
@@ -609,7 +609,7 @@ bool DynamixelDevice::getCurrentPosition(float* position) {
 //Goal Position
 bool DynamixelDevice::setGoalPosition(float position) {
     if ((0<=position)&&(position<=300)){
-        targetPosition=(int)position/TURAG_DXL_FACTOR_DEGREE;
+		targetPosition = static_cast<int>(position)/TURAG_DXL_FACTOR_DEGREE;
         return writeWord(TURAG_DXL_ADDRESS_GOAL_POSITION, targetPosition);
     } else {
         return false;
@@ -625,7 +625,7 @@ bool DynamixelDevice::getGoalPosition(float* position) {
 
     int goalPosition=0;
     if (readWord(TURAG_DXL_ADDRESS_GOAL_POSITION, &goalPosition)){
-        *position=(float)goalPosition*TURAG_DXL_FACTOR_DEGREE;
+		*position = static_cast<float>(goalPosition) * TURAG_DXL_FACTOR_DEGREE;
         return true;
     } else {
         return false;

@@ -54,7 +54,7 @@ public:
 	};
 
 protected:
-	static const int myNumberOfColors = (int)Color::Unknown;
+	static const int myNumberOfColors = static_cast<int>(Color::Unknown);
 	static const int myColorStringSize = 10;
 	static const char myColorStrings[myNumberOfColors + 2][myColorStringSize];
 
@@ -78,7 +78,7 @@ public:
 	bool getHSV(hsv_t* hsv);
 	void setColorThresholds(Color color, uint16_t h_min, uint16_t h_max, uint16_t s_min, uint16_t s_max, uint8_t v_min, uint8_t v_max);
 
-	static const char* getColorString(Color color)  { return myColorStrings[(int)color]; }
+	static const char* getColorString(Color color)  { return myColorStrings[static_cast<int>(color)]; }
 
 };
 

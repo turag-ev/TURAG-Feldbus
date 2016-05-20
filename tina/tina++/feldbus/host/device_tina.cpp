@@ -350,7 +350,7 @@ bool Device::receiveUptime(float* uptime) {
 		return false;
 	}
 
-    *uptime = (float)count / (float)myDeviceInfo.uptimeFrequency;
+	*uptime = static_cast<float>(count) / static_cast<float>(myDeviceInfo.uptimeFrequency);
     return true;
 }
 

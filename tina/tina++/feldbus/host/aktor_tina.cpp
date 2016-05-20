@@ -424,14 +424,14 @@ int Aktor::getStructuredOutputTableLength(void) {
         if (!transceive(request, &response)) {
             return -1;
         }
-        structuredOutputTableLength = (int)response.data;
+		structuredOutputTableLength = static_cast<int>(response.data);
         return structuredOutputTableLength;
     }
 }
 
 
 bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
-    if ((int)keys.size() > getStructuredOutputTableLength()) {
+	if (static_cast<int>(keys.size()) > getStructuredOutputTableLength()) {
         turag_errorf("%s: output table in device too small for number of provided keys", name);
         return false;
     }

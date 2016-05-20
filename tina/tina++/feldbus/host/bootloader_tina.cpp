@@ -190,9 +190,9 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress,
 	uint32_t targetAddress = byteAddress;
 	
 	for (unsigned i = 0; i < pages; ++i) {
-		*((uint32_t*)(request + myAddressLength + 1)) = targetAddress;
+		*(reinterpret_cast<uint32_t*>(request + myAddressLength + 1)) = targetAddress;
 		
-		uint16_t currentPageSize = std::min(myPageSize, (uint16_t)(byteAddress + length - targetAddress));
+		uint16_t currentPageSize = std::min(myPageSize, static_cast<uint16_t>(byteAddress + length - targetAddress));
 		memcpy(request + myAddressLength + 5, data, currentPageSize);
 		
 		unsigned k = 0;
@@ -242,7 +242,7 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 	uint32_t packetSize = myDeviceInfo.bufferSize - myAddressLength - 1 - 1;
 	
 	// We are conservative because the transmission is only secured with an 8 bit CRC.
-	packetSize = std::min(packetSize, (uint32_t)64);
+	packetSize = std::min(packetSize, static_cast<uint32_t>(64));
 	
 	unsigned packets = length / packetSize;
 	if (length % packetSize) {
@@ -257,8 +257,8 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 	for (unsigned i = 0; i < packets; ++i) {
 		uint16_t currentPacketSize = std::min(packetSize, byteAddress + length - targetAddress);
 		
-		*((uint32_t*)(request + myAddressLength + 1)) = targetAddress;
-		*((uint16_t*)(request + myAddressLength + 5)) = currentPacketSize;
+		*(reinterpret_cast<uint32_t*>(request + myAddressLength + 1)) = targetAddress;
+		*(reinterpret_cast<uint16_t*>(request + myAddressLength + 5)) = currentPacketSize;
 		
 		uint8_t response[myAddressLength + 1 + currentPacketSize + 1];
 		

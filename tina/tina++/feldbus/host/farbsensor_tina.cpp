@@ -56,7 +56,7 @@ Farbsensor::Color Farbsensor::getColor(void) {
 					WITHIN_BOUNDARIES(hsv.s, myColorIndexTable[i].s_min, myColorIndexTable[i].s_max) &&
                     WITHIN_BOUNDARIES(hsv.v, myColorIndexTable[i].v_min, myColorIndexTable[i].v_max) ) {
 
-				result = (Farbsensor::Color)i;
+				result = static_cast<Farbsensor::Color>(i);
 //                turag_infof("color match");
                 break;
 			}
@@ -69,13 +69,13 @@ Farbsensor::Color Farbsensor::getColor(void) {
 
 void Farbsensor::setColorThresholds(Color color_index, uint16_t h_min, uint16_t h_max,
 		uint16_t s_min, uint16_t s_max, uint8_t v_min, uint8_t v_max) {
-	myColorIndexTable[(int)color_index].h_min = h_min;
-	myColorIndexTable[(int)color_index].h_max = h_max;
-	myColorIndexTable[(int)color_index].s_min = s_min;
-	myColorIndexTable[(int)color_index].s_max = s_max;
-	myColorIndexTable[(int)color_index].v_min = v_min;
-	myColorIndexTable[(int)color_index].v_max = v_max;
-	myColorIndexTable[(int)color_index].initialized = true;
+	myColorIndexTable[static_cast<int>(color_index)].h_min = h_min;
+	myColorIndexTable[static_cast<int>(color_index)].h_max = h_max;
+	myColorIndexTable[static_cast<int>(color_index)].s_min = s_min;
+	myColorIndexTable[static_cast<int>(color_index)].s_max = s_max;
+	myColorIndexTable[static_cast<int>(color_index)].v_min = v_min;
+	myColorIndexTable[static_cast<int>(color_index)].v_max = v_max;
+	myColorIndexTable[static_cast<int>(color_index)].initialized = true;
 }
 
 bool Farbsensor::initiateMeasurement() {
