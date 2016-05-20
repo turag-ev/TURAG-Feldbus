@@ -77,6 +77,9 @@ Device::Device(const char* name_, unsigned address, ChecksumType type,
  
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length, bool ignoreDysfunctional) {
 	if (isDysfunctional() && !ignoreDysfunctional) {
+		// FIXME: improve error reporting!
+		// (warning will not be shown if the device was offline once
+		// and disappears a second time...)
         static unsigned dysfunctionalMessageDisplayed = 0;
         if (dysfunctionalMessageDisplayed < 5) {
             turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
@@ -84,7 +87,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         }
         return false;
     } else {
-		// we assume the caller wants to transmit a broadcast, if he does not supply means to store any answer.
+		// we assume the caller wants to transmit a broadcast, if he does not supply any means to store an answer.
 		// Thus we use zero rather than the device's address.
 		unsigned useAddress = !receive || !receive_length ? TURAG_FELDBUS_BROADCAST_ADDR : myAddress;
 		

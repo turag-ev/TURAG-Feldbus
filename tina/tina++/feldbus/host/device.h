@@ -76,6 +76,15 @@ namespace Feldbus {
  * Während des Betriebs kann isAvailable() jederzeit benutzt werden um den Status
  * des Gerätes zu prüfen, da dieser Aufruf nur einmalig Buslast verursacht.
  * 
+ * Wenn für ein Gerät zu viele Übertragungsfehler in Folge registriert werden,
+ * so wird dieses auf unbestimmte Zeit als "dysfunktional" deklariert. Sämtliche
+ * an dieses Gerät gerichtete Pakete werden verworfen. Besteht Grund zur Annahme,
+ * dass der Fehler im Gerät temporärer Natur war (z.B. Spannungseinbruch und infolgedessen
+ * Reset), so sollte in gewissen Abständen sendPing() benutzt werden, um die
+ * erneute Erreichbarkeit des Gerätes zu prüfen. Gelingt eine Übertragung, so
+ * wird das Gerät nicht länger als dysfunktional betrachtet und auch alle weiteren Pakete
+ * werden erneut transportiert.
+ * 
  * Instanzen dieser Klasse können je nach Bedarf mit verschiedenen Adresslängen 
  * gebildet werden.
  * 
@@ -191,7 +200,8 @@ public:
 	 * \brief Gibt zurück, ob das Gerät verfügbar ist.
 	 * \param[in] forceUpdate Gibt an, ob in jedem Fall ein 
 	 * Ping-Paket versendet werden soll, um eine möglichst aktuelle
-	 * Information zu erhalten.
+	 * Information zu erhalten. Ist das Gerät dysfunktional, wird allerdings
+	 * trotzdem nicht der Versuch unternommen, ein Paket zu senden.
 	 * \return True wenn das Gerät verfügbar ist, ansonsten false.
 	 * 
 	 * Diese Funktion informiert über den Verfügbarkeitsstatus des
@@ -203,17 +213,21 @@ public:
 	 * an verursacht die Funktion keine Buslast mehr, sondern gibt lediglich
 	 * den aktuellen Fehlerstatus des Gerätes zurück. Dadurch ist diese
 	 * Funktion bestens geeignet, wenn eine Verfügbarkeitsinformation 
-	 * mit einer großen Häufiigkeit, doch mittleren Verlässlichkeit benötigt wird. Ist eine
+	 * mit einer großen Häufigkeit, doch mittleren Verlässlichkeit benötigt wird.
+	 * 
+	 * Ist eine
 	 * besonders aktuelle Information nötig, so kann das Verhalten des ersten
 	 * Aufrufs mit dem forceUpdate-Parameter erzwungen werden - in diesem Fall
-	 * wird stets mindestens ein Paket gesendet.
+	 * werden solange Pakete gesendet, bis 
+	 * eine Übertragung erfolgreich verläuft oder das Gerät als dysfunktional 
+	 * deklariert wird.
 	 * 
 	 * Gibt die Funktion einmal false zurück, so wird sich daran von selbst
 	 * nichts mehr ändern, weil zu diesem Zeitpunkt sämtliche Pakete verworfen
-	 * werden, außer wenn forceUpdate benutzt wird. Gibt diese Funktion false zurück
+	 * werden (auch dann, wenn forceUpdate benutzt wird!). Gibt diese Funktion false zurück
 	 * obwohl das Gerät funktionieren sollte, so kann entweder mit clearTransmissionCounters()
-	 * der interne Fehler-Counter zurückgesetzt oder diese Funktion mit ForceUpdate
-	 * benutzt werden um das erneute Versenden von Paketen zu erzwingen.
+	 * der interne Fehler-Counter zurückgesetzt oder versucht werden, mit sendPing()
+	 * das Gerät zu erreichen.
 	 */
     bool isAvailable(bool forceUpdate = false);
 	
@@ -339,8 +353,11 @@ public:
 	 * im Fehlerfall.
 	 *
 	 * Diese Funktion sendet immer ein Paket, auch wenn das Gerät dysfunktional ist.
-	 * Ist die Übertragung erfolgreich, so wird das Gerät wieder als funktionieren
-	 * betrachtet.
+	 * Ist die Übertragung erfolgreich, so wird das Gerät wieder als funktionierend
+	 * betrachtet, indem der interne Fehler Counter zurückgesetzt wird.
+	 * 
+	 * \note Diese Funktion sollte verwendet werden, um für dysfunktionale Geräte
+	 * zu prüfen, ob diese eventuell wieder verfügbar sind.
 	 */
 	bool sendPing(void);
 
@@ -392,6 +409,10 @@ public:
 	 * 
 	 * Nach Aufruf dieser Funktion wird ein Gerät nicht mehr als dysfunktional betrachtet
 	 * und Übertragungen werden erneut versucht.
+	 * 
+	 * \note Falls nicht klar ist, ob ein Gerät noch dysfunktional ist, sollte
+	 * statt dieser Funktion sendPing() benutzt werden. Ein Aufruf dieser Funktion
+	 * ist dann nur nötig um die bisherigen Übertragungsstatistiken zurückzusetzen.
 	 */
     void clearTransmissionCounters(void) { 
 		myTotalChecksumErrors = 0;
@@ -516,12 +537,17 @@ protected:
 	 * \return Wenn das Gerät dysfunktional ist true, ansonsten false.
 	 * 
 	 * Ein Gerät wird als dysfunktional eingestuft, wenn hintereinander zu viele 
-	 * Übertragungsfehler regisitriert werden. Von diesem Zeitpunkt an werden alle
+	 * Übertragungsfehler registriert werden. Von diesem Zeitpunkt an werden alle
 	 * Datenübertragungen abgebrochen.
 	 * 
-	 * Diese Funktion wird von der isAvailable()-Funktion verwendet, welche
-	 * statt dieser benutzt werden sollte, da isAvailable() mehr High-Level-Logik
-	 * implementiert.
+	 * Diese Funktion prüft lediglich ob
+	 * \code
+	 * myCurrentErrorCounter >= maxTransmissionErrors
+	 * \endcode
+	 * und wird von der isAvailable()-Funktion verwendet, welche
+	 * statt dieser benutzt werden sollte, da diese mehr High-Level-Logik
+	 * implementiert (und in den meisten Fällen das ist, was man eigentlich
+	 * braucht).
 	 */
     bool isDysfunctional(void) const { return myCurrentErrorCounter >= maxTransmissionErrors; }
     

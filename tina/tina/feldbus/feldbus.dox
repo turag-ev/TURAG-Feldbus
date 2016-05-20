@@ -262,14 +262,16 @@
  * 
  * Die Synchronisierung des Zugriffs auf die Bus-Hardware obliegt der Platform-Implementierung
  * der Funktion turag_rs485_transceive(), welche das Versenden und den Empfang einer bestimmten 
- * Datenmenge bereitstellt.
+ * Datenmenge bereitstellt. Dabei muss gewährleistet sein, dass eine begonnene Transaktion
+ * vollständig abgeschlossen ist, bevor eine neue begonnen wird.
  * 
- * Atomizität der Bus-Transaktionen bedeutet, dass zu einem Befehl gehörende 
- * Datenübertragungen nicht von fremden unterbrochen werden können. Dies wird zu einem
- * großen Teil schon von der Anforderung gewährleistet, dass alle Protokolle zustandslos
- * sein müssen, wodurch es unproblematisch ist, wenn Pakete zwischeneinander gemischt werden.
- * In der Praxis bedeutet das üblicherweise, dass eine Funktion einer Hostklasse maximal 
- * einmal turag_rs485_transceive() aufrufen kann. 
+ * Atomizität der Bus-Transaktionen bedeutet, dass falls für eine bestimmte
+ * Funktionalität in einem Gerät mehr als eine Bus-Transaktion (Paket senden und
+ * empfangen) erforderlich ist, die sequentielle Durchführung aller notwendigen Transaktionen
+ * nicht durch Fremdpakete unterbrochen wird. Da jedoch das
+ * Basis-Protokoll zustandslos ist und dies auch von allen Geräte-Protokollen
+ * verlangt wird, kann eine solche Konstellation theoretisch nicht auftreten und 
+ * es müssen dahingehend keine Maßnahmen getroffen werden.
  * 
  * 
  * 
