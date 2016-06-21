@@ -76,6 +76,10 @@ Device::Device(const char* name_, unsigned address, ChecksumType type,
 
  
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length, bool ignoreDysfunctional) {
+	
+	// FIXME: if ignoreDysfunctional == true we should probably only send one package if the device is in fact already
+	// dysfunctional to prevent unnecessary waiting times
+	
 	if (isDysfunctional() && !ignoreDysfunctional) {
 		// FIXME: improve error reporting!
 		// (warning will not be shown if the device was offline once
