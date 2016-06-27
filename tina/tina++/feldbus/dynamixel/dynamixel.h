@@ -45,7 +45,7 @@ extern "C" {
 
     
 ///////////// device control methods ////////////////////////
-int turag_dxl_initialize(void);
+int turag_dxl_initialize(void* bus);
 
 ///////////// device specific unit factors ///////////////////////
 #define TURAG_DXL_FACTOR_DEGREE     0.2929f

@@ -17,7 +17,6 @@
 #include <tina++/crc/xor.h>
 #include <tina++/crc/crc.h>
 #include <tina/debug/print.h>
-#include <tina/feldbus/host/rs485.h>
 #include <tina/math.h>
 
 #include "device.h"
@@ -45,7 +44,7 @@ Mutex Device::mutex;
 Device* Device::firstDevice(nullptr);
 
 
-Device::Device(const char* name_, unsigned address, ChecksumType type,
+Device::Device(const char* name_, unsigned address, FeldbusAbstraction *feldbus, ChecksumType type,
 	   const AddressLength addressLength,
 	   unsigned int max_transmission_attempts,
 	   unsigned int max_transmission_errors) :
@@ -62,7 +61,8 @@ Device::Device(const char* name_, unsigned address, ChecksumType type,
 	myTotalNoAnswerErrors(0),
 	myTotalMissingDataErrors(0),
 	myTotalTransmitErrors(0),
-	myNextDevice(nullptr)
+    myNextDevice(nullptr),
+    bus(feldbus)
 {
 	Mutex::Lock lock(mutex);
 
@@ -80,6 +80,11 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 	// FIXME: if ignoreDysfunctional == true we should probably only send one package if the device is in fact already
 	// dysfunctional to prevent unnecessary waiting times
 	
+    if (!bus) {
+        turag_errorf("%s: pointer to FeldbusAbstraction is zero", name);
+        return false;
+    }
+
 	if (isDysfunctional() && !ignoreDysfunctional) {
 		// FIXME: improve error reporting!
 		// (warning will not be shown if the device was offline once
@@ -151,8 +156,8 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 			}
 
 			// clear buffer from any previous failed transmissions
-			turag_rs485_buffer_clear();
-			success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, insertTransmissionDelay);
+            bus->clearBuffer();
+            success = bus->transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, insertTransmissionDelay);
 
 			addressOfLastTransmission = useAddress;
 

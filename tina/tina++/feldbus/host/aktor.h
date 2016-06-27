@@ -106,14 +106,14 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-    Aktor(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+    Aktor(const char* name_, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-                Device(name_, address, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false),
+                Device(name_, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false),
                 structuredOutputTableLength(-1)  { }
 #else
-    Aktor(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE, 
+    Aktor(const char* name_, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-                Device(name_, address, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false) { }
+                Device(name_, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false) { }
 #endif
 
 

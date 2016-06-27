@@ -65,9 +65,9 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	Aseb(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+    Aseb(const char* name_, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-                Device(name_, address, type, addressLength),
+                Device(name_, address, feldbus, type, addressLength),
                 analogInputs_(nullptr), analogInputSize_(-1),
                 pwmOutputs_(nullptr), pwmOutputSize_(-1),
                 digitalInputs_(0), digitalInputSize_(-1),
@@ -324,9 +324,9 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	AsebTemplate(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+    AsebTemplate(const char* name_, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 			   const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		Aseb(name_, address, type, addressLength)  { }
+        Aseb(name_, address, feldbus, type, addressLength)  { }
 	
 	/**
 	 * \brief Initialisiert das Gerät.

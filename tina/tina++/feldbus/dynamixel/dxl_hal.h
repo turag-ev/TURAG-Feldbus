@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 
-int turag_dxl_hal_open(int deviceIndex, float baudrate);
+int turag_dxl_hal_open(void *feldbusAbstractionInstance);
 void turag_dxl_hal_close(void);
 int turag_dxl_hal_set_baud( float baudrate );
 void turag_dxl_hal_clear(void);
