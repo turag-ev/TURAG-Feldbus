@@ -236,7 +236,7 @@ bool Aseb::sync(void) {
 
         if (!transceive(request,
                         sizeof(request),
-                        syncBuffer_,
+						syncBuffer_,
                         syncSize_)) {
             return false;
         }
@@ -244,13 +244,13 @@ bool Aseb::sync(void) {
         uint8_t* response = syncBuffer_ + myAddressLength;
 
         if (digitalInputSize_ > 0) {
-            digitalInputs_ = *(reinterpret_cast<uint16_t*>(response));
+			digitalInputs_ = (response[1] << 8) + response[0];
             response += 2;
         }
 
         if (analogInputs_) {
             for (int i = 0; i < analogInputSize_; ++i) {
-                analogInputs_[i].value = *(reinterpret_cast<int16_t*>(response));
+				analogInputs_[i].value = static_cast<int16_t>((response[1] << 8) + response[0]);
                 response += 2;
             }
         }

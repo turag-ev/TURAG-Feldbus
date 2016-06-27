@@ -190,8 +190,11 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress,
 	uint32_t targetAddress = byteAddress;
 	
 	for (unsigned i = 0; i < pages; ++i) {
-		*(reinterpret_cast<uint32_t*>(request + myAddressLength + 1)) = targetAddress;
-		
+		request[myAddressLength + 1] = static_cast<uint8_t>(targetAddress & 0xFF);
+		request[myAddressLength + 2] = static_cast<uint8_t>((targetAddress >> 8) & 0xFF);
+		request[myAddressLength + 3] = static_cast<uint8_t>((targetAddress >> 16) & 0xFF);
+		request[myAddressLength + 4] = static_cast<uint8_t>((targetAddress >> 24) & 0xFF);
+
 		uint16_t currentPageSize = std::min(myPageSize, static_cast<uint16_t>(byteAddress + length - targetAddress));
 		memcpy(request + myAddressLength + 5, data, currentPageSize);
 		
@@ -257,9 +260,14 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 	for (unsigned i = 0; i < packets; ++i) {
 		uint16_t currentPacketSize = std::min(packetSize, byteAddress + length - targetAddress);
 		
-		*(reinterpret_cast<uint32_t*>(request + myAddressLength + 1)) = targetAddress;
-		*(reinterpret_cast<uint16_t*>(request + myAddressLength + 5)) = currentPacketSize;
-		
+		request[myAddressLength + 1] = static_cast<uint8_t>(targetAddress & 0xFF);
+		request[myAddressLength + 2] = static_cast<uint8_t>((targetAddress >> 8) & 0xFF);
+		request[myAddressLength + 3] = static_cast<uint8_t>((targetAddress >> 16) & 0xFF);
+		request[myAddressLength + 4] = static_cast<uint8_t>((targetAddress >> 24) & 0xFF);
+
+		request[myAddressLength + 5] = static_cast<uint8_t>(currentPacketSize & 0xFF);
+		request[myAddressLength + 6] = static_cast<uint8_t>((currentPacketSize >> 8) & 0xFF);
+
 		uint8_t response[myAddressLength + 1 + currentPacketSize + 1];
 		
 		if (!transceive(request, sizeof(request), response, sizeof(response))) {
