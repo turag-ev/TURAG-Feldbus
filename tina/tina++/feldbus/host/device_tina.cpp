@@ -134,6 +134,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 		
 
 		// protect globalTransmissionErrorCounter and addressOfLastTransmission
+		// FIXME: THIS CAUSES PROBLEMS WITH BUS ABSTRACTION!
 		Mutex::Lock lock(mutex);
 
 		// we try to transmit until the transmission succeeds and the checksum is correct

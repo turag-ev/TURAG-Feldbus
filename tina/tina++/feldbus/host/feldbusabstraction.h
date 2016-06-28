@@ -24,6 +24,10 @@ class FeldbusAbstraction
 public:
     FeldbusAbstraction() {}
 
+#if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
+	virtual ~FeldbusAbstraction() {}
+#endif
+
     /**
      * \brief Sendet und empfängt Daten auf dem Bus.
      * \param[in,out] transmit Pointer auf den Sendepuffer.
@@ -39,8 +43,9 @@ public:
      *
      * Diese Funktion sendet blockierend einen Satz Daten auf den Bus und empfängt
      * danach die angegebene Menge an Daten. Die Funktion kehrt zurück, sobald alle Daten
-     * gesendet und empfangen wurden oder wenn der in turag_rs485_init() eingestellte
-     * Timeout erreicht wurde.
+	 * gesendet und empfangen wurden oder wenn ein Timeout erreicht wurde. Dieser ist durch
+	 * die Subklasse weiter zu definieren, die außerdem eine Möglichkeit zur Anpassung
+	 * desselben bieten sollte.
      *
      * Es ist zulässig, wenn receive_length auf null verweist oder 0 enthält: dann werden
      * nur Daten gesendet, aber keine empfangen.
