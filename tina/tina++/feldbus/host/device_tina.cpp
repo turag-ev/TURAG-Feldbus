@@ -30,7 +30,8 @@ struct DeviceInfoInternal {
     uint8_t deviceProtocolId;
     uint8_t deviceTypeId;
     uint8_t crcType;
-    uint32_t bufferSize;
+	uint16_t bufferSize;
+	uint16_t reserved;
     uint8_t nameLength;
     uint8_t versioninfoLength;
     uint16_t uptimeFrequency;
@@ -49,20 +50,20 @@ Device::Device(const char* name_, unsigned address, FeldbusAbstraction *feldbus,
 	   unsigned int max_transmission_attempts,
 	   unsigned int max_transmission_errors) :
 	name(name_),
-	myAddress(address),
-	myAddressLength(static_cast<unsigned>(addressLength)),
+	myChecksumType(type),
+	myAddressLength(static_cast<uint8_t>(addressLength)),
 	hasCheckedAvailabilityYet(false),
+	myAddress(address),
+	bus(feldbus),
+	myNextDevice(nullptr),
 	maxTransmissionAttempts(max_transmission_attempts),
 	maxTransmissionErrors(max_transmission_errors),
-	myChecksumType(type),
 	myCurrentErrorCounter(0),
 	myTotalTransmissions(0),
 	myTotalChecksumErrors(0),
 	myTotalNoAnswerErrors(0),
 	myTotalMissingDataErrors(0),
-	myTotalTransmitErrors(0),
-    myNextDevice(nullptr),
-    bus(feldbus)
+	myTotalTransmitErrors(0)
 {
 	Mutex::Lock lock(mutex);
 
@@ -102,12 +103,12 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 		
 		switch (myAddressLength) {
 		case 1:
-			transmit[0] = useAddress;
+			transmit[0] = static_cast<uint8_t>(useAddress);
 			break;
 			
 		case 2:
-			transmit[0] = useAddress & 0xff;
-			transmit[1] = useAddress >> 8;
+			transmit[0] = static_cast<uint8_t>(useAddress & 0xff);
+			transmit[1] = static_cast<uint8_t>(useAddress >> 8);
 			break;
 		}
 		
@@ -140,8 +141,8 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 		// we try to transmit until the transmission succeeds and the checksum is correct
         // or the number of transmission attempts is exceeded.
         while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
-            int transmit_length_copy = transmit_length;
-            int receive_length_copy = receive_length;
+			int transmit_length_copy = transmit_length;
+			int receive_length_copy = receive_length;
 
 
 			// we need to delay the transmission for protocol compliance reasons in the following
@@ -251,7 +252,7 @@ bool Device::isAvailable(bool forceUpdate) {
 }
 
 bool Device::getDeviceInfo(DeviceInfo* device_info) {
-    if (myDeviceInfo.bufferSize == 0) {
+	if (!myDeviceInfo.isValid()) {
         Request<uint8_t> request;
         Response<DeviceInfoInternal> response;
 
@@ -260,14 +261,13 @@ bool Device::getDeviceInfo(DeviceInfo* device_info) {
         if (!transceive(request, &response)) {
             return false;
         }
-        myDeviceInfo.deviceProtocolId = response.data.deviceProtocolId;
-        myDeviceInfo.deviceTypeId = response.data.deviceTypeId;
-        myDeviceInfo.crcType = response.data.crcType & 0x7f;
-        myDeviceInfo.bufferSize = response.data.bufferSize;
-        myDeviceInfo.nameLength = response.data.nameLength;
-        myDeviceInfo.versioninfoLength = response.data.versioninfoLength;
-        myDeviceInfo.uptimeFrequency = response.data.uptimeFrequency;
-        myDeviceInfo.packageStatisticsAvailable = response.data.crcType & 0x80 ? true : false;
+		myDeviceInfo.deviceProtocolId_ = response.data.deviceProtocolId;
+		myDeviceInfo.deviceTypeId_ = response.data.deviceTypeId;
+		myDeviceInfo.crcType_ = response.data.crcType;
+		myDeviceInfo.bufferSize_ = response.data.bufferSize;
+		myDeviceInfo.nameLength_ = response.data.nameLength;
+		myDeviceInfo.versioninfoLength_ = response.data.versioninfoLength;
+		myDeviceInfo.uptimeFrequency_ = response.data.uptimeFrequency;
     }
     if (device_info) *device_info = myDeviceInfo;
     return true;
@@ -277,16 +277,16 @@ bool Device::receiveDeviceRealName(char* out_string) {
     // It is possible that nobody called getDeviceInfo() yet,
     // so our device info would be empty. Because the device
     // info contains the length of the string we are about 
-    // to receive, we make sure getDeviceInfo() get called.
-    if (myDeviceInfo.bufferSize == 0) {
-        if (!getDeviceInfo(nullptr)) {
-            return false;
-        }
-    }
-    
+	// to receive, we make sure getDeviceInfo() gets called.
+	if (!myDeviceInfo.isValid()) {
+		if (!getDeviceInfo(nullptr)) {
+			return false;
+		}
+	}
+
     return receiveString(
 		TURAG_FELDBUS_SLAVE_COMMAND_DEVICE_NAME, 
-		myDeviceInfo.nameLength,
+		myDeviceInfo.nameLength(),
 		out_string);
 }
 
@@ -294,16 +294,16 @@ bool Device::receiveVersionInfo(char* out_string) {
     // It is possible that nobody called getDeviceInfo() yet,
     // so our device info would be empty. Because the device
     // info contains the length of the string we are about 
-    // to receive, we make sure getDeviceInfo() get called.
-    if (myDeviceInfo.bufferSize == 0) {
-        if (!getDeviceInfo(nullptr)) {
-            return false;
-        }
-    }
-    
+	// to receive, we make sure getDeviceInfo() gets called.
+	if (!myDeviceInfo.isValid()) {
+		if (!getDeviceInfo(nullptr)) {
+			return false;
+		}
+	}
+
     return receiveString(
 		TURAG_FELDBUS_SLAVE_COMMAND_VERSIONINFO, 
-		myDeviceInfo.versioninfoLength,
+		myDeviceInfo.versionInfoLength(),
 		out_string);
 }
 
@@ -314,7 +314,7 @@ bool Device::receiveString(uint8_t command, uint8_t stringLength, char* out_stri
     
     // because we receive a packet including address and checksum
     // we need a slightly bigger array.
-    char recvBuffer[stringLength + myAddressLength + 1];
+	char recvBuffer[stringLength + myAddressLength + 1];
 
     struct cmd {
         uint8_t a;
@@ -345,11 +345,13 @@ bool Device::receiveUptime(float* uptime) {
 		return false;
 	}
 	
-	if (!getDeviceInfo(nullptr)) {
-		return false;
+	if (!myDeviceInfo.isValid()) {
+		if (!getDeviceInfo(nullptr)) {
+			return false;
+		}
 	}
-	
-	if (myDeviceInfo.uptimeFrequency == 0) {
+
+	if (myDeviceInfo.uptimeFrequency() == 0) {
         *uptime = NAN;
         return true;
 	}
@@ -360,7 +362,7 @@ bool Device::receiveUptime(float* uptime) {
 		return false;
 	}
 
-	*uptime = static_cast<float>(count) / static_cast<float>(myDeviceInfo.uptimeFrequency);
+	*uptime = static_cast<float>(count) / static_cast<float>(myDeviceInfo.uptimeFrequency());
     return true;
 }
 

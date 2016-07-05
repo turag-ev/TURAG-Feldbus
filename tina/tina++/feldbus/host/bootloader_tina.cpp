@@ -182,33 +182,33 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress,
 		++pages;
 	}
 	
-	uint8_t request[myAddressLength + 1 + 4 + myPageSize + 1];
-	request[myAddressLength] = TURAG_FELDBUS_BOOTLOADER_AVR_PAGE_WRITE;
+	uint8_t request[addressLength() + 1 + 4 + myPageSize + 1];
+	request[addressLength()] = TURAG_FELDBUS_BOOTLOADER_AVR_PAGE_WRITE;
 	
-	uint8_t response[myAddressLength + 1 + 1];
+	uint8_t response[addressLength() + 1 + 1];
 	
 	uint32_t targetAddress = byteAddress;
 	
 	for (unsigned i = 0; i < pages; ++i) {
-		request[myAddressLength + 1] = static_cast<uint8_t>(targetAddress & 0xFF);
-		request[myAddressLength + 2] = static_cast<uint8_t>((targetAddress >> 8) & 0xFF);
-		request[myAddressLength + 3] = static_cast<uint8_t>((targetAddress >> 16) & 0xFF);
-		request[myAddressLength + 4] = static_cast<uint8_t>((targetAddress >> 24) & 0xFF);
+		request[addressLength() + 1] = static_cast<uint8_t>(targetAddress & 0xFF);
+		request[addressLength() + 2] = static_cast<uint8_t>((targetAddress >> 8) & 0xFF);
+		request[addressLength() + 3] = static_cast<uint8_t>((targetAddress >> 16) & 0xFF);
+		request[addressLength() + 4] = static_cast<uint8_t>((targetAddress >> 24) & 0xFF);
 
 		uint16_t currentPageSize = std::min(myPageSize, static_cast<uint16_t>(byteAddress + length - targetAddress));
-		memcpy(request + myAddressLength + 5, data, currentPageSize);
+		memcpy(request + addressLength() + 5, data, currentPageSize);
 		
 		unsigned k = 0;
 		for (k = 0; k < maxTriesForWriting; ++k) {
 			if (!transceive(request, sizeof(request), response, sizeof(response))) {
 				return ErrorCode::transceive_error;
 			}
-			if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_SUCCESS) {
+			if (response[addressLength()] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_SUCCESS) {
 				break;
-			} else if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_CONTENT) {
+			} else if (response[addressLength()] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_CONTENT) {
 				continue;
 			} else {
-				return static_cast<ErrorCode>(response[myAddressLength]);
+				return static_cast<ErrorCode>(response[addressLength()]);
 			}
 		}
 		// we give up after a few tries.
@@ -232,8 +232,7 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 		turag_errorf("%s: tried to call BootloaderAtmega::readData, but couldn't read flash size", name);
 		return ErrorCode::preconditions_not_met;
 	}
-	getDeviceInfo(nullptr);
-	if (myDeviceInfo.bufferSize == 0) {
+	if (!getDeviceInfo(nullptr)) {
 		turag_errorf("%s: tried to call BootloaderAtmega::readData, but couldn't read device info", name);
 		return ErrorCode::preconditions_not_met;
 	}
@@ -242,7 +241,7 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 		return ErrorCode::invalid_args;
 	}
 	
-	uint32_t packetSize = myDeviceInfo.bufferSize - myAddressLength - 1 - 1;
+	uint32_t packetSize = myDeviceInfo.bufferSize() - addressLength() - 1 - 1;
 	
 	// We are conservative because the transmission is only secured with an 8 bit CRC.
 	packetSize = std::min(packetSize, static_cast<uint32_t>(64));
@@ -252,33 +251,33 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 		++packets;
 	}
 
-	uint8_t request[myAddressLength + 1 + 4 + 2 + 1];
-	request[myAddressLength] = TURAG_FELDBUS_BOOTLOADER_AVR_DATA_READ;
+	uint8_t request[addressLength() + 1 + 4 + 2 + 1];
+	request[addressLength()] = TURAG_FELDBUS_BOOTLOADER_AVR_DATA_READ;
 	
 	uint32_t targetAddress = byteAddress;
 	
 	for (unsigned i = 0; i < packets; ++i) {
 		uint16_t currentPacketSize = std::min(packetSize, byteAddress + length - targetAddress);
 		
-		request[myAddressLength + 1] = static_cast<uint8_t>(targetAddress & 0xFF);
-		request[myAddressLength + 2] = static_cast<uint8_t>((targetAddress >> 8) & 0xFF);
-		request[myAddressLength + 3] = static_cast<uint8_t>((targetAddress >> 16) & 0xFF);
-		request[myAddressLength + 4] = static_cast<uint8_t>((targetAddress >> 24) & 0xFF);
+		request[addressLength() + 1] = static_cast<uint8_t>(targetAddress & 0xFF);
+		request[addressLength() + 2] = static_cast<uint8_t>((targetAddress >> 8) & 0xFF);
+		request[addressLength() + 3] = static_cast<uint8_t>((targetAddress >> 16) & 0xFF);
+		request[addressLength() + 4] = static_cast<uint8_t>((targetAddress >> 24) & 0xFF);
 
-		request[myAddressLength + 5] = static_cast<uint8_t>(currentPacketSize & 0xFF);
-		request[myAddressLength + 6] = static_cast<uint8_t>((currentPacketSize >> 8) & 0xFF);
+		request[addressLength() + 5] = static_cast<uint8_t>(currentPacketSize & 0xFF);
+		request[addressLength() + 6] = static_cast<uint8_t>((currentPacketSize >> 8) & 0xFF);
 
-		uint8_t response[myAddressLength + 1 + currentPacketSize + 1];
+		uint8_t response[addressLength() + 1 + currentPacketSize + 1];
 		
 		if (!transceive(request, sizeof(request), response, sizeof(response))) {
 			return ErrorCode::transceive_error;
 		}
 		// this shouldn't happen
-		if (response[myAddressLength] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_ADDRESS) {
+		if (response[addressLength()] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_FAIL_ADDRESS) {
 			return ErrorCode::invalid_address;
 		}
 		
-		memcpy(buffer, response + myAddressLength + 1, currentPacketSize);
+		memcpy(buffer, response + addressLength() + 1, currentPacketSize);
 		
 		targetAddress += currentPacketSize;
 		buffer += currentPacketSize;
@@ -288,28 +287,28 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 
 const char* BootloaderAvrBase::errorName(BootloaderAvrBase::ErrorCode errorCode) {
 	switch (errorCode) {
-		case ErrorCode::success: return "Erfolgreich."; break;
-		case ErrorCode::invalid_size: return "Ungültige Größe."; break;
-		case ErrorCode::invalid_address: return "Ungültige Adresse."; break;
-		case ErrorCode::content_mismatch: return "Schreibvorgang fehlgeschlagen."; break;
-		case ErrorCode::unsupported: return "Nicht unterstützt."; break;
-		case ErrorCode::invalid_args: return "Ungültige Argumente."; break;
-		case ErrorCode::transceive_error: return "Übertragung fehlgeschlagen."; break;
-		case ErrorCode::preconditions_not_met: return "Voraussetzungen nicht erfüllt."; break;
+		case ErrorCode::success: return "Erfolgreich.";
+		case ErrorCode::invalid_size: return "Ungültige Größe.";
+		case ErrorCode::invalid_address: return "Ungültige Adresse.";
+		case ErrorCode::content_mismatch: return "Schreibvorgang fehlgeschlagen.";
+		case ErrorCode::unsupported: return "Nicht unterstützt.";
+		case ErrorCode::invalid_args: return "Ungültige Argumente.";
+		case ErrorCode::transceive_error: return "Übertragung fehlgeschlagen.";
+		case ErrorCode::preconditions_not_met: return "Voraussetzungen nicht erfüllt.";
 	}
 	return "";
 }
 
 const char* BootloaderAvrBase::errorDescription(BootloaderAvrBase::ErrorCode errorCode) {
 	switch (errorCode) {
-		case ErrorCode::success: return "Keine Fehler."; break;
-		case ErrorCode::invalid_size: return "Das Gerät meldet, dass die vom Host angeforderte Datenmenge ungültig ist."; break;
-		case ErrorCode::invalid_address: return "Das Gerät meldet, dass die vom Host angegebene Adresse ungültig ist."; break;
-		case ErrorCode::content_mismatch: return "Das Gerät meldet, dass die geschriebenen Daten nicht den gelesenen entsprechen."; break;
-		case ErrorCode::unsupported: return "Das Gerät meldet, dass die angeforderte Operation nicht unterstützt wird."; break;
-		case ErrorCode::invalid_args: return "Einige der übergebenen Argumente sind nicht gültig."; break;
-		case ErrorCode::transceive_error: return "Die Übertragung der Daten zum Gerät schlug fehl."; break;
-		case ErrorCode::preconditions_not_met: return "Einige zum Ausführen dieses Befehls nötigen Kommandos scheiterten."; break;
+		case ErrorCode::success: return "Keine Fehler.";
+		case ErrorCode::invalid_size: return "Das Gerät meldet, dass die vom Host angeforderte Datenmenge ungültig ist.";
+		case ErrorCode::invalid_address: return "Das Gerät meldet, dass die vom Host angegebene Adresse ungültig ist.";
+		case ErrorCode::content_mismatch: return "Das Gerät meldet, dass die geschriebenen Daten nicht den gelesenen entsprechen.";
+		case ErrorCode::unsupported: return "Das Gerät meldet, dass die angeforderte Operation nicht unterstützt wird.";
+		case ErrorCode::invalid_args: return "Einige der übergebenen Argumente sind nicht gültig.";
+		case ErrorCode::transceive_error: return "Die Übertragung der Daten zum Gerät schlug fehl.";
+		case ErrorCode::preconditions_not_met: return "Einige zum Ausführen dieses Befehls nötigen Kommandos scheiterten.";
 	}
 	return "";
 }
@@ -411,7 +410,7 @@ char BootloaderXmega::getRevisionId(void) {
 		Device::Response<uint8_t> response;
 
 		if (transceive(request, &response)) {
-			revisionId = response.data + 65;
+			revisionId = static_cast<char>(response.data + 65);
 		}
 	}
 	return revisionId;

@@ -107,7 +107,7 @@ bool Aktor::populateCommandSet(Command_t* commandSet_, unsigned int commandSetLe
     Response<AktorGetCommandInfoResponse> response;
     
     for (unsigned int i = 0; i < commandSetLength; ++i) {
-        request.data.key = i + 1;
+		request.data.key = static_cast<uint8_t>(i + 1);
 
         if (!transceive(request, &response)) {
             return false;
@@ -381,27 +381,27 @@ bool Aktor::getCommandName(uint8_t key, char* out_name) {
         return false;
     }
 
-    int name_length = getCommandNameLength(key);
+	unsigned name_length = getCommandNameLength(key);
     if (name_length == 0) {
         *out_name = 0;
         return false;
     }
     
-	uint8_t request[myAddressLength + 4 + 1];
-	request[myAddressLength] = key;
-	request[myAddressLength + 1] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
-	request[myAddressLength + 2] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
-	request[myAddressLength + 3] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	uint8_t request[addressLength() + 4 + 1];
+	request[addressLength()] = key;
+	request[addressLength() + 1] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	request[addressLength() + 2] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
+	request[addressLength() + 3] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     
     if (!transceive(request,
                     sizeof(request),
                     reinterpret_cast<uint8_t*>(out_name),
-                    name_length + myAddressLength + 1)) {
+					name_length + addressLength() + 1)) {
         return false;
     }
 
-    for (int i = 0; i < name_length; ++i) {
-        out_name[i] = out_name[i + myAddressLength];
+	for (unsigned i = 0; i < name_length; ++i) {
+		out_name[i] = out_name[i + addressLength()];
     }
     out_name[name_length] = 0;
 
@@ -447,20 +447,20 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
         }
     }
     
-    uint8_t request[keys.size() + myAddressLength + 3];
+	uint8_t request[keys.size() + addressLength() + 3];
 
-    request[myAddressLength + 0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
-    request[myAddressLength + 1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
-    memcpy(request + myAddressLength + 2, keys.data(), keys.size());
+	request[addressLength() + 0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_CONTROL;
+	request[addressLength() + 1] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_SET_STRUCTURE;
+	memcpy(request + addressLength() + 2, keys.data(), keys.size());
     
-    uint8_t response[myAddressLength + 1 + 1];
+	uint8_t response[addressLength() + 1 + 1];
     
     if (transceive(
 			request, 
 			sizeof(request),
             response,
 			sizeof(response))) {
-        if (response[myAddressLength] == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
+		if (response[addressLength()] == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_TABLE_OK) {
             structuredOutputTable = keys;
             return true;
         }
@@ -480,7 +480,7 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
         return false;
     }
     
-    int data_size = 0;
+	unsigned data_size = 0;
     for (unsigned int i = 0; i < structuredOutputTable.size(); ++i) {
         switch (commandSet[structuredOutputTable[i] - 1].length) {
         case Command_t::CommandLength::length_char:
@@ -497,16 +497,16 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
         }
     }
 
-	uint8_t request[myAddressLength + 1 + 1];
-	request[myAddressLength] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
+	uint8_t request[addressLength() + 1 + 1];
+	request[addressLength()] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET;
 
-    uint8_t* response = new uint8_t[myAddressLength + data_size + 1];
+	uint8_t* response = new uint8_t[addressLength() + data_size + 1];
 
     if (transceive(request,
                    sizeof(request),
                    response,
-                   myAddressLength + data_size + 1)) {
-        uint8_t* pValue = response + myAddressLength;
+				   addressLength() + data_size + 1)) {
+		uint8_t* pValue = response + addressLength();
 
         for (unsigned int i = 0; i < structuredOutputTable.size(); ++i) {
             int32_t device_value;

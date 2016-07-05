@@ -79,7 +79,7 @@ void Farbsensor::setColorThresholds(Color color_index, uint16_t h_min, uint16_t 
 }
 
 bool Farbsensor::initiateMeasurement() {
-	uint8_t msg[myAddressLength + 1];
+	uint8_t msg[addressLength() + 1];
 	return transceive(msg, sizeof(msg), 0, 0);
 }
 
