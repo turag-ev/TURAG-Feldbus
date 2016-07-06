@@ -110,7 +110,7 @@ public:
     bool getDesiredCurrent(float* current) { return getValue(RS485_STELLANTRIEBE_KEY_DESIRED_CURRENT, current); }
 	/**
 	 * @brief Setzt den Sollstrom in mA.
-	 * @param pwm Sollstrom.
+	 * @param current Sollstrom.
 	 * @return True bei Erfolg, ansonsten false.
 	 * @post Aktiviert die Regelung.
 	 */
@@ -181,14 +181,15 @@ public:
 protected:
 	/**
 	 * @brief Konstruktor.
-	 * @param name_ Bezeichnung des Gerätes.
+	 * @param name Bezeichnung des Gerätes.
 	 * @param address Adresse des Gerätes.
+	 * \param[in] feldbus
 	 * @param type
 	 * @param addressLength
 	 */
-    ServoBase(const char* name_, int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	ServoBase(const char* name, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-        Aktor(name_, address, feldbus, type, addressLength) {}
+		Aktor(name, address, feldbus, type, addressLength) {}
 
 };
 
@@ -206,14 +207,15 @@ protected:
 public:
 	/**
 	 * @brief Servo
-	 * @param name_
+	 * @param name
 	 * @param address
+	 * \param[in] feldbus
 	 * @param type
 	 * @param addressLength
 	 */
-    Servo(const char* name_, int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Servo(const char* name, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-        ServoBase(name_, address, feldbus, type, addressLength) {}
+		ServoBase(name, address, feldbus, type, addressLength) {}
 
 	/**
 	 * @brief initialize

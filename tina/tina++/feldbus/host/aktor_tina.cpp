@@ -93,7 +93,7 @@ bool Aktor::populateCommandSet(Command_t* commandSet_, unsigned int commandSetLe
         commandSetLength = commandSetLength_;
 		// Because it is not unlikely that the user supplied a shorter buffer on purpose, 
 		// this message has debug level.
-        turag_debugf("%s: commandset will be truncated (buffer requires space for %d more elements)", name, deviceCommandSetLength - commandSetLength_);
+        turag_debugf("%s: commandset will be truncated (buffer requires space for %d more elements)", name(), deviceCommandSetLength - commandSetLength_);
     } else {
         commandSetLength = deviceCommandSetLength;
     }
@@ -123,22 +123,22 @@ bool Aktor::populateCommandSet(Command_t* commandSet_, unsigned int commandSetLe
 
 bool Aktor::getValue(uint8_t key, float* value) {
     if (!commandSetPopulated) {
-        turag_errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name());
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        turag_errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name());
         return false;
     }
 
     Command_t* command = &commandSet[key-1];
     
     if (command->length == Command_t::CommandLength::none) {
-        turag_errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name());
         return false;
     }
     if (command->factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-		turag_errorf("%s: value with key %u is not floating point, which was requested", name, key);
+		turag_errorf("%s: value with key %u is not floating point, which was requested", name(), key);
         return false;
     }
     
@@ -178,22 +178,22 @@ bool Aktor::getValue(uint8_t key, float* value) {
 
 bool Aktor::getValue(uint8_t key, int32_t* value) {
     if (!commandSetPopulated) {
-        turag_errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name());
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        turag_errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name());
         return false;
     }
 
     Command_t* command = &commandSet[key-1];
 
     if (command->length == Command_t::CommandLength::none) {
-        turag_errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name());
         return false;
     }
     if (command->factor != TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        turag_errorf("%s: value is floating point", name);
+        turag_errorf("%s: value is floating point", name());
         return false;
     }
 
@@ -234,26 +234,26 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
 
 bool Aktor::setValue(uint8_t key, float value) {
     if (!commandSetPopulated) {
-        turag_errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name());
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        turag_errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name());
         return false;
     }
 
     Command_t* command = &commandSet[key-1];
 
     if (command->length == Command_t::CommandLength::none) {
-        turag_errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name());
         return false;
     }
     if (command->writeAccess != Command_t::WriteAccess::write) {
-        turag_errorf("%s: key not writable", name);
+        turag_errorf("%s: key not writable", name());
         return false;
     }
     if (command->factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-		turag_errorf("%s: value with key %u is not floating point, but float shall be set", name, key);
+		turag_errorf("%s: value with key %u is not floating point, but float shall be set", name(), key);
         return false;
     }
 
@@ -290,26 +290,26 @@ bool Aktor::setValue(uint8_t key, float value) {
 
 bool Aktor::setValue(uint8_t key, int32_t value) {
     if (!commandSetPopulated) {
-        turag_errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name());
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        turag_errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name());
         return false;
     }
 
     Command_t* command = &commandSet[key-1];
 
     if (command->length == Command_t::CommandLength::none) {
-        turag_errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name());
         return false;
     }
     if (command->writeAccess != Command_t::WriteAccess::write) {
-        turag_errorf("%s: key not writable", name);
+        turag_errorf("%s: key not writable", name());
         return false;
     }
     if (command->factor != TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE) {
-        turag_errorf("%s: value is floating point", name);
+        turag_errorf("%s: value is floating point", name());
         return false;
     }
 
@@ -346,18 +346,18 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
 
 unsigned int Aktor::getCommandNameLength(uint8_t key) {
     if (!commandSetPopulated) {
-        turag_errorf("%s: commandSet not populated", name);
+        turag_errorf("%s: commandSet not populated", name());
         return false;
     }
     if (key > commandSetLength || key == 0) {
-        turag_errorf("%s: key not within commandSetLength", name);
+        turag_errorf("%s: key not within commandSetLength", name());
         return false;
     }
 
     Command_t* command = &commandSet[key-1];
 
     if (command->length == Command_t::CommandLength::none) {
-        turag_errorf("%s: key not supported", name);
+        turag_errorf("%s: key not supported", name());
         return false;
     }
 
@@ -432,17 +432,17 @@ int Aktor::getStructuredOutputTableLength(void) {
 
 bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
 	if (static_cast<int>(keys.size()) > getStructuredOutputTableLength()) {
-        turag_errorf("%s: output table in device too small for number of provided keys", name);
+		turag_errorf("%s: output table in device too small for number of provided keys", name());
         return false;
     }
     if (!commandSetPopulated) {
-        turag_errorf("%s: commandSet not populated", name);
+		turag_errorf("%s: commandSet not populated", name());
         return false;
     }
     
     for (unsigned int i = 0; i < keys.size(); ++i) {
         if (keys[i] > getCommandsetLength() || commandSet[keys[i] - 1].length == Command_t::CommandLength::none) {
-            turag_errorf("%s: requested keys invalid", name);
+			turag_errorf("%s: requested keys invalid", name());
             return false;
         }
     }
@@ -472,11 +472,11 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
 
 bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
     if (structuredOutputTable.size() == 0) {
-        turag_errorf("%s: structured output mapping empty", name);
+		turag_errorf("%s: structured output mapping empty", name());
         return false;
     }
     if (!commandSetPopulated) {
-        turag_errorf("%s: commandSet not populated", name);
+		turag_errorf("%s: commandSet not populated", name());
         return false;
     }
     

@@ -62,7 +62,7 @@ bool Bootloader::unlockBootloader(void) {
 	getMcuId();
 	
 	if (myMcuId == TURAG_FELDBUS_BOOTLOADER_MCU_ID_INVALID) {
-		turag_errorf("%s: tried to call Bootloader::unlockBootloader, but couldn't read MCU-ID", name);
+		turag_errorf("%s: tried to call Bootloader::unlockBootloader, but couldn't read MCU-ID", name());
 		return false;
 	}
 	
@@ -86,7 +86,7 @@ bool Bootloader::unlockBootloader(void) {
 			unlocked = true;
 			return true;
 		} else {
-			turag_infof("%s: bootloader unlock rejected", name);
+			turag_infof("%s: bootloader unlock rejected", name());
 			return false;
 		}
 	}
@@ -160,20 +160,20 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress,
 	}
 	getPageSize();
 	if (myPageSize == 0) {
-		turag_errorf("%s: tried to call BootloaderAtmega::writePage, but couldn't read page size", name);
+		turag_errorf("%s: tried to call BootloaderAtmega::writePage, but couldn't read page size", name());
 		return ErrorCode::preconditions_not_met;
 	}
 	getFlashSize(true);
 	if (myWritableFlashSize == 0) {
-		turag_errorf("%s: tried to call BootloaderAtmega::writePage, but couldn't read writable flash size", name);
+		turag_errorf("%s: tried to call BootloaderAtmega::writePage, but couldn't read writable flash size", name());
 		return ErrorCode::preconditions_not_met;
 	}
 	if (myWritableFlashSize - byteAddress < length) {
-		turag_errorf("%s: in call to BootloaderAtmega::writePage: write would exceed writable flash boundary", name);
+		turag_errorf("%s: in call to BootloaderAtmega::writePage: write would exceed writable flash boundary", name());
 		return ErrorCode::invalid_args;
 	}
 	if (byteAddress % myPageSize != 0) {
-		turag_errorf("%s: in call to BootloaderAtmega::writePage: address must be page-aligned", name);
+		turag_errorf("%s: in call to BootloaderAtmega::writePage: address must be page-aligned", name());
 		return ErrorCode::invalid_args;
 	}
 	
@@ -229,15 +229,15 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 	}
 	getFlashSize(false);
 	if (myFlashSize == 0) {
-		turag_errorf("%s: tried to call BootloaderAtmega::readData, but couldn't read flash size", name);
+		turag_errorf("%s: tried to call BootloaderAtmega::readData, but couldn't read flash size", name());
 		return ErrorCode::preconditions_not_met;
 	}
 	if (!getDeviceInfo(nullptr)) {
-		turag_errorf("%s: tried to call BootloaderAtmega::readData, but couldn't read device info", name);
+		turag_errorf("%s: tried to call BootloaderAtmega::readData, but couldn't read device info", name());
 		return ErrorCode::preconditions_not_met;
 	}
 	if (myFlashSize - byteAddress < length) {
-		turag_errorf("%s: in call to BootloaderAtmega::readData: read would exceed flash size", name);
+		turag_errorf("%s: in call to BootloaderAtmega::readData: read would exceed flash size", name());
 		return ErrorCode::invalid_args;
 	}
 	

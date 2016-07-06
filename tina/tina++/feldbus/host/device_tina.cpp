@@ -45,14 +45,14 @@ Mutex Device::mutex;
 Device* Device::firstDevice(nullptr);
 
 
-Device::Device(const char* name_, unsigned address, FeldbusAbstraction *feldbus, ChecksumType type,
+Device::Device(const char* name, unsigned address, FeldbusAbstraction *feldbus, ChecksumType type,
 	   const AddressLength addressLength,
 	   unsigned int max_transmission_attempts,
 	   unsigned int max_transmission_errors) :
-	name(name_),
 	dysFunctionalLog_(SystemTime::fromSec(25)),
 	bus(feldbus),
 	myNextDevice(nullptr),
+	name_(name),
 	myAddress(address),
 	maxTransmissionAttempts(max_transmission_attempts),
 	maxTransmissionErrors(max_transmission_errors),
@@ -86,7 +86,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 	bool bailOutBecauseDysfunctional = isDysfunctional() && !ignoreDysfunctional;
 	
 	if (dysFunctionalLog_.doErrorOutput(!bailOutBecauseDysfunctional)) {
-		turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED (%u).", name, dysFunctionalLog_.getErrorCount());
+		turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED (%u).", name_, dysFunctionalLog_.getErrorCount());
 		dysFunctionalLog_.resetErrorCount();
     }
 	if (bailOutBecauseDysfunctional) {
@@ -234,7 +234,7 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             }
             return true;
         } else {
-            turag_warningf("%s: rs485 transceive failed", name);
+			turag_warningf("%s: rs485 transceive failed", name_);
             myCurrentErrorCounter += attempt;
             return false;
         }

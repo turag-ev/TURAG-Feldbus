@@ -66,12 +66,12 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
     if (analogInputs) {
         if (!getAnalogInputSize(&sizeBuffer)) return false;
         if (sizeBuffer > static_cast<int>(analogInputSize)) {
-			turag_errorf("%s: analogInputSize must be %d (is %d)", name, sizeBuffer, analogInputSize);
+			turag_errorf("%s: analogInputSize must be %d (is %d)", name(), sizeBuffer, analogInputSize);
 			return false;
 		}
 			
         if (static_cast<int>(analogInputSize) > sizeBuffer) {
-            turag_warningf("%s: analog input buffer larger than required (%d > %d)", name, analogInputSize, sizeBuffer);
+            turag_warningf("%s: analog input buffer larger than required (%d > %d)", name(), analogInputSize, sizeBuffer);
         }
 
         analogInputs_ = analogInputs;
@@ -90,19 +90,19 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
     } else {
         analogInputSize_ = 0;
 		if (analogInputSize != 0) {
-			turag_warningf("%s: analogInputs is null, but analogInputSize != 0", name);
+			turag_warningf("%s: analogInputs is null, but analogInputSize != 0", name());
 		}
     }
 
     if (pwmOutputs) {
         if (!getPwmOutputSize(&sizeBuffer)) return false;
         if (sizeBuffer > static_cast<int>(pwmOutputSize)) {
-			turag_errorf("%s: pwmOutputSize must be %d (is %d)", name, sizeBuffer, pwmOutputSize);
+			turag_errorf("%s: pwmOutputSize must be %d (is %d)", name(), sizeBuffer, pwmOutputSize);
 			return false;
 		}
 
         if (static_cast<int>(pwmOutputSize) > sizeBuffer) {
-            turag_warningf("%s: pwm output buffer larger than required (%d > %d)", name, pwmOutputSize, sizeBuffer);
+            turag_warningf("%s: pwm output buffer larger than required (%d > %d)", name(), pwmOutputSize, sizeBuffer);
         }
 
         pwmOutputs_ = pwmOutputs;
@@ -121,21 +121,21 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
     } else {
         pwmOutputSize_ = 0;
 		if (pwmOutputSize != 0) {
-			turag_warningf("%s: pwmOutputs is null, but pwmOutputSize != 0", name);
+			turag_warningf("%s: pwmOutputs is null, but pwmOutputSize != 0", name());
 		}
     }
 
     if (!sync_buffer) {
-		turag_errorf("%s: sync_buffer is null", name);
+		turag_errorf("%s: sync_buffer is null", name());
 		return false;
     }
     if (!getSyncSize(&sizeBuffer)) return false;
     if (static_cast<int>(sync_buffer_size) < sizeBuffer) {
-        turag_errorf("%s: sync buffer size must be %d (is %d)", name, sizeBuffer, sync_buffer_size);
+        turag_errorf("%s: sync buffer size must be %d (is %d)", name(), sizeBuffer, sync_buffer_size);
         return false;
     }
     if (static_cast<int>(sync_buffer_size) > sizeBuffer) {
-		turag_warningf("%s: sync buffer larger than required (%d > %d)", name, sync_buffer_size, sizeBuffer);
+		turag_warningf("%s: sync buffer larger than required (%d > %d)", name(), sync_buffer_size, sizeBuffer);
     }
     syncBuffer_ = sync_buffer;
 
@@ -262,10 +262,10 @@ bool Aseb::sync(void) {
 
 float Aseb::getAnalogInput(unsigned key) {
     if (!syncSize_ || !analogInputs_ || analogInputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::getAnalogInput prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getAnalogInput prior to initialization", name());
         return 0.0f;
     } else if (key >= static_cast<unsigned>(analogInputSize_)) {
-        turag_errorf("%s: Wrong arguments to getAnalogInput. Key must be in the range of 0 to %u (given %u).", name, static_cast<unsigned>(analogInputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to getAnalogInput. Key must be in the range of 0 to %u (given %u).", name(), static_cast<unsigned>(analogInputSize_) - 1, key);
         return 0.0f;
     } else {
         return static_cast<float>(analogInputs_[key].value) * analogInputs_[key].factor;
@@ -274,10 +274,10 @@ float Aseb::getAnalogInput(unsigned key) {
 
 bool Aseb::getDigitalInput(unsigned key) {
     if (!syncSize_ || digitalInputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::getDigitalInput prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getDigitalInput prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(digitalInputSize_)) {
-        turag_errorf("%s: Wrong arguments to getDigitalInput. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(digitalInputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to getDigitalInput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(digitalInputSize_) - 1, key);
         return false;
     } else {
         return static_cast<bool>(digitalInputs_ & (1<<key));
@@ -286,10 +286,10 @@ bool Aseb::getDigitalInput(unsigned key) {
 
 bool Aseb::getDigitalOutput(unsigned key) {
     if (!syncSize_ || digitalOutputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::getDigitalOutput prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getDigitalOutput prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(digitalOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to getDigitalOutput. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(digitalOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to getDigitalOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(digitalOutputSize_) - 1, key);
         return false;
     } else {
         return static_cast<bool>(digitalOutputs_ & (1<<key));
@@ -299,7 +299,7 @@ bool Aseb::getDigitalOutput(unsigned key) {
 bool Aseb::initDigitalOutputBuffer() {
     int size;
     if (!getDigitalOutputSize(&size)) {
-        turag_errorf("%s: call to Aseb::initDigitalOutputBuffer() failed", name);
+        turag_errorf("%s: call to Aseb::initDigitalOutputBuffer() failed", name());
         return false;
     }
 
@@ -316,10 +316,10 @@ bool Aseb::initDigitalOutputBuffer() {
 
 bool Aseb::setDigitalOutput(unsigned key, bool value) {
     if (!syncSize_ || digitalOutputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::setDigitalOutput prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::setDigitalOutput prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(digitalOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to setDigitalOutput. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(digitalOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to setDigitalOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(digitalOutputSize_) - 1, key);
         return false;
     } else {
         uint16_t temp = digitalOutputs_;
@@ -346,10 +346,10 @@ bool Aseb::setDigitalOutput(unsigned key, bool value) {
 
 float Aseb::getPwmOutput(unsigned key) {
     if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::getPwmOutput prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getPwmOutput prior to initialization", name());
         return 0.0f;
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to getPwmOutput. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to getPwmOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return 0.0f;
     } else {
         return pwmOutputs_[key].value;
@@ -359,12 +359,12 @@ float Aseb::getPwmOutput(unsigned key) {
 bool Aseb::initPwmOutputBuffer() {
     int size;
     if (!getPwmOutputSize(&size)) {
-        turag_errorf("%s: call to Aseb::initPwmOutputBuffer() failed", name);
+        turag_errorf("%s: call to Aseb::initPwmOutputBuffer() failed", name());
         return false;
     }
 
     if (size > 0 && !pwmOutputs_) {
-        turag_errorf("%s: call to Aseb::initPwmOutputBuffer() failed", name);
+        turag_errorf("%s: call to Aseb::initPwmOutputBuffer() failed", name());
         return false;
     }
 
@@ -381,10 +381,10 @@ bool Aseb::initPwmOutputBuffer() {
 
 uint16_t Aseb::getPwmSpeed(unsigned key) {
     if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::getPwmSpeed prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getPwmSpeed prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to getPwmSpeed. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to getPwmSpeed. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
     }
     struct AsebGetSpeed {
@@ -397,7 +397,7 @@ uint16_t Aseb::getPwmSpeed(unsigned key) {
     request.data.index = key + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
     Response<uint16_t> response;
     if (!transceive(request, &response)) {
-        turag_errorf("%s: Aseb getPWMSpeed transceive failed", name);
+        turag_errorf("%s: Aseb getPWMSpeed transceive failed", name());
         return 0;
     }
     return response.data;
@@ -406,10 +406,10 @@ uint16_t Aseb::getPwmSpeed(unsigned key) {
 
 bool Aseb::setPwmSpeed(unsigned key, uint16_t speed) {
     if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::setPwmSpeed prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::setPwmSpeed prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to setPwmSpeed. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to setPwmSpeed. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
     }
     struct AsebSetSpeed {
@@ -425,7 +425,7 @@ bool Aseb::setPwmSpeed(unsigned key, uint16_t speed) {
 
     Response<> response;
     if (!transceive(request, &response)) {
-        turag_errorf("%s: Aseb setPWMSpeed transceive failed", name);
+        turag_errorf("%s: Aseb setPWMSpeed transceive failed", name());
         return false;
     }
     return true;
@@ -433,13 +433,13 @@ bool Aseb::setPwmSpeed(unsigned key, uint16_t speed) {
 
 bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
     if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::setPwmOutput prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::setPwmOutput prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to setPwmOutput. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to setPwmOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
 	} else if (duty_cycle < 0.0f || duty_cycle > 100.0f) {
-		turag_errorf("%s: Wrong arguments to setPwmOutput: %.2f not within valid range (0 ... 100 %%)", name, duty_cycle);
+		turag_errorf("%s: Wrong arguments to setPwmOutput: %.2f not within valid range (0 ... 100 %%)", name(), duty_cycle);
 		return false;
 	} else {
         Request<AsebSet> request;
@@ -448,7 +448,7 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
 
         Response<> response;
         if (!transceive(request, &response)) {
-            turag_errorf("%s: Aseb setPWMOutput transceive failed", name);
+            turag_errorf("%s: Aseb setPWMOutput transceive failed", name());
             return false;
         }
 
@@ -460,10 +460,10 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
 
 bool Aseb::getPwmFrequency(unsigned key, uint32_t* frequency) {
     if (!syncSize_ || !pwmOutputs_ || pwmOutputSize_ < 0) {
-        turag_errorf("%s: tried to call Aseb::getPwmFrequency prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getPwmFrequency prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to getPwmFrequency. Key must be in the range of 0 to %d (given %d).", name, static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to getPwmFrequency. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
     } else {
         Request<AsebGetInfo> request;
@@ -483,7 +483,7 @@ bool Aseb::getPwmFrequency(unsigned key, uint32_t* frequency) {
 
 unsigned int Aseb::getCommandNameLength(unsigned key) {
     if (!syncSize_) {
-        turag_errorf("%s: tried to call Aseb::getCommandNameLength prior to initialization", name);
+        turag_errorf("%s: tried to call Aseb::getCommandNameLength prior to initialization", name());
         return false;
     }
 

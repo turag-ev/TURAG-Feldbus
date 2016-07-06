@@ -60,14 +60,15 @@ public:
 	
 	/**
 	 * \brief Konstruktor
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-    Aseb(const char* name_, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Aseb(const char* name, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-                Device(name_, address, feldbus, type, addressLength),
+				Device(name, address, feldbus, type, addressLength),
 				analogInputs_(nullptr), pwmOutputs_(nullptr), syncBuffer_(nullptr),
 				analogInputSize_(-1), pwmOutputSize_(-1), digitalInputSize_(-1),
 				digitalOutputSize_(-1), syncSize_(0),
@@ -316,14 +317,15 @@ class AsebTemplate : public Aseb {
 public:
 	/**
 	 * \brief Konstruktor
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-    AsebTemplate(const char* name_, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	AsebTemplate(const char* name, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 			   const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-        Aseb(name_, address, feldbus, type, addressLength)  { }
+		Aseb(name, address, feldbus, type, addressLength)  { }
 	
 	/**
 	 * \brief Initialisiert das Gerät.

@@ -101,19 +101,20 @@ public:
 #if TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE || defined(__DOXYGEN__)
 	/**
 	 * \brief Konstruktor.
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-    Aktor(const char* name_, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Aktor(const char* name, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-                Device(name_, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false),
+				Device(name, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false),
                 structuredOutputTableLength(-1)  { }
 #else
-    Aktor(const char* name_, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Aktor(const char* name, unsigned address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-                Device(name_, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false) { }
+				Device(name, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false) { }
 #endif
 
 

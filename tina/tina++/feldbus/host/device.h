@@ -249,6 +249,18 @@ public:
 	 */
     bool isAvailable(bool forceUpdate = false);
 
+	/**
+	 * @brief Gibt den Namen des Gerätes zurück.
+	 * @return Name des Gerätes.
+	 *
+	 * Hierbei handelt es sich um den Master-seitig vergebenen Gerätenamen, der
+	 * sich durchaus von der Bezeichnung unterscheiden kann, die ein Slave über
+	 * sich selbst zurück gibt.
+	 *
+	 * \see receiveDeviceRealName
+	 */
+	const char* name(void) const { return name_; }
+
 	/*!
 	 * \brief Gibt die Adresse des Gerätes zurück.
 	 * \return Adresse des Gerätes.
@@ -574,16 +586,6 @@ private:
 // data is ordered to prevent the insertion
 // of padding bytes!
 public:
-	/*!
-	 * \brief Gerätename.
-	 *
-	 * Hierbei handelt es sich um den Master-seitig vergebenen Gerätenamen, der
-	 * sich durchaus von der Bezeichnung unterscheiden kann, die ein Slave über
-	 * sich selbst zurück gibt.
-	 *
-	 * \see receiveDeviceRealName
-	 */
-	const char* name;
 
 protected:
 	/**
@@ -600,6 +602,7 @@ private:
 	Device* myNextDevice;
 	static Device* firstDevice;
 
+	const char* name_;
 	const unsigned myAddress;
 
 	const unsigned int maxTransmissionAttempts;
