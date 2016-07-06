@@ -446,6 +446,7 @@ public:
 		myTotalTransmissions = 0;
 		myCurrentErrorCounter = 0; 
 		hasCheckedAvailabilityYet = false;
+		dysFunctionalLog_.resetAll();
 	}
 
 	/**
@@ -592,17 +593,14 @@ protected:
 
 
 private:
-	ChecksumType myChecksumType;
-	const uint8_t myAddressLength;
-
-	bool hasCheckedAvailabilityYet;
-
-	const unsigned myAddress;
+	Debug::CheapErrorObserver dysFunctionalLog_;
 
 	FeldbusAbstraction* bus;
 
 	Device* myNextDevice;
 	static Device* firstDevice;
+
+	const unsigned myAddress;
 
 	const unsigned int maxTransmissionAttempts;
 	const unsigned int maxTransmissionErrors;
@@ -613,6 +611,11 @@ private:
 	unsigned int myTotalNoAnswerErrors;
 	unsigned int myTotalMissingDataErrors;
 	unsigned int myTotalTransmitErrors;
+
+	ChecksumType myChecksumType;
+	const uint8_t myAddressLength;
+
+	bool hasCheckedAvailabilityYet;
 
 
 	static int globalTransmissionErrorCounter;

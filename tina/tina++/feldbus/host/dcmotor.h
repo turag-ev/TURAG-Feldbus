@@ -31,15 +31,16 @@ public:
 
 
 class DCMotor : public DCMotorBase {
-protected:
-    Aktor::Command_t command_set[19];
-
 public:
     DCMotor(const char* name_, int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
         DCMotorBase(name_, address, feldbus, type, addressLength) {}
 
     bool initialize(void) { return populateCommandSet(command_set, 19); }
+
+
+protected:
+	Aktor::Command_t command_set[19];
 };
 
 } // namespace Feldbus

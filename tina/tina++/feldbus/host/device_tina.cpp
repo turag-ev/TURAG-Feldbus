@@ -50,12 +50,10 @@ Device::Device(const char* name_, unsigned address, FeldbusAbstraction *feldbus,
 	   unsigned int max_transmission_attempts,
 	   unsigned int max_transmission_errors) :
 	name(name_),
-	myChecksumType(type),
-	myAddressLength(static_cast<uint8_t>(addressLength)),
-	hasCheckedAvailabilityYet(false),
-	myAddress(address),
+	dysFunctionalLog_(SystemTime::fromSec(25)),
 	bus(feldbus),
 	myNextDevice(nullptr),
+	myAddress(address),
 	maxTransmissionAttempts(max_transmission_attempts),
 	maxTransmissionErrors(max_transmission_errors),
 	myCurrentErrorCounter(0),
@@ -63,7 +61,10 @@ Device::Device(const char* name_, unsigned address, FeldbusAbstraction *feldbus,
 	myTotalChecksumErrors(0),
 	myTotalNoAnswerErrors(0),
 	myTotalMissingDataErrors(0),
-	myTotalTransmitErrors(0)
+	myTotalTransmitErrors(0),
+	myChecksumType(type),
+	myAddressLength(static_cast<uint8_t>(addressLength)),
+	hasCheckedAvailabilityYet(false)
 {
 	Mutex::Lock lock(mutex);
 
@@ -77,24 +78,18 @@ Device::Device(const char* name_, unsigned address, FeldbusAbstraction *feldbus,
 
  
 bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length, bool ignoreDysfunctional) {
+//    if (!bus) {
+//        turag_errorf("%s: pointer to FeldbusAbstraction is zero", name);
+//        return false;
+//    }
 	
-	// FIXME: if ignoreDysfunctional == true we should probably only send one package if the device is in fact already
-	// dysfunctional to prevent unnecessary waiting times
+	bool bailOutBecauseDysfunctional = isDysfunctional() && !ignoreDysfunctional;
 	
-    if (!bus) {
-        turag_errorf("%s: pointer to FeldbusAbstraction is zero", name);
-        return false;
+	if (dysFunctionalLog_.doErrorOutput(!bailOutBecauseDysfunctional)) {
+		turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED (%u).", name, dysFunctionalLog_.getErrorCount());
+		dysFunctionalLog_.resetErrorCount();
     }
-
-	if (isDysfunctional() && !ignoreDysfunctional) {
-		// FIXME: improve error reporting!
-		// (warning will not be shown if the device was offline once
-		// and disappears a second time...)
-        static unsigned dysfunctionalMessageDisplayed = 0;
-        if (dysfunctionalMessageDisplayed < 5) {
-            turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
-            dysfunctionalMessageDisplayed++;
-        }
+	if (bailOutBecauseDysfunctional) {
         return false;
     } else {
 		// we assume the caller wants to transmit a broadcast, if he does not supply any means to store an answer.
@@ -133,14 +128,22 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         bool success = false, checksum_correct = false;
         unsigned int attempt = 0;
 		
+		// If the device is dysfunctional, we can force transmissions with
+		// ignoreDysfunctional. But in this case it wouldn't make sense
+		// to try more than a single transmission as the reason for a failure
+		// is then most likely the device still being dysfunctional.
+		unsigned maxAttempts = isDysfunctional() ? 1 : maxTransmissionAttempts;
+
 
 		// protect globalTransmissionErrorCounter and addressOfLastTransmission
 		// FIXME: THIS CAUSES PROBLEMS WITH BUS ABSTRACTION!
 		Mutex::Lock lock(mutex);
 
-		// we try to transmit until the transmission succeeds and the checksum is correct
-        // or the number of transmission attempts is exceeded.
-        while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
+		// we try to transmit until either
+		// - the transmission succeeds and the checksum is correct or
+		// - the number of transmission attempts is exceeded or
+		// - the first attempt failed when the device is already dysfunctional.
+		while (attempt < maxAttempts && !(success && checksum_correct)) {
 			int transmit_length_copy = transmit_length;
 			int receive_length_copy = receive_length;
 
@@ -221,6 +224,13 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             // but resetting the error only makes sense if we got a response from the device
             if (receive && receive_length != 0) {
                 myCurrentErrorCounter = 0;
+
+				// Because resetting the error counter essentially
+				// means setting the device to be functional again
+				// we also have to reset the dysFunctionalLog_ to get
+				// an error message if the device fails again within
+				// a short time.
+				dysFunctionalLog_.resetAll();
             }
             return true;
         } else {
