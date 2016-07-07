@@ -15,7 +15,8 @@
 #include <tina++/time.h>
 #include <tina++/debug/errorobserver.h>
 #include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
-#include "feldbusabstraction.h"
+#include <tina++/feldbus/host/feldbusabstraction.h>
+
 
 #if !TURAG_USE_TURAG_FELDBUS_HOST
 # warning TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
@@ -43,7 +44,7 @@
 /// Checksummen-Algorithmus der beim Instanziieren von Feldbusklassen
 /// standardmäßig benutzt wird.
 #if !defined(TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) || defined(__DOXYGEN__)
-# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::Device::ChecksumType::crc8_icode
+# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::ChecksumType::crc8_icode
 #endif
 
 /// Standardmäßige Adresslänge.
@@ -60,16 +61,21 @@
 namespace TURAG {
 
 /**
- * @brief TURAG-Feldbus host classes
+ * @brief TURAG-Feldbus Host-Klassen.
+ *
+ * Alle Geräte leiten sich von Device ab, welches zusammen mit
+ * FeldbusAbstraction das Basis-Protokoll implementiert.
+ *
  * @ingroup feldbus-host
  */	
 namespace Feldbus {
+
 
 /**
  * \brief Basis-Klasse aller Feldbus-Geräte.
  * 
  * Die Device-Klasse implementiert auf Hostseite das Basis-Protkoll
- * des %TURAG-Feldbus.
+ * des %TURAG-Feldbus (zusammen mit FeldbusAbstraction).
  * 
  * Zu Beginn der Initialisierung jedes Gerätes sollte isAvailable() aufgerufen werden,
  * damit nicht funktionierende Geräte nicht erst zum Zeitpunkt ihres ersten Einsatzes
@@ -92,16 +98,8 @@ namespace Feldbus {
  * 
  */
 class Device {
+	NOT_COPYABLE(Device);
 public:
-	/*!
-	 * \brief Verfügbare Checksummenalgorithmen.
-	 * \see \ref checksums
-	 */
-	enum class ChecksumType : uint8_t {
-		xor_based = TURAG_FELDBUS_CHECKSUM_XOR, ///< XOR-Checksumme.
-        crc8_icode = TURAG_FELDBUS_CHECKSUM_CRC8_ICODE ///< CRC8-Checksumme.
-	};
-	
 	/**
 	 * \brief Verfügbare Adresslängen.
 	 */
@@ -204,7 +202,7 @@ public:
 	 * \param[in] max_transmission_errors
 	 * \param[in] addressLength
 	 */
-    Device(const char* name_, unsigned address, FeldbusAbstraction* feldbus,
+	Device(const char* name_, unsigned address, FeldbusAbstraction& feldbus,
            ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
            const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH,
 		   unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
@@ -461,11 +459,6 @@ public:
 		dysFunctionalLog_.resetAll();
 	}
 
-	/**
-	 * @brief Anzahl aller am Bus aufgetretenen Übertragungsfehler zurückgeben
-	 * @return Anzahl der Fehler.
-	 */
-	int getGlobalTransmissionErrors(void) const;
 
     /*!
 	 * \brief Blockierende Standard-Datenüberträgung.
@@ -533,6 +526,12 @@ public:
 		return myNextDevice;
 	}
 
+	/**
+	 * @brief Zugriff auf den mit dem Gerät assoziierten Bus.
+	 * @return Referenz auf eine FeldbusAbstraction-Instanz.
+	 */
+	FeldbusAbstraction& bus(void) const { return bus_; }
+
 protected:
     /*!
      * \brief Sendet Daten zum Slave und empfängt eine Antwort.
@@ -597,10 +596,11 @@ protected:
 private:
 	Debug::CheapErrorObserver dysFunctionalLog_;
 
-	FeldbusAbstraction* bus;
+	FeldbusAbstraction& bus_;
 
 	Device* myNextDevice;
 	static Device* firstDevice;
+	static Mutex listMutex;
 
 	const char* name_;
 	const unsigned myAddress;
@@ -619,11 +619,6 @@ private:
 	const uint8_t myAddressLength;
 
 	bool hasCheckedAvailabilityYet;
-
-
-	static int globalTransmissionErrorCounter;
-	static unsigned addressOfLastTransmission;
-	static Mutex mutex;
 };
 
 

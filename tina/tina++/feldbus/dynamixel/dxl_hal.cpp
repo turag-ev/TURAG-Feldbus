@@ -2,11 +2,13 @@
 #include "dxl_hal.h"
 #include <tina++/feldbus/host/feldbusabstraction.h>
 
-static TURAG::Feldbus::FeldbusAbstraction* bus;
+using namespace TURAG::Feldbus;
+
+static FeldbusAbstraction* bus;
 
 
 extern "C" int turag_dxl_hal_open(void* feldbusAbstractionInstance) {
-    bus = (TURAG::Feldbus::FeldbusAbstraction*)feldbusAbstractionInstance;
+	bus = (FeldbusAbstraction*)feldbusAbstractionInstance;
     return (bus != 0);
 }
 
@@ -21,7 +23,7 @@ extern "C" void turag_dxl_hal_clear(void) {
 }
 
 extern "C" int turag_dxl_hal_tx( unsigned char *pPacket, int numPacket ) {
-    if (bus->transceive(pPacket, &numPacket, 0, 0, false)) {
+	if (bus->transceive(pPacket, &numPacket, 0, 0, 0xFF, ChecksumType::none) == FeldbusAbstraction::ResultStatus::Success) {
         return numPacket;
     } else {
         return 0;
@@ -29,7 +31,7 @@ extern "C" int turag_dxl_hal_tx( unsigned char *pPacket, int numPacket ) {
 }
 
 extern "C" int turag_dxl_hal_rx( unsigned char *pPacket, int numPacket ) {
-    if (bus->transceive(0, 0, pPacket, &numPacket, false)) {
+	if (bus->transceive(0, 0, pPacket, &numPacket, 0xFF, TURAG::Feldbus::ChecksumType::none) == FeldbusAbstraction::ResultStatus::Success) {
         return numPacket;
     } else {
         return 0;

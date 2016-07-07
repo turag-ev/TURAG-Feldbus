@@ -66,7 +66,7 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	Aseb(const char* name, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Aseb(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
 				Device(name, address, feldbus, type, addressLength),
 				analogInputs_(nullptr), pwmOutputs_(nullptr), syncBuffer_(nullptr),
@@ -323,7 +323,7 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	AsebTemplate(const char* name, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	AsebTemplate(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 			   const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
 		Aseb(name, address, feldbus, type, addressLength)  { }
 	

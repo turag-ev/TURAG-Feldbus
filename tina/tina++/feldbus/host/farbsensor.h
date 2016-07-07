@@ -64,7 +64,7 @@ protected:
 	bool initiateMeasurement(void);
 
 public:
-	Farbsensor(const char* name, unsigned int address, FeldbusAbstraction* feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Farbsensor(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 			const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
 			Sensor(name, address, feldbus, type, addressLength), lastKnownColor(Color::Error)
 	{
