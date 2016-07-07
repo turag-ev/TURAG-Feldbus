@@ -96,6 +96,12 @@ public:
                     Pwm_t* pwmOutputs, unsigned pwmOutputSize );
 
 	/**
+	 * @brief Gibt zurück, ob das Gerät erfolgreich initialisiert wurde.
+	 * @return True, wenn initialisiert, sonst false.
+	 */
+	bool isInitialized(void) { return syncSize_ != 0; }
+
+	/**
 	 * \brief Synchronisiert den Eingangspuffer mit den Eingängen des Gerätes.
 	 * \return True bei Erfolg, ansonsten false.
 	 * 
@@ -130,7 +136,7 @@ public:
 	 * \param[in] key Key das auszugebenden Channels (0-15).
 	 * \return Der Wert des analogen Eingangs. Physikalische Dimension und
 	 * Wertebreich hängen vom jeweiligen Gerät ab. Wenn initialize() nicht ausgeführt 
-	 * wurde oder key außerhalb des gültigen 
+	 * wurde, oder key außerhalb des gültigen
 	 * Wertebreichs liegt, wird 0.0f zurückgegeben.
 	 * 
 	 * Diese Funktion verursacht keine Buslast.
