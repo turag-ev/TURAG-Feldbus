@@ -22,14 +22,15 @@ class Bootloader : public TURAG::Feldbus::Device {
 public:
 	/**
 	 * \brief Konstruktor.
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-    Bootloader(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Bootloader(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		Device(name_, address, type, addressLength), myMcuId(TURAG_FELDBUS_BOOTLOADER_MCU_ID_INVALID), unlocked(false)
+		Device(name, address, feldbus, type, addressLength), myMcuId(TURAG_FELDBUS_BOOTLOADER_MCU_ID_INVALID), unlocked(false)
     {
     }
     
@@ -63,14 +64,15 @@ public:
 	
 	/**
 	 * \brief Konstruktor.
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	BootloaderAvrBase(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	BootloaderAvrBase(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		Bootloader(name_, address, type, addressLength), myPageSize(0), myFlashSize(0), myWritableFlashSize(0)
+		Bootloader(name, address, feldbus, type, addressLength), myPageSize(0), myFlashSize(0), myWritableFlashSize(0)
     {
     }
 	
@@ -126,14 +128,15 @@ public:
 
 	/**
 	 * \brief Konstruktor.
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	BootloaderAtmega(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	BootloaderAtmega(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		BootloaderAvrBase(name_, address, type, addressLength)
+		BootloaderAvrBase(name, address, feldbus, type, addressLength)
 	{
 	}
 
@@ -166,14 +169,15 @@ public:
 
 	/**
 	 * \brief Konstruktor.
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	BootloaderXmega(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	BootloaderXmega(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		BootloaderAvrBase(name_, address, type, addressLength), revisionId(0)
+		BootloaderAvrBase(name, address, feldbus, type, addressLength), revisionId(0)
 	{
 	}
 

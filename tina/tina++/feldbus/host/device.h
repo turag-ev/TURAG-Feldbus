@@ -13,7 +13,10 @@
 #include <tina++/tina.h>
 #include <tina++/thread.h>
 #include <tina++/time.h>
+#include <tina++/debug/errorobserver.h>
 #include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
+#include <tina++/feldbus/host/feldbusabstraction.h>
+
 
 #if !TURAG_USE_TURAG_FELDBUS_HOST
 # warning TURAG_USE_TURAG_FELDBUS_HOST must be defined to 1
@@ -41,7 +44,7 @@
 /// Checksummen-Algorithmus der beim Instanziieren von Feldbusklassen
 /// standardmäßig benutzt wird.
 #if !defined(TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE) || defined(__DOXYGEN__)
-# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::Device::ChecksumType::crc8_icode
+# define TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE			TURAG::Feldbus::ChecksumType::crc8_icode
 #endif
 
 /// Standardmäßige Adresslänge.
@@ -58,16 +61,21 @@
 namespace TURAG {
 
 /**
- * @brief TURAG-Feldbus host classes
+ * @brief TURAG-Feldbus Host-Klassen.
+ *
+ * Alle Geräte leiten sich von Device ab, welches zusammen mit
+ * FeldbusAbstraction das Basis-Protokoll implementiert.
+ *
  * @ingroup feldbus-host
  */	
 namespace Feldbus {
+
 
 /**
  * \brief Basis-Klasse aller Feldbus-Geräte.
  * 
  * Die Device-Klasse implementiert auf Hostseite das Basis-Protkoll
- * des %TURAG-Feldbus.
+ * des %TURAG-Feldbus (zusammen mit FeldbusAbstraction).
  * 
  * Zu Beginn der Initialisierung jedes Gerätes sollte isAvailable() aufgerufen werden,
  * damit nicht funktionierende Geräte nicht erst zum Zeitpunkt ihres ersten Einsatzes
@@ -90,20 +98,12 @@ namespace Feldbus {
  * 
  */
 class Device {
+	NOT_COPYABLE(Device);
 public:
-	/*!
-	 * \brief Verfügbare Checksummenalgorithmen.
-	 * \see \ref checksums
-	 */
-	enum class ChecksumType {
-		xor_based = TURAG_FELDBUS_CHECKSUM_XOR, ///< XOR-Checksumme.
-        crc8_icode = TURAG_FELDBUS_CHECKSUM_CRC8_ICODE ///< CRC8-Checksumme.
-	};
-	
 	/**
 	 * \brief Verfügbare Adresslängen.
 	 */
-	enum class AddressLength {
+	enum class AddressLength : uint8_t {
 		// do not change the values! They are casted to
 		// int and used for pointer arithmetics.
 		// Also the size of the address fields in the following templates
@@ -131,7 +131,7 @@ public:
 	 * address und checksum werden dann automatisch befüllt.
 	 */
     template<typename T = void>
-    struct Request {
+	struct Request {
 		uint8_t address[2];
         T data;
         uint8_t checksum;
@@ -155,26 +155,38 @@ public:
      * Diese Struktur entspricht vom Speicherlayout nicht dem, was der
      * Slave über den Bus sendet.
      */
-    struct DeviceInfo {
-        uint8_t deviceProtocolId;
-        uint8_t deviceTypeId;
-        uint8_t crcType;
-        uint32_t bufferSize;
-        uint8_t nameLength;
-        uint8_t versioninfoLength;
-        uint16_t uptimeFrequency;
-        bool packageStatisticsAvailable;
-		
+	class DeviceInfo {
+		friend class Device;
+	public:
 		DeviceInfo() :
-			deviceProtocolId(0),
-			deviceTypeId(0),
-			crcType(0),
-			bufferSize(0),
-			nameLength(0),
-			versioninfoLength(0),
-			uptimeFrequency(0),
-			packageStatisticsAvailable(false)
+			uptimeFrequency_(0),
+			bufferSize_(0),
+			deviceProtocolId_(0),
+			deviceTypeId_(0),
+			crcType_(0),
+			nameLength_(0),
+			versioninfoLength_(0)
 		{}
+
+		bool isValid(void) { return bufferSize_ != 0; }
+
+		uint8_t deviceProtocolId(void) const { return deviceProtocolId_; }
+		uint8_t deviceTypeId(void) const { return deviceTypeId_; }
+		ChecksumType crcType(void) const { return static_cast<ChecksumType>(crcType_ & 0x07); }
+		bool packageStatisticsAvailable(void) const { return crcType_ & 0x80 ? true : false; }
+		uint16_t bufferSize(void) const { return bufferSize_; }
+		uint8_t nameLength(void) const { return nameLength_; }
+		uint8_t versionInfoLength(void) const { return versioninfoLength_; }
+		uint16_t uptimeFrequency(void) const { return uptimeFrequency_; }
+
+	private:
+		uint16_t uptimeFrequency_;
+		uint16_t bufferSize_;
+		uint8_t deviceProtocolId_;
+		uint8_t deviceTypeId_;
+		uint8_t crcType_;
+		uint8_t nameLength_;
+		uint8_t versioninfoLength_;
     };
 
 
@@ -182,18 +194,22 @@ public:
 	 * \brief Konstruktor.
 	 * \param[in] name_
 	 * \param[in] address
+	 * \param[in] feldbus
+     * \param[in] feldbus Pointer auf eine FeldbusAbstraction-Instanz, an die die
+     * eigentliche Datenübertragung delegiert wird.
 	 * \param[in] type
 	 * \param[in] max_transmission_attempts
 	 * \param[in] max_transmission_errors
 	 * \param[in] addressLength
 	 */
-    Device(const char* name_, unsigned address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Device(const char* name_, unsigned address, FeldbusAbstraction& feldbus,
+           ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
            const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH,
 		   unsigned int max_transmission_attempts = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ATTEMPTS,
 		   unsigned int max_transmission_errors = TURAG_FELDBUS_DEVICE_CONFIG_MAX_TRANSMISSION_ERRORS);
 
 #if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
-    virtual ~Device() { }
+	virtual ~Device() { }
 #endif
 
 	/**
@@ -230,12 +246,30 @@ public:
 	 * das Gerät zu erreichen.
 	 */
     bool isAvailable(bool forceUpdate = false);
-	
+
+	/**
+	 * @brief Gibt den Namen des Gerätes zurück.
+	 * @return Name des Gerätes.
+	 *
+	 * Hierbei handelt es sich um den Master-seitig vergebenen Gerätenamen, der
+	 * sich durchaus von der Bezeichnung unterscheiden kann, die ein Slave über
+	 * sich selbst zurück gibt.
+	 *
+	 * \see receiveDeviceRealName
+	 */
+	const char* name(void) const { return name_; }
+
 	/*!
 	 * \brief Gibt die Adresse des Gerätes zurück.
 	 * \return Adresse des Gerätes.
 	 */
-    unsigned getAddress(void) const { return myAddress; }
+	unsigned address(void) const { return myAddress; }
+
+	/**
+	 * @brief Gibt die Adresslänge des Gerätes zurück.
+	 * @return Adresslänge in Byte.
+	 */
+	unsigned addressLength(void) const { return myAddressLength; }
 	
 	/*!
 	 * \brief Gibt die Geräte-Info zurück.
@@ -422,13 +456,9 @@ public:
 		myTotalTransmissions = 0;
 		myCurrentErrorCounter = 0; 
 		hasCheckedAvailabilityYet = false;
+		dysFunctionalLog_.resetAll();
 	}
 
-	/**
-	 * @brief Anzahl aller am Bus aufgetretenen Übertragungsfehler zurückgeben
-	 * @return Anzahl der Fehler.
-	 */
-	int getGlobalTransmissionErrors(void) const;
 
     /*!
 	 * \brief Blockierende Standard-Datenüberträgung.
@@ -496,16 +526,11 @@ public:
 		return myNextDevice;
 	}
 
-    /*!
-     * \brief Gerätename.
-	 * 
-	 * Hierbei handelt es sich um den Master-seitig vergebenen Gerätenamen, der 
-	 * sich durchaus von der Bezeichnung unterscheiden kann, die ein Slave über
-	 * sich selbst zurück gibt.
-	 * 
-	 * \see receiveDeviceRealName
-     */
-    const char* name;
+	/**
+	 * @brief Zugriff auf den mit dem Gerät assoziierten Bus.
+	 * @return Referenz auf eine FeldbusAbstraction-Instanz.
+	 */
+	FeldbusAbstraction& bus(void) const { return bus_; }
 
 protected:
     /*!
@@ -551,50 +576,49 @@ protected:
 	 */
     bool isDysfunctional(void) const { return myCurrentErrorCounter >= maxTransmissionErrors; }
     
-	/**
-	 * \brief Enthält die Geräteadresse.
-	 */
-    const unsigned myAddress;
-	
-	/**
-	 * \brief Enthält, auf welche Adresslänge das Gerät konfiguriert ist.
-	 */
-	const unsigned myAddressLength;
-	
-	/**
-	 * \brief Wird von isAvailable() bei der ersten Auführung auf
-	 * true gesetzt.
-	 */
-    bool hasCheckedAvailabilityYet;
-	
-	/**
-	 * \brief Puffert die DeviceInfo-Struktur des Gerätes.
-	 */
-    DeviceInfo myDeviceInfo;
 
 private:
 	bool receiveString(uint8_t command, uint8_t stringLength, char* out_string);
 	bool receiveErrorCount(uint8_t command, uint32_t* buffer);
-	
-    const unsigned int maxTransmissionAttempts;
-    const unsigned int maxTransmissionErrors;
 
-    ChecksumType myChecksumType;
-	
-    unsigned int myCurrentErrorCounter;
-	
-    unsigned int myTotalTransmissions;
+
+// data is ordered to prevent the insertion
+// of padding bytes!
+public:
+
+protected:
+	/**
+	 * \brief Puffert die DeviceInfo-Struktur des Gerätes.
+	 */
+	DeviceInfo myDeviceInfo;
+
+
+private:
+	Debug::CheapErrorObserver dysFunctionalLog_;
+
+	FeldbusAbstraction& bus_;
+
+	Device* myNextDevice;
+	static Device* firstDevice;
+	static Mutex listMutex;
+
+	const char* name_;
+	const unsigned myAddress;
+
+	const unsigned int maxTransmissionAttempts;
+	const unsigned int maxTransmissionErrors;
+
+	unsigned int myCurrentErrorCounter;
+	unsigned int myTotalTransmissions;
 	unsigned int myTotalChecksumErrors;
 	unsigned int myTotalNoAnswerErrors;
 	unsigned int myTotalMissingDataErrors;
 	unsigned int myTotalTransmitErrors;
 
-	static int globalTransmissionErrorCounter;
-	static unsigned addressOfLastTransmission;
-	static Mutex mutex;
+	ChecksumType myChecksumType;
+	const uint8_t myAddressLength;
 
-	Device* myNextDevice;
-	static Device* firstDevice;
+	bool hasCheckedAvailabilityYet;
 };
 
 

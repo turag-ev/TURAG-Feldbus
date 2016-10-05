@@ -1,7 +1,7 @@
 #ifndef DYNAMIXELDEVICE_H
 #define DYNAMIXELDEVICE_H
 
-#include <tina/feldbus/dynamixel/dynamixel.h>
+#include <tina++/feldbus/dynamixel/dynamixel.h>
 #include <tina++/feldbus/host/device.h>
 
 namespace TURAG {

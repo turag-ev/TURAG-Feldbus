@@ -17,10 +17,10 @@
 #include <tina++/crc/xor.h>
 #include <tina++/crc/crc.h>
 #include <tina/debug/print.h>
-#include <tina/feldbus/host/rs485.h>
 #include <tina/math.h>
 
 #include "device.h"
+
 
 namespace TURAG {
 namespace Feldbus {
@@ -31,7 +31,8 @@ struct DeviceInfoInternal {
     uint8_t deviceProtocolId;
     uint8_t deviceTypeId;
     uint8_t crcType;
-    uint32_t bufferSize;
+	uint16_t bufferSize;
+	uint16_t reserved;
     uint8_t nameLength;
     uint8_t versioninfoLength;
     uint16_t uptimeFrequency;
@@ -39,32 +40,33 @@ struct DeviceInfoInternal {
 
 }
 
-int Device::globalTransmissionErrorCounter{0};
-unsigned Device::addressOfLastTransmission{TURAG_FELDBUS_BROADCAST_ADDR};
-Mutex Device::mutex;
+Mutex Device::listMutex;
 Device* Device::firstDevice(nullptr);
 
 
-Device::Device(const char* name_, unsigned address, ChecksumType type,
+Device::Device(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type,
 	   const AddressLength addressLength,
 	   unsigned int max_transmission_attempts,
 	   unsigned int max_transmission_errors) :
-	name(name_),
+	dysFunctionalLog_(SystemTime::fromSec(5)),
+	bus_(feldbus),
+	myNextDevice(nullptr),
+	name_(name),
 	myAddress(address),
-	myAddressLength(static_cast<unsigned>(addressLength)),
-	hasCheckedAvailabilityYet(false),
 	maxTransmissionAttempts(max_transmission_attempts),
 	maxTransmissionErrors(max_transmission_errors),
-	myChecksumType(type),
 	myCurrentErrorCounter(0),
 	myTotalTransmissions(0),
 	myTotalChecksumErrors(0),
 	myTotalNoAnswerErrors(0),
 	myTotalMissingDataErrors(0),
 	myTotalTransmitErrors(0),
-	myNextDevice(nullptr)
+	myChecksumType(type),
+	myAddressLength(static_cast<uint8_t>(addressLength)),
+	hasCheckedAvailabilityYet(false)
 {
-	Mutex::Lock lock(mutex);
+	{
+		Mutex::Lock lock(listMutex);
 
 	if (firstDevice == nullptr) {
 		firstDevice = this;
@@ -73,39 +75,43 @@ Device::Device(const char* name_, unsigned address, ChecksumType type,
 		firstDevice = this;
 	}
 }
+	if (!name_) {
+		name_ = "???";
+	}
+}
 
  
-bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length, bool ignoreDysfunctional) {
+bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive, int receive_length, bool ignoreDysfunctional)
+{
+	bool bailOutBecauseDysfunctional = isDysfunctional() && !ignoreDysfunctional;
 	
-	// FIXME: if ignoreDysfunctional == true we should probably only send one package if the device is in fact already
-	// dysfunctional to prevent unnecessary waiting times
-	
-	if (isDysfunctional() && !ignoreDysfunctional) {
-		// FIXME: improve error reporting!
-		// (warning will not be shown if the device was offline once
-		// and disappears a second time...)
-        static unsigned dysfunctionalMessageDisplayed = 0;
-        if (dysfunctionalMessageDisplayed < 5) {
-            turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED.", name);
-            dysfunctionalMessageDisplayed++;
-        }
+	if (dysFunctionalLog_.doErrorOutput(!bailOutBecauseDysfunctional)) {
+		turag_errorf("DEVICE \"%s\" DYSFUNCTIONAL. PACKAGE DROPPED (%u).", name_, dysFunctionalLog_.getErrorCount());
+		dysFunctionalLog_.resetErrorCount();
+    }
+	if (bailOutBecauseDysfunctional) {
         return false;
-    } else {
-		// we assume the caller wants to transmit a broadcast, if he does not supply any means to store an answer.
+	}
+
+	// Generate target address.
+	// We assume the caller wants to transmit a broadcast, if he does not supply any means to store an answer.
 		// Thus we use zero rather than the device's address.
 		unsigned useAddress = !receive || !receive_length ? TURAG_FELDBUS_BROADCAST_ADDR : myAddress;
 		
 		switch (myAddressLength) {
 		case 1:
-			transmit[0] = useAddress;
+			transmit[0] = static_cast<uint8_t>(useAddress);
 			break;
 			
 		case 2:
-			transmit[0] = useAddress & 0xff;
-			transmit[1] = useAddress >> 8;
+			transmit[0] = static_cast<uint8_t>(useAddress & 0xff);
+			transmit[1] = static_cast<uint8_t>(useAddress >> 8);
 			break;
+
+	default: return false;
 		}
 		
+	// Generate checksum for transmission.
         switch (myChecksumType) {
         case ChecksumType::xor_based:
             transmit[transmit_length - 1] = XOR::calculate(transmit, transmit_length - 1);
@@ -114,6 +120,9 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         case ChecksumType::crc8_icode:
             transmit[transmit_length - 1] = CRC8::calculate(transmit, transmit_length - 1);
             break;
+
+	case ChecksumType::none:
+		break;
         }
 
 
@@ -124,65 +133,31 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 //            turag_info("]\n");
 
 
-        bool success = false, checksum_correct = false;
+	FeldbusAbstraction::ResultStatus status = FeldbusAbstraction::ResultStatus::TransmissionError;
         unsigned int attempt = 0;
 		
-
-		// protect globalTransmissionErrorCounter and addressOfLastTransmission
-		Mutex::Lock lock(mutex);
-
-		// we try to transmit until the transmission succeeds and the checksum is correct
-        // or the number of transmission attempts is exceeded.
-        while (attempt < maxTransmissionAttempts && !(success && checksum_correct)) {
-            int transmit_length_copy = transmit_length;
-            int receive_length_copy = receive_length;
+		// If the device is dysfunctional, we can force transmissions with
+		// ignoreDysfunctional. But in this case it wouldn't make sense
+		// to try more than a single transmission as the reason for a failure
+		// is then most likely the device still being dysfunctional.
+		unsigned maxAttempts = isDysfunctional() ? 1 : maxTransmissionAttempts;
 
 
-			// we need to delay the transmission for protocol compliance reasons in the following
-			// cases:
-			// - our last transmission was a broadcast
-			// - the last transmission was sent to a different slave
-			bool insertTransmissionDelay;
-			if (addressOfLastTransmission == TURAG_FELDBUS_BROADCAST_ADDR ||
-					addressOfLastTransmission != useAddress) {
-				insertTransmissionDelay = true;
-			} else {
-				insertTransmissionDelay = false;
-			}
+		// we try to transmit until either
+		// - the transmission succeeds and the checksum is correct or
+		// - the number of transmission attempts is exceeded or
+		// - the first attempt failed when the device is already dysfunctional.
+	while (attempt < maxAttempts && status != FeldbusAbstraction::ResultStatus::Success) {
+			int transmit_length_copy = transmit_length;
+			int receive_length_copy = receive_length;
 
-			// clear buffer from any previous failed transmissions
-			turag_rs485_buffer_clear();
-			success = turag_rs485_transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, insertTransmissionDelay);
+		// clear buffer from any previous failed transmissions, then send
+		bus_.clearBuffer();
+		status = bus_.transceive(transmit, &transmit_length_copy, receive, &receive_length_copy, useAddress, myChecksumType);
 
-			addressOfLastTransmission = useAddress;
 
-            if (success) {
-                if (!receive || receive_length == 0) {
-                    // if the caller doesn't want to receive anything and the transmission was successful
-                    // we leave the loop (that happens in the case of broadcasts)
-                    checksum_correct = true;
-                } else {
-                    // transmission seems fine, lets look at the checksum
-                    switch (myChecksumType) {
-                    case ChecksumType::xor_based:
-                        checksum_correct = XOR::check(receive, receive_length-1, receive[receive_length-1]);
-                        break;
-
-                    case ChecksumType::crc8_icode:
-                        checksum_correct = CRC8::check(receive, receive_length-1, receive[receive_length-1]);
-                        break;
-                    }
-                    
-                    if (!checksum_correct) {
-						++myTotalChecksumErrors;
-						
-						++globalTransmissionErrorCounter;
-						if (!(globalTransmissionErrorCounter % 25)) {
-							turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
-						}
-                    }
-                }
-            } else {
+		switch (status) {
+		case FeldbusAbstraction::ResultStatus::TransmissionError:
                 if (transmit_length_copy < transmit_length) {
 					++myTotalTransmitErrors;
                 } else if (receive_length_copy == 0) {
@@ -190,16 +165,19 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 				} else {
 					++myTotalMissingDataErrors;
 				}
+			break;
 				
-                ++globalTransmissionErrorCounter;
-				if (!(globalTransmissionErrorCounter % 25)) {
-					turag_criticalf("%d failed transmissions on the bus so far.", globalTransmissionErrorCounter);
+		case FeldbusAbstraction::ResultStatus::ChecksumError:
+			++myTotalChecksumErrors;
+			break;
+
+		case FeldbusAbstraction::ResultStatus::Success: break;
                 }
-            }
+
             ++attempt;
         }
+	myTotalTransmissions += attempt;
 
-		lock.unlock();
 
 //            turag_infof("%s: transceive rx success(%x|%x) [", name, success, checksum_correct);
 //            for (int j = 0; j < receive_length; ++j) {
@@ -207,22 +185,27 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 //            }
 //            turag_info("]\n");
 
-        myTotalTransmissions += attempt;
 
-        if (success && checksum_correct) {
+	if (status == FeldbusAbstraction::ResultStatus::Success) {
             // if we had a successful transmission, we reset the error counter
             // but resetting the error only makes sense if we got a response from the device
             if (receive && receive_length != 0) {
                 myCurrentErrorCounter = 0;
+
+				// Because resetting the error counter essentially
+				// means setting the device to be functional again
+				// we also have to reset the dysFunctionalLog_ to get
+				// an error message if the device fails again within
+				// a short time.
+				dysFunctionalLog_.resetAll();
             }
             return true;
         } else {
-            turag_warningf("%s: rs485 transceive failed", name);
+			turag_warningf("%s: rs485 transceive failed", name_);
             myCurrentErrorCounter += attempt;
             return false;
         }
     }
-}
 
 bool Device::sendPing(void) {
 	Request<> request;
@@ -245,7 +228,7 @@ bool Device::isAvailable(bool forceUpdate) {
 }
 
 bool Device::getDeviceInfo(DeviceInfo* device_info) {
-    if (myDeviceInfo.bufferSize == 0) {
+	if (!myDeviceInfo.isValid()) {
         Request<uint8_t> request;
         Response<DeviceInfoInternal> response;
 
@@ -254,14 +237,13 @@ bool Device::getDeviceInfo(DeviceInfo* device_info) {
         if (!transceive(request, &response)) {
             return false;
         }
-        myDeviceInfo.deviceProtocolId = response.data.deviceProtocolId;
-        myDeviceInfo.deviceTypeId = response.data.deviceTypeId;
-        myDeviceInfo.crcType = response.data.crcType & 0x7f;
-        myDeviceInfo.bufferSize = response.data.bufferSize;
-        myDeviceInfo.nameLength = response.data.nameLength;
-        myDeviceInfo.versioninfoLength = response.data.versioninfoLength;
-        myDeviceInfo.uptimeFrequency = response.data.uptimeFrequency;
-        myDeviceInfo.packageStatisticsAvailable = response.data.crcType & 0x80 ? true : false;
+		myDeviceInfo.deviceProtocolId_ = response.data.deviceProtocolId;
+		myDeviceInfo.deviceTypeId_ = response.data.deviceTypeId;
+		myDeviceInfo.crcType_ = response.data.crcType;
+		myDeviceInfo.bufferSize_ = response.data.bufferSize;
+		myDeviceInfo.nameLength_ = response.data.nameLength;
+		myDeviceInfo.versioninfoLength_ = response.data.versioninfoLength;
+		myDeviceInfo.uptimeFrequency_ = response.data.uptimeFrequency;
     }
     if (device_info) *device_info = myDeviceInfo;
     return true;
@@ -271,16 +253,16 @@ bool Device::receiveDeviceRealName(char* out_string) {
     // It is possible that nobody called getDeviceInfo() yet,
     // so our device info would be empty. Because the device
     // info contains the length of the string we are about 
-    // to receive, we make sure getDeviceInfo() get called.
-    if (myDeviceInfo.bufferSize == 0) {
-        if (!getDeviceInfo(nullptr)) {
-            return false;
-        }
-    }
-    
+	// to receive, we make sure getDeviceInfo() gets called.
+	if (!myDeviceInfo.isValid()) {
+		if (!getDeviceInfo(nullptr)) {
+			return false;
+		}
+	}
+
     return receiveString(
 		TURAG_FELDBUS_SLAVE_COMMAND_DEVICE_NAME, 
-		myDeviceInfo.nameLength,
+		myDeviceInfo.nameLength(),
 		out_string);
 }
 
@@ -288,16 +270,16 @@ bool Device::receiveVersionInfo(char* out_string) {
     // It is possible that nobody called getDeviceInfo() yet,
     // so our device info would be empty. Because the device
     // info contains the length of the string we are about 
-    // to receive, we make sure getDeviceInfo() get called.
-    if (myDeviceInfo.bufferSize == 0) {
-        if (!getDeviceInfo(nullptr)) {
-            return false;
-        }
-    }
-    
+	// to receive, we make sure getDeviceInfo() gets called.
+	if (!myDeviceInfo.isValid()) {
+		if (!getDeviceInfo(nullptr)) {
+			return false;
+		}
+	}
+
     return receiveString(
 		TURAG_FELDBUS_SLAVE_COMMAND_VERSIONINFO, 
-		myDeviceInfo.versioninfoLength,
+		myDeviceInfo.versionInfoLength(),
 		out_string);
 }
 
@@ -308,7 +290,7 @@ bool Device::receiveString(uint8_t command, uint8_t stringLength, char* out_stri
     
     // because we receive a packet including address and checksum
     // we need a slightly bigger array.
-    char recvBuffer[stringLength + myAddressLength + 1];
+	char recvBuffer[stringLength + myAddressLength + 1];
 
     struct cmd {
         uint8_t a;
@@ -339,11 +321,13 @@ bool Device::receiveUptime(float* uptime) {
 		return false;
 	}
 	
-	if (!getDeviceInfo(nullptr)) {
-		return false;
+	if (!myDeviceInfo.isValid()) {
+		if (!getDeviceInfo(nullptr)) {
+			return false;
+		}
 	}
-	
-	if (myDeviceInfo.uptimeFrequency == 0) {
+
+	if (myDeviceInfo.uptimeFrequency() == 0) {
         *uptime = NAN;
         return true;
 	}
@@ -354,7 +338,7 @@ bool Device::receiveUptime(float* uptime) {
 		return false;
 	}
 
-	*uptime = static_cast<float>(count) / static_cast<float>(myDeviceInfo.uptimeFrequency);
+	*uptime = static_cast<float>(count) / static_cast<float>(myDeviceInfo.uptimeFrequency());
     return true;
 }
 
@@ -452,11 +436,6 @@ bool Device::resetSlaveErrors(void) {
 	Response<> response;
 	
 	return transceive(request, &response);
-}
-
-int Device::getGlobalTransmissionErrors(void) const {
-	Mutex::Lock lock(mutex);
-	return globalTransmissionErrorCounter;
 }
 
 

@@ -107,14 +107,7 @@
 
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 65535
-	typedef uint32_t FeldbusSize_t;
-# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
-#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xffffffff
-# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
-#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfffffffe
-# else
-#  error no option for address size
-# endif
+# error buffer sizes greater than 65535 are no longer supported.
 #elif TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 255
 	typedef uint16_t FeldbusSize_t;
 # if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
@@ -804,13 +797,10 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 #else
 				turag_feldbus_slave_uart.txbuf[4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
 #endif
-#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 65535				
-				turag_feldbus_slave_uart.txbuf[5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = (TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE >> 16) & 0xff;
-				turag_feldbus_slave_uart.txbuf[6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = (TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE >> 24) & 0xff;
-#else
-				turag_feldbus_slave_uart.txbuf[5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
-				turag_feldbus_slave_uart.txbuf[6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
-#endif
+				// reserved bytes don't need to be written.
+//				turag_feldbus_slave_uart.txbuf[5 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
+//				turag_feldbus_slave_uart.txbuf[6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
+
 				turag_feldbus_slave_uart.txbuf[7 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_NAME) - 1;
 				turag_feldbus_slave_uart.txbuf[8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1;
 				turag_feldbus_slave_uart.txbuf[9 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY & 0xff;

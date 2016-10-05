@@ -62,8 +62,8 @@ static int giBusUsing = 0;
 //static TuragBinarySemaphore sem_;
 
 
-int turag_dxl_initialize(void) {
-	gbCommStatus = TURAG_DXL_COMM_RXSUCCESS;
+int turag_dxl_initialize(void *bus) {
+    gbCommStatus = turag_dxl_hal_open(bus);
 	giBusUsing = 0;
 
     //turag_binary_semaphore_init(&sem_, false);

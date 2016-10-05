@@ -62,7 +62,7 @@
 #define TURAG_FELDBUS_DEVICE_PROTOCOL_BOOTLOADER				0x04
 
 /// @brief "ESCON" motor drive device type
-#define TURAG_FELDBUS_DEVICE_PROTOCOL_ESCON 0x05
+#define TURAG_FELDBUS_DEVICE_PROTOCOL_ESCON 					0x05
 
 ///@}
 

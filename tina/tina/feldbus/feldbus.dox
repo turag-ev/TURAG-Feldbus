@@ -230,7 +230,9 @@
  * sinnvolle Standardwerte eingestellt sind. Bei Bedarf können diese über die TinA-Konfiguration
  * entsprechend überschrieben werden.
  *
- * Die plattformabhängige Schnittstelle zur Hardware ist in rs485.h definiert.
+ * Die Kommunikation mit der Hardware-Schnittstelle wird mit der TURAG::Feldbus::FeldbusAbstraction-Klasse
+ * abstrahiert und muss mit einer Subklasse um den plattformspezifischen Teil
+ * erweitert werden.
  *
  * \section feldbus-host-configurability Konfigurierbarkeit
  * - \ref TURAG_USE_TURAG_FELDBUS_HOST muss auf 1 definiert sein.
@@ -256,14 +258,13 @@
  * Dies ist eine übliche Einschränkung, da die Gewährleistung von Threadsicherheit
  * für jede Funktion einen zu großen Overhead mit sich bringen würde. Soll ein Busgerät
  * von mehreren Threads angesprochen werden, so müssen entweder zwei Instanzen 
- * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-immutable Funktionen muss
+ * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-const Funktionen muss
  * synchronisert werden. Welche Variante sinnvoller ist, hängt stark von den Details
  * der entsprechenden Klasse ab.
  * 
- * Die Synchronisierung des Zugriffs auf die Bus-Hardware obliegt der Platform-Implementierung
- * der Funktion turag_rs485_transceive(), welche das Versenden und den Empfang einer bestimmten 
- * Datenmenge bereitstellt. Dabei muss gewährleistet sein, dass eine begonnene Transaktion
- * vollständig abgeschlossen ist, bevor eine neue begonnen wird.
+ * Der Zugriff auf den Bus wird durch die Klasse TURAG::Feldbus::FeldbusAbstraction gewährleistet.
+ * Im Konstruktor kann angegeben werden, ob eine Semaphore zur Synchronisierung benutzt 
+ * werde soll.
  * 
  * Atomizität der Bus-Transaktionen bedeutet, dass falls für eine bestimmte
  * Funktionalität in einem Gerät mehr als eine Bus-Transaktion (Paket senden und

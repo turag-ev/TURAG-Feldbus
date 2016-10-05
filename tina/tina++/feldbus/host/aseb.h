@@ -60,19 +60,20 @@ public:
 	
 	/**
 	 * \brief Konstruktor
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	Aseb(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	Aseb(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-                Device(name_, address, type, addressLength),
-                analogInputs_(nullptr), analogInputSize_(-1),
-                pwmOutputs_(nullptr), pwmOutputSize_(-1),
-                digitalInputs_(0), digitalInputSize_(-1),
-                digitalOutputs_(0), digitalOutputSize_(-1),
-                syncBuffer_(nullptr), syncSize_(0), isSynced_(false)  { }
+				Device(name, address, feldbus, type, addressLength),
+				analogInputs_(nullptr), pwmOutputs_(nullptr), syncBuffer_(nullptr),
+				analogInputSize_(-1), pwmOutputSize_(-1), digitalInputSize_(-1),
+				digitalOutputSize_(-1), syncSize_(0),
+				digitalInputs_(0), digitalOutputs_(0),
+				isSynced_(false)  { }
                 
     /**
 	 * \brief Initialisiert das Gerät.
@@ -93,6 +94,12 @@ public:
     bool initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
                     Analog_t* analogInputs, unsigned analogInputSize,
                     Pwm_t* pwmOutputs, unsigned pwmOutputSize );
+
+	/**
+	 * @brief Gibt zurück, ob das Gerät erfolgreich initialisiert wurde.
+	 * @return True, wenn initialisiert, sonst false.
+	 */
+	bool isInitialized(void) { return syncSize_ != 0; }
 
 	/**
 	 * \brief Synchronisiert den Eingangspuffer mit den Eingängen des Gerätes.
@@ -129,7 +136,7 @@ public:
 	 * \param[in] key Key das auszugebenden Channels (0-15).
 	 * \return Der Wert des analogen Eingangs. Physikalische Dimension und
 	 * Wertebreich hängen vom jeweiligen Gerät ab. Wenn initialize() nicht ausgeführt 
-	 * wurde oder key außerhalb des gültigen 
+	 * wurde, oder key außerhalb des gültigen
 	 * Wertebreichs liegt, wird 0.0f zurückgegeben.
 	 * 
 	 * Diese Funktion verursacht keine Buslast.
@@ -280,26 +287,23 @@ public:
 
 	
 private:
-    Analog_t* analogInputs_;
-    int analogInputSize_;
+	bool initDigitalOutputBuffer(void);
+	bool initPwmOutputBuffer(void);
 
-    Pwm_t* pwmOutputs_;
+	Analog_t* analogInputs_;
+	Pwm_t* pwmOutputs_;
+	uint8_t* syncBuffer_;
+
+	int analogInputSize_;
     int pwmOutputSize_;
+	int digitalInputSize_;
+	int digitalOutputSize_;
+	int syncSize_;
 
     uint16_t digitalInputs_;
-    int digitalInputSize_;
-
     uint16_t digitalOutputs_;
-    int digitalOutputSize_;
-
-    uint8_t* syncBuffer_;
-    int syncSize_;
 
     bool isSynced_;
-
-    bool initDigitalOutputBuffer(void);
-    bool initPwmOutputBuffer(void);
-	
 };
 
 /**
@@ -319,14 +323,15 @@ class AsebTemplate : public Aseb {
 public:
 	/**
 	 * \brief Konstruktor
-	 * \param[in] name_
+	 * \param[in] name
 	 * \param[in] address
+	 * \param[in] feldbus
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	AsebTemplate(const char* name_, unsigned int address, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	AsebTemplate(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 			   const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		Aseb(name_, address, type, addressLength)  { }
+		Aseb(name, address, feldbus, type, addressLength)  { }
 	
 	/**
 	 * \brief Initialisiert das Gerät.
