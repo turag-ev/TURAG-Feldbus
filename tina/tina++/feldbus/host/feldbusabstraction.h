@@ -72,7 +72,7 @@ public:
 	 */
 	FeldbusAbstraction(const char* name, bool threadSafe = true) :
 		name_(name), busTransmissionStatistics_(SystemTime::fromSec(5), 0, 50),
-		sem_(false), lastTargetAddress_(TURAG_FELDBUS_BROADCAST_ADDR),
+		sem_(1), lastTargetAddress_(TURAG_FELDBUS_BROADCAST_ADDR),
 		threadSafe_(threadSafe)
 	{}
 
