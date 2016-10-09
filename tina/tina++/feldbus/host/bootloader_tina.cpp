@@ -194,7 +194,7 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress,
 	} _packed;
 	
 	for (unsigned i = 0; i < pages; ++i) {
-		reinterpret_cast<uint32_t_packed*>(request + myAddressLength + 1)->value = targetAddress;
+		reinterpret_cast<uint32_t_packed*>(request + addressLength() + 1)->value = targetAddress;
 
 		uint16_t currentPageSize = std::min(myPageSize, static_cast<uint16_t>(byteAddress + length - targetAddress));
 		memcpy(request + addressLength() + 5, data, currentPageSize);
@@ -265,8 +265,8 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 	for (unsigned i = 0; i < packets; ++i) {
 		uint16_t currentPacketSize = std::min(packetSize, byteAddress + length - targetAddress);
 		
-		reinterpret_cast<header_packed*>(request + myAddressLength + 1)->targetAddress = targetAddress;
-		reinterpret_cast<header_packed*>(request + myAddressLength + 1)->currentPacketSize = currentPacketSize;
+		reinterpret_cast<header_packed*>(request + addressLength() + 1)->targetAddress = targetAddress;
+		reinterpret_cast<header_packed*>(request + addressLength() + 1)->currentPacketSize = currentPacketSize;
 
 		uint8_t response[addressLength() + 1 + currentPacketSize + 1];
 		
