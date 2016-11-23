@@ -35,12 +35,10 @@ void turag_feldbus_stellantriebe_init(feldbus_stellantriebe_command_t* command_s
     commmand_set = command_set_;
     command_names = command_names_;
     command_set_length = command_set_length_;
-
-    turag_feldbus_slave_init();
 }
 
 
-FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
+FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
     // the feldbus base implementation guarantees message_length >= 1 and message[0] >= 1 
 	// so we don't need to check that
 

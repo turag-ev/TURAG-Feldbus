@@ -1,5 +1,7 @@
 
-#include "feldbus.h"
+#include "avr_feldbus_base.h"
+
+#ifdef TURAG_FELDBUS_SLAVE_BASE_IMPLEMENTATION_IS_AVR_VERSION
 
 turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
 	.transmitLength = 0,
@@ -235,3 +237,5 @@ void print_slong(int32_t x) {
 	start_transmission();
 }
 #endif
+
+#endif // TURAG_FELDBUS_SLAVE_BASE_IMPLEMENTATION_IS_AVR_VERSION

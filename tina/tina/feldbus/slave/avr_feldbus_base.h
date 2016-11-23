@@ -1,18 +1,19 @@
 /**
  *  @brief		Implementiert slave-side %TURAG feldbus support
- *  @file		feldbus.h
+ *  @file		avr_feldbus_base.h
  *  @date		06.11.2013
  *  @author		Martin Oemus <martin@oemus.net>
  *  @see 		\ref feldbus-slave
- *  @ingroup feldbus-slave-base
+ *  @ingroup feldbus-slave-base-avr
  */
 
 
 /** 
- * @defgroup feldbus-slave-base Basis-Implementierung
+ * @defgroup feldbus-slave-base-avr Basis-Implementierung (AVR)
  * @ingroup feldbus-slave
  * 
- * TURAG-Feldbus-Basisimplementierung. 
+ * TURAG-Feldbus-Basisimplementierung für AVR-Controller ohne Betriebssystem.
+ * Die Code-Struktur ist auf Interrupt-Betrieb optimiert.
  * 
  * Auf einem Atmega88 belegt die Basis-Implementierung minimal ca 1 KB Flash 
  * zzgl. die Größe der Lookup-Table wenn eine tabellenbasierte 
@@ -21,6 +22,264 @@
  * belegt RAM.
  * 
  * \see \ref feldbus-slave
+ * 
+ * @section felbus-slave-struktur-basis Struktur der Basis-Implementierung
+ * 
+ * \image html feldbus-slave.png "Strukturschema der TURAG-Feldbus-Basisimplementierung"
+ * Die Basis-Implementierung sitzt zwischen Hardware und Firmware des Slave-Gerätes. 
+ * Die Kommunikation mit der Hardware geschieht über ein Hardware-Interface, während für die
+ * Firmware des Gerätes mit dem Protokoll-Interface eine abstrakte Schnittstelle bereitsteht,
+ * um mit geringem Aufwand über den TURAG-Feldbus kommunizieren zu können.
+ * 
+ * Beide Interfaces sind jeweils teilweise implementiert - der andere Teil muss 
+ * vom Entwickler des Slave-Gerätes bereitgestellt werden, so wie dies im Strukturschema 
+ * dargestellt ist.
+ * 
+ * Anhand des Strukturschemas lässt sich die Arbeitsweise der Basis-Implementierung auch 
+ * gut beschreiben. Der Entwickler des Gerätes ruft zu einem frühen Zeitpunkt 
+ * turag_feldbus_slave_init() auf. Das initialisiert interne Strukturen und ruft seinerseits
+ * turag_feldbus_hardware_init() auf, welches die UART-Peripherie des Controllers initialisieren 
+ * sollte. Danach müssen (falls das der Controller verlangt) die Interrupts global aktiviert 
+ * werden. Ab diesem Zeitpunkt werden eintreffende Daten im Hardware-Interfaceteil der
+ * Basis-Implementierung verarbeitet. Da die Paket-Erkennung im Kontext von Interrupts
+ * ausgeführt wird, wird an dieser Stelle nur ein Flag gesetzt, sobald ein gültiges Paket
+ * erkannt wurde. Die eigentliche Auswertung eines angekommenen Paketes wird erst gestartet,
+ * wenn turag_feldbus_do_processing() aufgerufen wird. Diese Funktion deaktiviert 
+ * temporär den Empfang neuer Daten, kopiert das empfangene Paket in einen Zwischenpuffer
+ * und aktiviert die Kommunikation wieder. Dann wird, je nach Pakettyp, 
+ * turag_feldbus_slave_process_package() oder turag_feldbus_slave_process_broadcast() 
+ * aufgerufen und das Paket wird so verarbeitet, wie das die Firmware des Slave-Gerätes
+ * vorsieht.
+ * 
+ * Diese strikte Trennung der Kommunikation zwischen Empfang der Daten in Interrupts
+ * und Verarbeitung im Kontext von main() hat zwei Vorteile:
+ * - Die Verweildauer in Interrupts wird reduziert, was bei zeitkritischen 
+ * Anwendungen wie Motorregelungen relevant sein kann. Der Entwickler muss sich 
+ * dadurch weniger Gedanken über die Laufzeit der Paketverarbeitung machen, da 
+ * diese lediglich ein Teil von main() ist.
+ * - Da der komplette Datenaustausch zwischen Interrupts und main-Kontext 
+ * von der Basis-Implementierung übernommen wird, muss der Entwickler keine 
+ * weiteren Vorkehrungen treffen - es ist weder nötig Variablen als volatile
+ * zu deklarieren, noch nicht-atomare Schreiboperationen vor Unterbrechung durch
+ * Interrupts zu schützen (das gilt natürlich nur, solange das Slave-Gerät nicht
+ * selbst noch weitere Interrupts benutzt).
+ * 
+ * **Wichtig**: damit sich das Slave-Gerät korrekt verhält, muss turag_feldbus_do_processing()
+ * regelmäßig von der Hauptschleife aus aufgerufen werden.
+ * 
+ * Ein weiteres erwähnenswertes Feature ist der Uptime-Counter. Ein Timer des Slaves wird
+ * so konfiguriert, dass er mit einer wählbaren Frequenz 
+ * turag_feldbus_slave_increase_uptime_counter() aufruft. Der Master kann die Laufzeit des
+ * Slaves auslesen und so zum Beispiel Probleme in der Stromversorgung feststellen, was sich 
+ * in Neustarts des Slaves und einem Zurücksetzen des Uptime-Counters äußern
+ * würde. 
+ * 
+ * Wenn eine LED vorhanden ist, kann automatisch die Funktion
+ * turag_feldbus_slave_toggle_led() aufgerufen werden. Das Blinkmuster ist dabei
+ * (soweit möglich) unabhängig von der Timer-Frequenz und fungiert außerdem als Indikator
+ * für die Stabilität der Kommunikation: das Blinken der LED wird ausgesetzt, solange
+ * im Gerät ein unverarbeitetes Paket vorliegt (zum Beispiel weil turag_feldbus_do_processing())
+ * nicht oder nur zu selten aufgerufen wird. Zeigt die LED also ein unregelmäßiges Blinkmuster an
+ * oder blinkt sie sogar gar nicht, gibt es Kommunikationsprobleme oder der Gerät
+ * ist abgestürzt.
+ * 
+ * @section felbus-slave-struktur-anwendung Struktur der Anwendungsprotokoll-Implementierungen
+ * Die Implementierungen der Anwendungsprotokolle führen im Allgemeinen zwei Änderungen
+ * ein:
+ * - nach turag_feldbus_slave_init() muss zusätzlich eine spezialisierte Initialisierungsroutine
+ * aufgerufen werden
+ * - turag_feldbus_slave_process_package() und turag_feldbus_slave_process_broadcast() 
+ * werden vom Anwendungsprotokoll selbst implementiert, während die Firmware das 
+ * Slave-Gerätes spezialisiertere Funktionen zu implementieren hat.
+ * 
+ * An der Notwendigkeit, turag_feldbus_do_processing() zyklisch aufzurufen,
+ * ändert sich normalerweise nichts.
+ * 
+ * @section feldbus-slave-implementierungsanleitung HowTo: Softwaregerüst für ein neues Feldbusgerät erstellen
+ * 1. Verzeichnisstruktur erstellen:
+ * \image html feldbus-device-file-structure.png
+ * 2. Als Basis für die Konfigurationsdatei sollte eine Kopie der Datei programmierung/tina/tina/feldbus/slave/feldbus_config.h benutzt werden.
+ *    Wichtig ist hierbei das korrekte includieren des passenden Protokoll-Headers. Basiert das Gerät auf einem Anwendungsprotokoll 
+ *    (statt nur des Basis-Protokolls) werden evt. weitere Definitionen nötig, die in der Beispieldatei nicht enthalten sind. 
+ * 3. Die Funktionen des Hardware-Interfaces müssen für die Plattform bereitgestellt werden (feldbus_hardware_driver.c). 
+ * 4. Die Funktionen des Protokoll-Interfaces müssen gemäß dem Strukturschema bereitgestellt werden (main.c).
+ * 5. Ein Makefile ist nötig, welches
+ *  - alle Dateien des src-Ordners compiliert
+ *  - die Feldbus-Slave-Quelldateien compiliert (es kann problemlos der komplette Ordner compiliert werden, da
+ *    nur Code des gewählten Protokolls benutzt wird)
+ *  - die Quelldateien des eingestellten Checksummen-Algorithmus compiliert
+ *  - den tina- und den src-Ordner als Include-Pfad konfiguriert
+ * 
+ * Das Makefile kann üblicherweise aus alten Projekten übernommen und entsprechend angepasst werden.
+ * 
+ * **Wichtig:** zumindest die Datei, die die ISRs enthält (also feldbus_hardware_driver.c) muss mit -O3
+ * compiliert werden! Nur dann beginnt der Compiler automatisch Aufrufe von kleinen Funktionen zu inlinen,
+ * was im Falle der ISRs wichtig ist. Ansonsten leidet die Performance stark.
+ * 
+ * **Wichtig:** Die von der Basis-Implementerung bereitgestellten Hardware-Funktionen 
+ * (wie z.B. turag_feldbus_slave_receive_timeout_occured()) gehen davon aus,
+ * dass ihre Ausführung nicht unterbrochen werden kann. Die Interrupts, die diese Funktionen
+ * aufrefen, sollten also nicht von anderen Interrupts unterbrochen werden können.
+ * 
+ * @section feldbus-slave-beispiel-hardware-interface Beispiel-Implementierung des Hardware-Interfaces
+ * Im folgenden wird ein Beispiel betrachtet, wie die Implementierung des Hardware-Interfaces für einen
+ * ATmega88 aussehen kann.
+ * 
+ * Neben den AVR-Headern wird der entsprechende Protokoll-Header eingebunden.
+ * \snippet feldbus_hardware_driver.c Includes
+ * 
+ * Als nächstes folgen einige Definitionen. Insbesondere die letzten beiden werden
+ * üblicherweise über das Makefile global im Projekt bereitgestellt.
+ * \snippet feldbus_hardware_driver.c Definitions
+ * 
+ * Danach ein paar hilfreiche Makros:
+ * \snippet feldbus_hardware_driver.c Helper macros
+ * 
+ * Einen großen Teil der Implementierung nimmt die Bereitstellung der notwendigen
+ * Hardware-Interface-Funktionen ein, darunter die Funktion \ref turag_feldbus_hardware_init() 
+ * zum Initialisieren der Peripherie des Controllers.
+ * \snippet feldbus_hardware_driver.c Required hardware functions
+ * 
+ * Zu guter letzt folgen die ISR-Handler, die die Ausführung lediglich an die entsprechenden
+ * Funktionen der Basis-Implementierung weiterreichen:
+ * \snippet feldbus_hardware_driver.c Interrupts
+ * 
+ * @section feldbus-slave-korrekt-includen Korrektes includieren der Header
+ * 
+ * Die folgenden Graphen zeigen an, welche Header sinnvollerweise von welchen Dateien includiert
+ * werden sollten. Blau umrandete Dateien sind Teil von TinA, schwarz umrandete solche,
+ * die der Entwickler des Slave-Gerätes bereitstellt.
+ * 
+ * Hervorzuheben sind folgende Punkte:
+ * - die Header von Basis- und Anwendungsprotokoll sind auf die Existenz von 
+ * "feldbus_config.h" angewiesen und die Tatsache, dass dieser Header auch 
+ * den richtigen Protokollheader includiert.
+ * - setzt das Slave-Gerät direkt auf dem Basis-Protokoll auf, so wird stets nur "avr_feldbus_base.h" 
+ * includiert, anonsten zusätzlich der entsprechende Header des Anwendungsprotokolls.
+ * 
+ * \dot
+ * digraph G {
+ * 
+ * node [shape="box", fontname="Helvetica", fontsize="12"];
+ * 
+ * subgraph cluster0 {
+ *      a1 -> a2 -> a3 -> a4 -> a5;
+ *      a3 -> a6;
+ * 
+ *      label = "Basis-Implementierung";
+ *      fontname="Helvetica";
+ *      fontsize="14";
+ *      color="white";
+ * }
+ * 
+ * subgraph cluster1 {
+ *      b1 -> b2 -> b4;
+ *      b1 -> b3 -> b4 -> b5 -> b6 -> b7; 
+ *      b4 -> b8;
+ * 
+ *      label ="Stellantriebe-Anwendungsprotokoll"
+ *      fontname="Helvetica";
+ *      fontsize="14";
+ *      color="white";
+ * }
+ * 
+ * a1 [label="main.c; andere Dateien"];
+ * a2 [label="avr_feldbus_base.h", color="blue"];
+ * a3 [label="feldbus_config_check.h", color="blue"];
+ * a4 [label="feldbus_config.h"];
+ * a5 [label="turag_feldbus_bus_protokoll.h", color="blue"];
+ * a6 [label="avr_feldbus_config_check.h", color="blue"];
+ * 
+ * b1 [label="main.c; andere Dateien"];
+ * b2 [label="feldbus_stellantriebe.h", color="blue"];
+ * b3 [label="avr_feldbus_base.h", color="blue"];
+ * b4 [label="feldbus_config_check.h", color="blue"];
+ * b5 [label="feldbus_config.h"];
+ * b6 [label="turag_feldbus_fuer_stellantriebe.h", color="blue"];
+ * b7 [label="turag_feldbus_bus_protokoll.h", color="blue"];
+ * b8 [label="avr_feldbus_config_check.h", color="blue"];
+ * 
+ * 
+ * }
+ * \enddot
+ * 
+ * @section feldbus-slave-neues-anwendungsprotokoll Implementieren eines neuen Anwendungsprotokolls
+ * Ein neues Anwendungsprotokoll ist normalerweise dann von Nöten, wenn eine 
+ * neue Gerätegruppe entwickelt werden soll. Die Entwicklung eines neuen
+ * Anwendungsprotokolls umfasst mehrere Schritte:
+ * 
+ * 1. Im [Wiki](https://intern.turag.de/wiki/doku.php/id,04_programmierung;protokolle_busse;turag-simplebus#anwendungs-protokolle) 
+ * eine Seite mit den Spezifikationsdetails des Anwendungsprotokolls anlegen und auf der 
+ * Hauptseite verlinken
+ * 2. In turag_feldbus_bus_protokoll.h wird die ID des neuen Protokolls eingetragen
+ * 3. Für das neue Protokoll wird ein eigener Protokollheader angelegt, der die in der Spezifikation
+ * definierten Werte und IDs enthält
+ * 4. Eine Slave-Implementierung des Anwendungsprotokolls wird angelegt, die üblicherweise
+ * aus einem Header und einer Quelldatei besteht.
+ * 5. Hostklassen zur Kommunikation mit den neuen Geräten werden angelegt
+ * 6. In der TURAG-Console wird Support für den Gerätetyp eingebaut, was gleich 
+ * zur Verifizierung der Host-Klassen benutzt werden kann.
+ * 
+ * Wenn möglich, sollte \ref _Static_assert benutzt werden, um sicherzustellen
+ * dass mit \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE ein ausreichend großer
+ * Transmit-Buffer konfiguriert ist, da es ansonsten zu Pufferüberläufen kommen kann.
+ * 
+ * 
+ * @defgroup feldbus-host Host Implementierungen [C++]
+ * @ingroup feldbus
+ * 
+ * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
+ * 
+ * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::Device, das masterseitigen 
+ * Support für das Basis-Protokoll bereitstellt.
+ * 
+ * Das Verhalten des Masters kann mit einigen Definitionen angepasst werden, für die
+ * sinnvolle Standardwerte eingestellt sind. Bei Bedarf können diese über die TinA-Konfiguration
+ * entsprechend überschrieben werden.
+ *
+ * Die Kommunikation mit der Hardware-Schnittstelle wird mit der TURAG::Feldbus::FeldbusAbstraction-Klasse
+ * abstrahiert und muss mit einer Subklasse um den plattformspezifischen Teil
+ * erweitert werden.
+ *
+ * \section feldbus-host-configurability Konfigurierbarkeit
+ * - \ref TURAG_USE_TURAG_FELDBUS_HOST muss auf 1 definiert sein.
+ * - \ref TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE ist optional.
+ *
+ * 
+ * \section feldbus-host-threadsafety Thread-Safety
+ * \note Generell ist aus Gründen der Einfachheit zu empfehlen, alle Host-Klassen
+ * exklusiv von einem einzigen %Thread aus zu benutzen und den Austausch von Daten
+ * über andere Mechanismen zu gewährleisten. Dadurch ist der Zugriff auf den 
+ * Bus geordnet und die Komplexität des System wird nicht unnnötig gesteigert.
+ * Die folgenden Informationen sind der Vollständigkeit halber angegeben.
+ * 
+ * Damit der Buszugriff mit mehreren Threads reibungslos funktioniert, sind
+ * folgende Voraussetzungen zu erfüllen:
+ * - Host-Klassen müssen mindestens reentrant sein
+ * - Zugriff auf die Bus-Hardware muss synchronisert sein
+ * - Bus-Transaktionen müssen atomaren Charakter besitzen.
+ * 
+ * Die Host-Klassen sind reentrant, aber nicht thread-safe. Das heißt, der Zugriff 
+ * auf eine Instanz einer Klasse muss manuell synchronisiert werden. Unproblematisch 
+ * ist hingegen die Verwendung verschiedener Instanzen einer Klasse in verschiedenen Threads.
+ * Dies ist eine übliche Einschränkung, da die Gewährleistung von Threadsicherheit
+ * für jede Funktion einen zu großen Overhead mit sich bringen würde. Soll ein Busgerät
+ * von mehreren Threads angesprochen werden, so müssen entweder zwei Instanzen 
+ * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-const Funktionen muss
+ * synchronisert werden. Welche Variante sinnvoller ist, hängt stark von den Details
+ * der entsprechenden Klasse ab.
+ * 
+ * Der Zugriff auf den Bus wird durch die Klasse TURAG::Feldbus::FeldbusAbstraction gewährleistet.
+ * Im Konstruktor kann angegeben werden, ob eine Semaphore zur Synchronisierung benutzt 
+ * werde soll.
+ * 
+ * Atomizität der Bus-Transaktionen bedeutet, dass falls für eine bestimmte
+ * Funktionalität in einem Gerät mehr als eine Bus-Transaktion (Paket senden und
+ * empfangen) erforderlich ist, die sequentielle Durchführung aller notwendigen Transaktionen
+ * nicht durch Fremdpakete unterbrochen wird. Da jedoch das
+ * Basis-Protokoll zustandslos ist und dies auch von allen Geräte-Protokollen
+ * verlangt wird, kann eine solche Konstellation theoretisch nicht auftreten und 
+ * es müssen dahingehend keine Maßnahmen getroffen werden.
  * 
  * @section feldbus-slave-base-config Konfiguration
  * 
@@ -31,104 +290,19 @@
  * 
  */
 
-#ifndef TINA_FELDBUS_SLAVE_FELDBUS_H_
-#define TINA_FELDBUS_SLAVE_FELDBUS_H_
+#ifndef TINA_FELDBUS_SLAVE_FELDBUS_AVR_H_
+#define TINA_FELDBUS_SLAVE_FELDBUS_AVR_H_
 
 #include <tina/tina.h>
 #include <tina/helper/static_assert.h>
-#include <feldbus_config.h>
 #include <tina/crc/xor_checksum.h>
 #include <tina/crc/crc_checksum.h>
 #include <stdlib.h>
 #include <string.h>
 
-
-// hide some uninteresting stuff from documentation
-#if (!defined(__DOXYGEN__))
-	
-#ifndef MY_ADDR
-# error MY_ADDR must be defined
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_NAME
-# define TURAG_FELDBUS_DEVICE_NAME "unnamed device"
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_VERSIONINFO
-# define TURAG_FELDBUS_DEVICE_VERSIONINFO __DATE__ " " __TIME__
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
-# error TURAG_FELDBUS_DEVICE_PROTOCOL must be defined
-#endif
-#ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
-# error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
-# error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be defined
-#else
-# if (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 1 ) && (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 2)
-#  error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be 1 or 2
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE
-# error TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE must be defined
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
-# error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-# error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
-#else
-# if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-# error TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE must be defined
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY
-# error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be defined
-#else
-# if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<0) || (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>65535)
-#  error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be within the range of 0-65535
-# else
-#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 && !defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK)
-#   error TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK must be defined
-#  endif
-#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY == 0 && !defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK)
-#   define TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK 0
-#  endif
-#  if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY==0 && defined(TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK) && TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK != 0
-#   warning TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1, but TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY == 0. Led flashing feature depends on uptime feature.
-#  endif
-# endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
-# error TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE must be defined
-#endif
+#include "feldbus_config_check.h"
 
 
-#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 65535
-# error buffer sizes greater than 65535 are no longer supported.
-#elif TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 255
-	typedef uint16_t FeldbusSize_t;
-# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
-#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xffff
-# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
-#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfffe
-# else
-#  error no option for address size
-# endif
-#else
-	typedef uint8_t FeldbusSize_t;
-# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
-#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xff
-# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
-#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfe
-# else
-#  error no option for address size
-# endif
-#endif
-
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -335,7 +509,7 @@ typedef int FeldbusSize_t;
  * @warning Keinesfalls dürfen in response mehr Daten geschrieben werden als 
  * \ref TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - \ref TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH bytes.
  */
-extern FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
+extern FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
 
 
 /**
@@ -352,7 +526,7 @@ extern FeldbusSize_t turag_feldbus_slave_process_package(uint8_t* message, Feldb
  *
  * \note Diese Funktion wird stets im main-Kontext aufgerufen.
  */
-extern void turag_feldbus_slave_process_broadcast(uint8_t* message, FeldbusSize_t message_length, uint8_t protocol_id);
+extern void turag_feldbus_slave_process_broadcast(const uint8_t* message, FeldbusSize_t message_length, uint8_t protocol_id);
 ///@}
 
 
@@ -955,4 +1129,4 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 #endif
 
 
-#endif /* TINA_FELDBUS_SLAVE_FELDBUS_H_ */
+#endif /* TINA_FELDBUS_SLAVE_FELDBUS_AVR_H_ */

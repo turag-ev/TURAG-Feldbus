@@ -60,7 +60,7 @@
 #define TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
 
 #include <tina/tina.h>
-#include "feldbus.h"
+#include <tina/feldbus/slave/feldbus_config_check.h>
 
 
 #ifdef __cplusplus
@@ -132,7 +132,11 @@ extern void turag_feldbus_stellantriebe_value_changed(uint8_t key);
  * 
  * If you don't nedd this functionality you can simply leave the function body empty.
  */
-extern FeldbusSize_t turag_feldbus_stellantriebe_process_package(uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
+extern FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
+
+
+FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
+
 
 #endif
 

@@ -1,8 +1,8 @@
 /**
- *  @file		feldbus_config.h
+ *  @file		avr_feldbus_config.h
  *  @date		09-2014
  *  @author		Martin Oemus <martin@oemus.net>
- *  @ingroup    feldbus-slave-base
+ *  @ingroup    feldbus-slave-base-avr
  * 
  * @brief Beispiel für den Config-Header eines Feldbus Slave-Gerätes. 
  * Diese Datei kann in das Quellverzeichnis des Gerätes kopiert und angepasst werden.
@@ -27,12 +27,19 @@
  */
 #error THIS FILE IS INTENDED FOR DOCUMENTATIONAL PURPOSES ONLY.
 
-#ifndef FELDBUS_CONFIG_H_
-#define FELDBUS_CONFIG_H_
+#ifndef FELDBUS_CONFIG_AVR_H_
+#define FELDBUS_CONFIG_AVR_H_
 
 
 #include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
 
+
+/**
+ * Dieses Symbol steuert das korrekte includieren einiger 
+ * Header und muss definiert werden, wenn die AVR-Basis-Implementierung
+ * benutzt wird.
+ */
+#define TURAG_FELDBUS_SLAVE_BASE_IMPLEMENTATION_IS_AVR_VERSION
 
 /**
  * Legt die Adresse des Gerätes fest.
@@ -52,7 +59,7 @@
  * Wird dieses Symbol nicht definiert, so wird der Defaultwert
  * "unnamed device" benutzt.
  */
-#define TURAG_FELDBUS_DEVICE_NAME "Feldbus Device"
+#define TURAG_FELDBUS_DEVICE_NAME "Feldbus AVR Device"
 
 
 /**
@@ -65,7 +72,7 @@
  * Wird dieses Symbol nicht definiert, so wird als Defaultwert
  * die aktuelle Zeit und das Datum vom Compiler benutzt.
  */
-//#define TURAG_FELDBUS_DEVICE_VERSIONINFO "25.09.2014 15:12"
+#define TURAG_FELDBUS_DEVICE_VERSIONINFO "25.09.2014 15:12"
 
 
 /**
@@ -129,12 +136,28 @@
 
 
 /**
- * Legt fest, ob das Feldbus-Blinkmuster über eine LED ausgegeben
- * werden soll.
+ * Legt die Frequenz[Hz] fest, mit der turag_feldbus_slave_increase_uptime_counter()
+ * aufgerufen wird.
+ * 
+ * Gültige Werte: 0-65535
+ * 
+ * Bei einem Wert von 0 wird das Feature des Uptime-Counters
+ * deaktiviert. Ein Wert zwischen 20 und 100 Hz ist empfehlenswert.
+ */
+#define TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY			50
+
+
+/**
+ * Legt fest, ob die Funktion turag_feldbus_slave_toggle_led()
+ * mit einem charakteristischen Frequenzmuster aufgerufen wird.
  * 
  * Gültige Werte: 0/1
+ * 
+ * Diese Option spielt nur eine Rolle, wenn 
+ * \ref TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY mit einem Wert
+ * ungleich 0 konfiguriert ist.
  */
-#define TURAG_FELDBUS_SLAVE_CONFIG_FLASH_LED	1
+#define TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK	1
 
 /**
  * Legt fest, ob das Slave-Gerät Informationen über
@@ -147,6 +170,5 @@
  */
 #define TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE 1
 
-
-#endif /* FELDBUS_CONFIG_H_ */
+#endif /* FELDBUS_CONFIG_AVR_H_ */
  

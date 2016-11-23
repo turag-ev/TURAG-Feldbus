@@ -1,0 +1,84 @@
+#ifndef FELDBUS_CONFIG_CHECK_H_
+#define FELDBUS_CONFIG_CHECK_H_
+
+#include <feldbus_config.h>
+
+#ifndef TURAG_FELDBUS_SLAVE_BASE_IMPLEMENTATION_IS_AVR_VERSION
+
+// hide some uninteresting stuff from documentation
+#if (!defined(__DOXYGEN__))
+    
+#ifndef MY_ADDR
+# error MY_ADDR must be defined
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_NAME
+# define TURAG_FELDBUS_DEVICE_NAME "unnamed device"
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_VERSIONINFO
+# define TURAG_FELDBUS_DEVICE_VERSIONINFO __DATE__ " " __TIME__
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_PROTOCOL
+# error TURAG_FELDBUS_DEVICE_PROTOCOL must be defined
+#endif
+#ifndef TURAG_FELDBUS_DEVICE_TYPE_ID
+# error TURAG_FELDBUS_DEVICE_TYPE_ID must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH
+# error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be defined
+#else
+# if (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 1 ) && (TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH != 2)
+#  error TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH must be 1 or 2
+# endif
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE
+# error TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE
+# error TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+# error TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED must be defined
+#else
+# if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+#  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
+# endif
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_FLASH_LED
+# error TURAG_FELDBUS_SLAVE_CONFIG_FLASH_LED must be defined
+#endif
+#ifndef TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
+# error TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE must be defined
+#endif
+
+
+#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 65535
+# error buffer sizes greater than 65535 are no longer supported.
+#elif TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 255
+    typedef uint16_t FeldbusSize_t;
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfffe
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfffd
+# else
+#  error no option for address size
+# endif
+#else
+    typedef uint8_t FeldbusSize_t;
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfe
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+#  define TURAG_FELDBUS_IGNORE_PACKAGE 0xfd
+# else
+#  error no option for address size
+# endif
+#endif
+
+#endif // __DOXYGEN__
+    
+    
+#else // #ifdef TURAG_FELDBUS_SLAVE_BASE_IMPLEMENTATION_IS_AVR_VERSION
+# include "avr_feldbus_config_check.h"
+#endif
+
+
+#endif // FELDBUS_CONFIG_CHECK_H_
