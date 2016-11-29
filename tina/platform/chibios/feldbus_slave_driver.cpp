@@ -106,16 +106,30 @@ void Driver::thread_func() {
             data.rx_size = 0;
         }
 
-        // sleep until there is a packet waiting to be processed
-        // or we need to toggle our led.
-        chBSemWaitTimeoutS(&rx_sem, MS2ST(20));
-
+        // If there is a new packet waiting, we start working on it.
+        // Otherwise we go to sleep. We need to check new packets before 
+        // going to sleep to cover the rare case where we received a new 
+        // one while doing the led pattern.
         if (data.packet_complete) {
             data.processing = true;
+        } else {
+            // Sleep until there is a packet waiting to be processed
+            // or we need to toggle our led.
+            chBSemWaitTimeoutS(&rx_sem, MS2ST(20));
+            
+            // Check whether there is a new packet. We need to do this while
+            // we are still in syslock to prevent the packet getting overwritten
+            // resulting in the loss of the current one.
+            if (data.packet_complete) {
+                data.processing = true;
+            }
         }
         chSysUnlock();
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_FLASH_LED
+        // Heavy traffic will speed up the led pattern.
+        // That's a feature, not a bug.
+        // We blink with 50 Hz because we wait for 20 ms a few lines above.
         Base::doLedPattern(50);
 #endif
 
@@ -148,7 +162,10 @@ void Driver::rxChar(UARTDriver *, uint16_t c) {
 		}
 
 		if (data.rx_size == TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
-			// buffer overflow
+			// Buffer overflow.
+            // No need to reset rx_size here, because we stop filling
+            // rxbuf, once it is full. This is important to correctly
+            // identify whether the packet was meant for us.
 			data.overflow = true;
 		} else {
 			data.rxbuf[data.rx_size] = static_cast<uint8_t>(c);
@@ -160,7 +177,8 @@ void Driver::rxChar(UARTDriver *, uint16_t c) {
 	} else {
 		// Byte received, but package is processing -> ignore.
 		// This shouldn't happen if the data is really meant
-		// for us.
+		// for us, unless we exceeded the masters timeout and it
+        // resent its request.
 	}
 	chSysUnlockFromIsr();
 }
@@ -170,20 +188,28 @@ void Driver::rxComplete(GPTDriver *) {
 	chSysLockFromIsr();
 
 	if (packetAdressedToMe()) {
-		if (!data.overflow && data.rx_size > 1) {
+        if (data.overflow) {
+#if (TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE)
+            // Only increase the overflow counter if the
+            // packet was addressed to us.
+            Base::increaseBufferOverflow();
+#endif
+        } else if (data.rx_size > TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
 			// valid packet, addressed to us
 			data.packet_complete = true;
 			// wake up worker thread
 			chBSemSignalI(&rx_sem);
-		} else if (data.overflow) {
-			data.overflow = false;
-#if (TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE)
-			Base::increaseBufferOverflow();
-#endif
 		}
 	}
+	// If either
+	// - we had an overflow or
+	// - the packet was not meant for us or
+	// - the packet was too short
+	// we get a complete reception bot no complete packet. Then we still need
+	// to clear the packet buffer and the overflow flag which is potentially set.
 	if (!data.packet_complete) {
 		data.rx_size = 0;
+        data.overflow = false;
 	}
 
 	chSysUnlockFromIsr();
