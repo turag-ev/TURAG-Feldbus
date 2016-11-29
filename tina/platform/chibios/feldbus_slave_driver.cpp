@@ -167,8 +167,6 @@ void Driver::rxChar(UARTDriver *, uint16_t c) {
 
 
 void Driver::rxComplete(GPTDriver *) {
-    palSetPad(GPIOA, 4);
-    
 	chSysLockFromIsr();
 
 	if (packetAdressedToMe()) {
