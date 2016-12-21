@@ -265,6 +265,7 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 	for (unsigned i = 0; i < packets; ++i) {
 		uint16_t currentPacketSize = std::min(packetSize, byteAddress + length - targetAddress);
 		
+
 		reinterpret_cast<header_packed*>(request + addressLength() + 1)->targetAddress = targetAddress;
 		reinterpret_cast<header_packed*>(request + addressLength() + 1)->currentPacketSize = currentPacketSize;
 
