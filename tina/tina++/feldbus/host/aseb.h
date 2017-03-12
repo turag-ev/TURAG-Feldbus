@@ -317,6 +317,11 @@ private:
  * Instanz dieses Klassen-Templates mit den richtigen
  * Puffergrößen gebildet werden, alles Weitere geschieht im 
  * Hintergrund.
+ *
+ * Die SyncSize ergibt sich aus der Formel 2*n, falls keine
+ * digitalen Eingänge existieren, und aus der Formel 2+2*n,
+ * falls digitale Eingänge vorhanden sind. n ist hierbei die
+ * Anzahl der analogen Eingänge.
  */
 template<std::size_t syncSize, std::size_t analogInputSize, std::size_t pwmOutputSize>
 class AsebTemplate : public Aseb {
