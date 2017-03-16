@@ -74,7 +74,7 @@ extern "C" {
 
 // do not change this structure!!! Otherwise the device will send 
 // corrupted command info packages.
-typedef struct {
+typedef struct _packed {
 	/// pointer to the actual value
     void* value;  
 	/// is the value allowed to be altered by the host?
