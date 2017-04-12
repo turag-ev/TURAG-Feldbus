@@ -192,15 +192,14 @@ public:
 
 	/**
 	 * \brief Konstruktor.
-	 * \param[in] name_
-	 * \param[in] address
-	 * \param[in] feldbus
-     * \param[in] feldbus Pointer auf eine FeldbusAbstraction-Instanz, an die die
+	 * \param[in] name_ Interner Name des Gerätes, der von name() zurückgeliefert wird.
+	 * \param[in] address Busadresse des Gerätes.
+     * \param[in] feldbus Referenz auf eine FeldbusAbstraction-Instanz, an die die
      * eigentliche Datenübertragung delegiert wird.
-	 * \param[in] type
-	 * \param[in] max_transmission_attempts
-	 * \param[in] max_transmission_errors
-	 * \param[in] addressLength
+	 * \param[in] type Typ der verwendeten Checksumme.
+	 * \param[in] max_transmission_attempts Maximale Anzahl von Versuchen, ein Paket zu übertragen.
+	 * \param[in] max_transmission_errors Anzahl hintereinander auftretender Fehler, ab dem das Gerät als dysfunktional deklariert wird.
+	 * \param[in] addressLength Auf dem Bus verwendete Adresslänge.
 	 */
 	Device(const char* name_, unsigned address, FeldbusAbstraction& feldbus,
            ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,

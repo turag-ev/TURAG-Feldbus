@@ -15,8 +15,8 @@
 namespace TURAG {
 namespace Feldbus {
 
-/*
- *
+/**
+ * @brief Sensor Klasse.
  */
 class Sensor : public TURAG::Feldbus::Device {
 public:

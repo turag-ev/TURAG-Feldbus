@@ -18,6 +18,9 @@ namespace TURAG {
 namespace Feldbus {
 
 
+/**
+* FeldbusDriver-Klasse.
+*/
 class FeldbusDriver : public FeldbusAbstraction {
 public:
 	FeldbusDriver(const char* name, bool threadSafe = true);

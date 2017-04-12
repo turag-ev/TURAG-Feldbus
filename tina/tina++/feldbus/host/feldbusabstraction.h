@@ -82,10 +82,10 @@ public:
 
     /**
      * \brief Sendet und empfängt Daten auf dem Bus.
-     * \param[in,out] transmit Pointer auf den Sendepuffer.
+     * \param[in] transmit Pointer auf den Sendepuffer.
      * \param[in,out] transmit_length Pointer auf die Größe der zu sendenden Daten.
      * Enthält nach Rückkehr der Funktion die Größe der tatsächlich gesendeten Daten.
-     * \param[in,out] receive Pointer auf den Empfangspuffer.
+     * \param[out] receive Pointer auf den Empfangspuffer.
      * \param[in,out] receive_length Pointer auf die Größe der zu empfangenden Daten.
      * Enthält nach Rückkehr der Funktion die Größe der tatsächlich empfangenen Daten.
 	 * \param[in] targetAddress Adresse, an die das Paket gesendet wird. Die Adresse
@@ -123,7 +123,7 @@ public:
 	const char* name(void) { return name_; }
 
 	/**
-	 * @brief Zugriff auf die Übertragungsstatistiken des Bussen.
+	 * @brief Zugriff auf die Übertragungsstatistiken des Busses.
 	 * @return Referenz auf eine Debug::ErrorObserver-Instanz.
 	 */
 	const Debug::ErrorObserver& busTransmissionStatistics(void) const { return busTransmissionStatistics_; }
@@ -133,10 +133,10 @@ protected:
 	// should be private, but is protected to get it in the docs.
 	/**
 	 * \brief Sendet und empfängt Daten auf dem Bus.
-	 * \param[in,out] transmit Pointer auf den Sendepuffer.
+	 * \param[in] transmit Pointer auf den Sendepuffer.
 	 * \param[in,out] transmit_length Pointer auf die Größe der zu sendenden Daten.
 	 * Enthält nach Rückkehr der Funktion die Größe der tatsächlich gesendeten Daten.
-	 * \param[in,out] receive Pointer auf den Empfangspuffer.
+	 * \param[out] receive Pointer auf den Empfangspuffer.
 	 * \param[in,out] receive_length Pointer auf die Größe der zu empfangenden Daten.
 	 * Enthält nach Rückkehr der Funktion die Größe der tatsächlich empfangenen Daten.
 	 * \param[in] delayTransmission Gibt an, ob das Paket-Delay von 15 Frames
