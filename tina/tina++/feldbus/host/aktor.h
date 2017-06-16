@@ -73,7 +73,7 @@ public:
 		bool bufferValid;
 		
 		Command_t() : 
-		factor(1), 
+		factor(1.0f),
 		buffer(),
 		writeAccess(WriteAccess::no_write),
 		length(CommandLength::length_char),

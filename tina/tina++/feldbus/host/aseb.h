@@ -308,6 +308,10 @@ private:
 
 /**
  * \brief Vereinfacht die Benutzung der Klasse Aseb.
+ * \tparam AnalogInputSize Anzahl der analogen Eingänge.
+ * \tparam PwmOutputSize Anzahl der PWM-Ausgänge.
+ * \tparam HasDigitalInputs True, wenn digitale Eingänge vorhanden sind, ansonsten false.
+ * \tparam AddressSize Auf dem Bus verwendete Adresslänge vom Typ Device::AddressLength.
  * 
  * Diese Klasse verwaltet ihre benötigten Puffer
  * selbst. Die Größe kann mit den Template-Parametern 
@@ -315,35 +319,31 @@ private:
  * 
  * Für jede verbaute ASEB-Platine muss dadurch lediglich eine
  * Instanz dieses Klassen-Templates mit den richtigen
- * Puffergrößen gebildet werden, alles Weitere geschieht im 
+ * Template-Parametern gebildet werden, alles Weitere geschieht im 
  * Hintergrund.
- *
- * Die SyncSize ergibt sich aus der Formel 2*n, falls keine
- * digitalen Eingänge existieren, und aus der Formel 2+2*n,
- * falls digitale Eingänge vorhanden sind. n ist hierbei die
- * Anzahl der analogen Eingänge.
+ * 
  */
-template<std::size_t syncSize, std::size_t analogInputSize, std::size_t pwmOutputSize>
+template<std::size_t AnalogInputSize, std::size_t PwmOutputSize, bool HasDigitalInputs,
+         Device::AddressLength AddressSize = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH>
 class AsebTemplate : public Aseb {
 public:
+    static constexpr std::size_t SyncSize = static_cast<uint8_t>(AddressSize) + 2*AnalogInputSize + (HasDigitalInputs?2:0) + 1;
 	/**
 	 * \brief Konstruktor
-	 * \param[in] name
-	 * \param[in] address
-	 * \param[in] feldbus
-	 * \param[in] type
-	 * \param[in] addressLength
+     * \param[in] name Interner Name des Gerätes, der von name() zurückgeliefert wird.
+     * \param[in] address Busadresse des Gerätes.
+     * \param[in] feldbus Referenz auf eine FeldbusAbstraction-Instanz, die den zu verwendenden Bus repräsentiert.
+     * \param[in] type Typ der verwendeten Checksumme.
 	 */
-	AsebTemplate(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
-			   const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		Aseb(name, address, feldbus, type, addressLength)  { }
+    AsebTemplate(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE):
+        Aseb(name, address, feldbus, type, AddressSize)  { }
 	
 	/**
 	 * \brief Initialisiert das Gerät.
 	 * \return True bei Erfolg, ansonsten false.
 	 */
     bool initialize(void) {
-        return Aseb::initialize(syncBuffer.get(), syncSize, analog.get(), analogInputSize, pwm.get(), pwmOutputSize);
+        return Aseb::initialize(syncBuffer.get(), SyncSize, analog.get(), AnalogInputSize, pwm.get(), PwmOutputSize);
     }
 
 private:
@@ -353,9 +353,9 @@ private:
 	template<typename T>
 	struct ConditionalArray<T, 0> { T* get() { return nullptr;} };
 	
-	ConditionalArray<uint8_t, syncSize> syncBuffer;
-	ConditionalArray<Analog_t, analogInputSize> analog;
-	ConditionalArray<Pwm_t, pwmOutputSize> pwm;
+    ConditionalArray<uint8_t, SyncSize> syncBuffer;
+    ConditionalArray<Analog_t, AnalogInputSize> analog;
+    ConditionalArray<Pwm_t, PwmOutputSize> pwm;
 };
 
 
