@@ -5,8 +5,10 @@
  *      Author: martin
  *
  *      This is a tina-platform header. As such its interface
- *      should be platform-independent, which it isn't.
- *      To get the most flexibility, initDriver() should be called
+ *      should be platform-independent, which it isn't 
+ *      (because init() requires a pointer to a platform-specific
+ *      structure).
+ *      To get the most flexibility, init() should be called
  *      in platform code and start() in generic code.
  */
 
@@ -30,25 +32,41 @@ namespace Slave {
 // device on one board, all static functions
 // could be replaced with normal ones.
 /**
- * @brief
- * @ingroup feldbus-slave-base
+ * @brief Feldbus-Slave Treiber für ChibiOS 3.
+ * 
+ * Dieser Treiber implementiert den plattform-abhängigen Teil des Feldbus-Slave
+ * Treibers für die ChibiOS 3-Plattform.
  */
 class Driver {
 public:
 	/**
-	 * @brief
+	 * @brief Feldbus-Konfigurationsstruktur.
+     * 
+     * Enthält sämtliche Informationen die für einen Betrieb als Feldbus-Slave
+     * in ChibiOS nötig sind.
 	 */
     struct HardwareConfig {
+        /// Zu verwendender UART-Treiber.
         UARTDriver *uartp;
+        /// UART-Config.
         UARTConfig uartConfig;
+        /// Baudrate. Muss hier und in uartConfig angegeben werden.
         uint32_t baudrate;		// must be set in uartConfig and in baudrate
+        /// Zu verwendender GPTimer.
         GPTDriver * gptp;
+        /// GPTimer Config.
         GPTConfig gptConfig;
+        /// Port an dem die LED angeschlossen ist.
         ioportid_t ledPort;
+        /// Pin der LED.
         unsigned ledPin;
+        /// Gibt an, ob das LED-Signal invertiert werden soll.
         bool ledInverted;
+        /// Port an dem das RTS-Signal angeschlossen ist.
         ioportid_t rtsPort;
+        /// Pin des RTS-Signals.
         unsigned rtsPin;
+        /// Gibt an, ob das RTS-Signal invertiert werden soll.
         bool rtsInverted;
     };
 
@@ -56,20 +74,30 @@ public:
     // sets up hardware-specific stuff
     // should be called in hardware-dependent source-file
     /**
-     *
-     * @param config
+     * @brief Initialisiert die Hardware.
+     * @param[in] config Konfigurationsstruktur.
+     * 
+     * Da diese Funktion einen Pointer auf eine plattform-abhängige
+     * Struktur benötigt, sollte sie im plattform-abhängigen Teil der 
+     * Applikation aufgerufen werden.
      */
     static void init(HardwareConfig* config);
 
     /**
-     *
-     * @param thread
-     * @param prio
+     * @brief Startet den Betrieb des Feldbus-Slave-Treibers.
+     * @param[in] thread Zeiger auf einen Arbeitsthread, der noch nicht gestartet wurde.
+     * @param[in] prio Priorität, mit der der Arbeitsthread gestartet werden soll.
+     * 
+     * Diese Funktion sollte nach Slave::Driver::init() und Slave::Base::init() aufgerufen werden.
+     * Sie startet den Datenempfang und den %Thread, der die empfangenen Daten verarbeitet.
      */
     static void start(ThreadImpl* thread, int prio);
 
     /**
      * @brief Schaltet die konfigurierte LED um.
+     * 
+     * Diese Funktion schaltet den Zustand der in init() konfigurierten LED um.
+     * Sie wird von Slave::Base benötigt.
      */
     static void toggleLed(void) {
     	if (config->ledPort) {
@@ -82,6 +110,9 @@ public:
     * @brief Sendet blockierend beliebige Daten z.B. zum debuggen.
     * @param[in] data Zu sendende Daten.
     * @param[in] length Länge des Datensatzes.
+    * 
+    * Diese Funktion wird von Slave::printf() und Slave::puts() zur Ausgabe
+    * von Debug-Informationen benutzt.
     */
     static void transmitDebugData(const void* data, size_t length);
 #endif

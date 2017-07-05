@@ -23,6 +23,12 @@
  * zu gewährleisten, gibt es fertige und plattformunabhängige Implementierungen für Basis-
  * und Anwendungsprotokolle. 
  * 
+ * Die AVR-Implementierung gab es zuerst, passt allerdings nicht wirklich in TinA, da es auf
+ * Controller ohne RTOS zugeschnitten war. Die neuere Implementierung nutzt Klassen, allerdings
+ * mit statischen Membern, damit die alten prozeduralen C-Implementierungen der Anwendungsprotokolle
+ * weiterhin genutzt werden können. In Zukunft sollte hier ein Klassenmodul ähnlich der Hostseite 
+ * entwickelt werden.
+ * 
  * 
  * 
  * 

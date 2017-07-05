@@ -4,7 +4,7 @@
  *  @author		Martin Oemus <martin@oemus.net>
  *  @ingroup    feldbus-slave-base-avr
  * 
- * @brief Beispiel für den Config-Header eines Feldbus Slave-Gerätes. 
+ * @brief Beispiel für den Config-Header eines Feldbus Slave-Gerätes (AVR). 
  * Diese Datei kann in das Quellverzeichnis des Gerätes kopiert und angepasst werden.
  * 
  * Die Basisimplementierung und die Protokollimplementierungen

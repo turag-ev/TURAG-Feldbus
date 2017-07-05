@@ -25,7 +25,7 @@
  * 
  * @section felbus-slave-struktur-basis Struktur der Basis-Implementierung
  * 
- * \image html feldbus-slave.png "Strukturschema der TURAG-Feldbus-Basisimplementierung"
+ * \image html feldbus-slave.png "Strukturschema der TURAG-Feldbus-Basisimplementierung (AVR)"
  * Die Basis-Implementierung sitzt zwischen Hardware und Firmware des Slave-Gerätes. 
  * Die Kommunikation mit der Hardware geschieht über ein Hardware-Interface, während für die
  * Firmware des Gerätes mit dem Protokoll-Interface eine abstrakte Schnittstelle bereitsteht,
@@ -98,7 +98,7 @@
  * @section feldbus-slave-implementierungsanleitung HowTo: Softwaregerüst für ein neues Feldbusgerät erstellen
  * 1. Verzeichnisstruktur erstellen:
  * \image html feldbus-device-file-structure.png
- * 2. Als Basis für die Konfigurationsdatei sollte eine Kopie der Datei programmierung/tina/tina/feldbus/slave/feldbus_config.h benutzt werden.
+ * 2. Als Basis für die Konfigurationsdatei sollte eine Kopie der Datei programmierung/tina/tina/feldbus/slave/avr_feldbus_config.h benutzt werden (umbenannt in %feldbus_config.h).
  *    Wichtig ist hierbei das korrekte includieren des passenden Protokoll-Headers. Basiert das Gerät auf einem Anwendungsprotokoll 
  *    (statt nur des Basis-Protokolls) werden evt. weitere Definitionen nötig, die in der Beispieldatei nicht enthalten sind. 
  * 3. Die Funktionen des Hardware-Interfaces müssen für die Plattform bereitgestellt werden (feldbus_hardware_driver.c). 
@@ -225,67 +225,12 @@
  * Transmit-Buffer konfiguriert ist, da es ansonsten zu Pufferüberläufen kommen kann.
  * 
  * 
- * @defgroup feldbus-host Host Implementierungen [C++]
- * @ingroup feldbus
- * 
- * Host-Klassen, die zur Kommunikation mit Busgeräten benutzt werden können.
- * 
- * Die Basis aller Hosts-Klassen ist \ref TURAG::Feldbus::Device, das masterseitigen 
- * Support für das Basis-Protokoll bereitstellt.
- * 
- * Das Verhalten des Masters kann mit einigen Definitionen angepasst werden, für die
- * sinnvolle Standardwerte eingestellt sind. Bei Bedarf können diese über die TinA-Konfiguration
- * entsprechend überschrieben werden.
- *
- * Die Kommunikation mit der Hardware-Schnittstelle wird mit der TURAG::Feldbus::FeldbusAbstraction-Klasse
- * abstrahiert und muss mit einer Subklasse um den plattformspezifischen Teil
- * erweitert werden.
- *
- * \section feldbus-host-configurability Konfigurierbarkeit
- * - \ref TURAG_USE_TURAG_FELDBUS_HOST muss auf 1 definiert sein.
- * - \ref TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE ist optional.
- *
- * 
- * \section feldbus-host-threadsafety Thread-Safety
- * \note Generell ist aus Gründen der Einfachheit zu empfehlen, alle Host-Klassen
- * exklusiv von einem einzigen %Thread aus zu benutzen und den Austausch von Daten
- * über andere Mechanismen zu gewährleisten. Dadurch ist der Zugriff auf den 
- * Bus geordnet und die Komplexität des System wird nicht unnnötig gesteigert.
- * Die folgenden Informationen sind der Vollständigkeit halber angegeben.
- * 
- * Damit der Buszugriff mit mehreren Threads reibungslos funktioniert, sind
- * folgende Voraussetzungen zu erfüllen:
- * - Host-Klassen müssen mindestens reentrant sein
- * - Zugriff auf die Bus-Hardware muss synchronisert sein
- * - Bus-Transaktionen müssen atomaren Charakter besitzen.
- * 
- * Die Host-Klassen sind reentrant, aber nicht thread-safe. Das heißt, der Zugriff 
- * auf eine Instanz einer Klasse muss manuell synchronisiert werden. Unproblematisch 
- * ist hingegen die Verwendung verschiedener Instanzen einer Klasse in verschiedenen Threads.
- * Dies ist eine übliche Einschränkung, da die Gewährleistung von Threadsicherheit
- * für jede Funktion einen zu großen Overhead mit sich bringen würde. Soll ein Busgerät
- * von mehreren Threads angesprochen werden, so müssen entweder zwei Instanzen 
- * für jeden %Thread angelegt werden oder jeder Aufruf von nicht-const Funktionen muss
- * synchronisert werden. Welche Variante sinnvoller ist, hängt stark von den Details
- * der entsprechenden Klasse ab.
- * 
- * Der Zugriff auf den Bus wird durch die Klasse TURAG::Feldbus::FeldbusAbstraction gewährleistet.
- * Im Konstruktor kann angegeben werden, ob eine Semaphore zur Synchronisierung benutzt 
- * werde soll.
- * 
- * Atomizität der Bus-Transaktionen bedeutet, dass falls für eine bestimmte
- * Funktionalität in einem Gerät mehr als eine Bus-Transaktion (Paket senden und
- * empfangen) erforderlich ist, die sequentielle Durchführung aller notwendigen Transaktionen
- * nicht durch Fremdpakete unterbrochen wird. Da jedoch das
- * Basis-Protokoll zustandslos ist und dies auch von allen Geräte-Protokollen
- * verlangt wird, kann eine solche Konstellation theoretisch nicht auftreten und 
- * es müssen dahingehend keine Maßnahmen getroffen werden.
- * 
  * @section feldbus-slave-base-config Konfiguration
  * 
- * Siehe feldbus_config.h.
+ * Siehe avr_feldbus_config.h.
  * 
- * feldbus_config.h ist eine Beispielkonfigurationsdatei, die nicht direkt includiert werden darf.
+ * avr_feldbus_config.h ist eine Beispielkonfigurationsdatei, die nicht direkt includiert werden darf.
+ * Eine Kopie dieser sollte unter dem Namen "feldbus_config.h" im Projektverzeichnis abgelegt werden.
  *
  * 
  */
