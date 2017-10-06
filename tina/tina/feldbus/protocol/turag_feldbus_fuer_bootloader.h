@@ -20,6 +20,7 @@
 #define TURAG_FELDBUS_BOOTLOADER_GENERIC				0x01
 #define TURAG_FELDBUS_BOOTLOADER_ATMEGA					0x02
 #define TURAG_FELDBUS_BOOTLOADER_XMEGA  				0x03
+#define TURAG_FELDBUS_BOOTLOADER_STM32  				0x04
 
 ///@}
 
@@ -108,7 +109,11 @@
 #define TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA16E5			    0x9445
 #define TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA32E5			    0x944C
 
+// note: the values abovo are legacy. From here on values are manually
+// chosen (mainly because for STM32 there seems to be no unique
+// model nuber).
 #define TURAG_FELDBUS_BOOTLOADER_MCU_ID_CHIBIOS_STM32F411xE     0x1000
+#define TURAG_FELDBUS_BOOTLOADER_MCU_ID_CHIBIOS_STM32F405xG     0x1001
 
 ///@}
 

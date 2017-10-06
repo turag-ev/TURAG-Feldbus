@@ -127,6 +127,9 @@ public:
      * gleichbleibender Häufigkeit aufgerufen werden. Durch die Angabe der Frequenz
      * wird TURAG::Feldbus::Slave::Driver::toggleLed() so aufgerufen, dass ein 
      * charakterstisches Blinkmuster entsteht.
+     * 
+     * @pre Diese Funktion ist nur verfügbar, wenn \ref TURAG_FELDBUS_SLAVE_CONFIG_FLASH_LED
+     * auf 1 definiert wurde.
 	 */
 	static void doLedPattern(unsigned frequency);
 #endif
