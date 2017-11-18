@@ -228,10 +228,10 @@ bool DynamixelDevice::isMoving(bool *movement){
     int tempMove=0;
     if(readWord(TURAG_DXL_ADDRESS_MOVING, &tempMove)) {
         if (tempMove==1){
-             turag_debugf("%s hasAngleReached = true", this->name, success);
+             turag_debugf("%s hasAngleReached = true", this->name);
             *movement= true;
         } else {
-             turag_debugf("%s hasAngleReached = false", this->name, success);
+             turag_debugf("%s hasAngleReached = false", this->name);
             *movement= false;
         }
     return true;

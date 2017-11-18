@@ -16,10 +16,10 @@ bool ServoBase::hasAngleReached() {
     bool success = getValue(RS485_STELLANTRIEBE_KEY_STATUS, &status);
 
 	if (success && static_cast<uint8_t>(status) == RS485_STELLANTRIEBE_STATUS_ANGLE_REACHED) {
-		turag_debugf("%s hasAngleReached = true", this->name);
+        turag_debugf("%s hasAngleReached = true", this->name());
         return true;
 	} else {
-		turag_debugf("%s hasAngleReached = false", this->name);
+        turag_debugf("%s hasAngleReached = false", this->name());
         return false;
 	}
 }
