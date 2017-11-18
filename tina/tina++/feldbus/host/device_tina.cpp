@@ -171,7 +171,8 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 			++myTotalChecksumErrors;
 			break;
 
-		case FeldbusAbstraction::ResultStatus::Success: break;
+        case FeldbusAbstraction::ResultStatus::Success:
+            break;
                 }
 
             ++attempt;
@@ -186,7 +187,9 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 //            turag_info("]\n");
 
 
-	if (status == FeldbusAbstraction::ResultStatus::Success) {
+    switch (status)
+    {
+    case FeldbusAbstraction::ResultStatus::Success:
             // if we had a successful transmission, we reset the error counter
             // but resetting the error only makes sense if we got a response from the device
             if (receive && receive_length != 0) {
@@ -198,12 +201,17 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
 				// an error message if the device fails again within
 				// a short time.
 				dysFunctionalLog_.resetAll();
-            }
-            return true;
-        } else {
-			turag_warningf("%s: rs485 transceive failed", name_);
-            myCurrentErrorCounter += attempt;
-            return false;
+        }
+        turag_debugf("%s: rs485 transceive successful!", name_);
+        return true;
+    case FeldbusAbstraction::ResultStatus::TransmissionError:
+        turag_warningf("%s: rs485 transceive failed: Transmission error", name_);
+        myCurrentErrorCounter += attempt;
+        return false;
+    case FeldbusAbstraction::ResultStatus::ChecksumError:
+        turag_warningf("%s: rs485 transceive failed: Checksum error", name_);
+        myCurrentErrorCounter += attempt;
+        return false;
         }
     }
 
