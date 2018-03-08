@@ -14,7 +14,7 @@
 #include "aseb.h"
 
 #include <tina/debug.h>
-
+#include <cmath>
 
 
 namespace TURAG {
@@ -110,15 +110,19 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
         pwmOutputs_ = pwmOutputs;
 
         Request<AsebGetInfo> request;
-        request.data.command = TURAG_FELDBUS_ASEB_PWM_OUTPUT_MAX_VALUE;
-
-        Response<AsebGetPwmMaxValue> response;
+        Response<AsebGetPwmMaxValue> max_value_response;
+        Response<AsebGetPwmFrequency> frequency_response;
 
         for (int i = 0; i < pwmOutputSize_; ++i) {
             request.data.index = i + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
 
-            if (!transceive(request, &response)) return false;
-            pwmOutputs_[i].max_value = static_cast<float>(response.data.maxValue);
+            request.data.command = TURAG_FELDBUS_ASEB_PWM_OUTPUT_MAX_VALUE;
+            if (!transceive(request, &max_value_response)) return false;
+            request.data.command = TURAG_FELDBUS_ASEB_PWM_OUTPUT_FREQUENCY;
+            if (!transceive(request, &frequency_response)) return false;
+
+            pwmOutputs_[i].max_value = max_value_response.data.maxValue;
+            pwmOutputs_[i].frequency = frequency_response.data.frequency;
         }
     } else {
         pwmOutputSize_ = 0;
@@ -384,32 +388,19 @@ bool Aseb::initPwmOutputBuffer() {
     return true;
 }
 
-uint16_t Aseb::getPwmSpeed(unsigned key) {
+float Aseb::getPwmSpeed(unsigned key) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getPwmSpeed prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
         turag_errorf("%s: Wrong arguments to getPwmSpeed. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
+    } else {
+        return pwmOutputs_[key].speed;
     }
-    struct AsebGetSpeed {
-        uint8_t command;
-        uint8_t index;
-    };
-
-    Request<AsebGetSpeed> request;
-    request.data.command = TURAG_FELDBUS_ASEB_PWM_SPEED;
-    request.data.index = key + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
-    Response<uint16_t> response;
-    if (!transceive(request, &response)) {
-        turag_errorf("%s: Aseb getPWMSpeed transceive failed", name());
-        return 0;
-    }
-    return response.data;
-
 }
 
-bool Aseb::setPwmSpeed(unsigned key, uint16_t speed) {
+bool Aseb::setPwmSpeed(unsigned key, float speed) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::setPwmSpeed prior to initialization", name());
         return false;
@@ -426,13 +417,17 @@ bool Aseb::setPwmSpeed(unsigned key, uint16_t speed) {
     Request<AsebSetSpeed> request;
     request.data.command = TURAG_FELDBUS_ASEB_PWM_SPEED;
     request.data.index = key + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
-    request.data.value = speed;
+    if(std::isfinite(speed))
+        request.data.value = static_cast<float>(pwmOutputs_[key].max_value) * (speed / 100.0f) / static_cast<float>(pwmOutputs_[key].frequency);
+    else
+        request.data.value = 0xFFFF;
 
     Response<> response;
     if (!transceive(request, &response)) {
         turag_errorf("%s: Aseb setPWMSpeed transceive failed", name());
         return false;
     }
+    pwmOutputs_[key].speed = speed;
     return true;
 }
 
@@ -458,29 +453,6 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
         }
 
         pwmOutputs_[key].value = duty_cycle;
-        return true;
-    }
-}
-
-
-bool Aseb::getPwmFrequency(unsigned key, uint32_t* frequency) {
-	if (!isInitialized()) {
-        turag_errorf("%s: tried to call Aseb::getPwmFrequency prior to initialization", name());
-        return false;
-    } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to getPwmFrequency. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
-        return false;
-    } else {
-        Request<AsebGetInfo> request;
-        request.data.command = TURAG_FELDBUS_ASEB_PWM_OUTPUT_FREQUENCY;
-        request.data.index = key + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
-
-        Response<AsebGetPwmFrequency> response;
-
-        if (!transceive(request, &response)) return false;
-
-        *frequency = response.data.frequency;
-
         return true;
     }
 }
@@ -535,6 +507,18 @@ bool Aseb::getCommandName(unsigned key, char* out_name) {
 
     return true;
 
+}
+
+uint32_t Aseb::getPwmFrequency(unsigned key) {
+    if (!isInitialized()) {
+        turag_errorf("%s: tried to call Aseb::getPwmFrequency prior to initialization", name());
+        return 0;
+    } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
+        turag_errorf("%s: Wrong arguments to getPwmFrequency. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        return 0;
+    } else {
+        return pwmOutputs_[key].frequency;
+    }
 }
 
 bool Aseb::getAnalogResolution(unsigned* resolution) {

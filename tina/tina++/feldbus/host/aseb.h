@@ -49,10 +49,10 @@ public:
 	 * \brief Repräsentiert einen PWM-Ausgang.
 	 */
 	struct Pwm_t {
-        float max_value;
-
-        /// [%]
-        float value;
+        uint16_t max_value;
+        uint32_t frequency; /// [Hz]
+        float speed; /// [%/s]
+        float value; /// [%]
 
         Pwm_t() : max_value(0), value(0) {}
 	};
@@ -168,12 +168,31 @@ public:
 	 */
     bool setDigitalOutput(unsigned key, bool value);
 	
-    uint16_t getPwmSpeed(unsigned key);
-    bool setPwmSpeed(unsigned key, uint16_t speed);
+    /**
+     * \brief Gibt die Stellgeschwindigkeit des eines PWM-Channels zurück.
+     * \param[in] key Key des auszugebenden Channels (0-15).
+     * \return Stellgeschwindigkeit des Channels in %/s, unendlich wenn die Stellgeschwindigkeit nicht vom ASEB begrenzt wird
+     * Wenn initialize() nicht ausgeführt
+     * wurde oder key außerhalb des gültigen
+     * Wertebreichs liegt, wird 0.0f zurückgegeben.
+     *
+     * Diese Funktion verursacht keine Buslast.
+     * \pre initialize() muss aufgerufen worden sein.
+     */
+    float getPwmSpeed(unsigned key);
+
+    /**
+     * \brief Setzt die Stellgeschwindigkeit eines PWM-Channels.
+     * \param[in] key Key das zu setzenden Channels (0-15).
+     * \param[in] speed Stellgeschwindigkeit des Channels, angegeben in %/s
+     * \return True bei Erfolg, ansonsten false.
+     * \pre initialize() muss aufgerufen worden sein.
+     */
+    bool setPwmSpeed(unsigned key, float speed);
 
 	/**
 	 * \brief Gibt den duty cycle eines PWM-Channels zurück.
-	 * \param[in] key Key das auszugebenden Channels (0-15).
+     * \param[in] key Key des auszugebenden Channels (0-15).
 	 * \return Duty cycle des Channels; mögliche Werte: 0 - 100 %.  
 	 * Wenn initialize() nicht ausgeführt 
 	 * wurde oder key außerhalb des gültigen 
@@ -235,13 +254,18 @@ public:
 	 */
 	unsigned int getCommandNameLength(unsigned raw_key);
 	
-	/**
-	 * \brief Fragt die Frequenz eines PWM-Kanals vom Gerät ab.
-	 * \param[in] key Key das abzufragenden Channels (0-15).
-	 * \param[out] frequency Puffer, in dem die Frequenz gespeichert wird.
-	 * \return True bei Erfolg, ansonsten false.
-	 */
-	bool getPwmFrequency(unsigned key, uint32_t* frequency);
+    /**
+     * \brief Gibt die Frequenz eines PWM-Channels zurück.
+     * \param[in] key Key das auszugebenden Channels (0-15).
+     * \return Frequenz des Channels in Hz
+     * Wenn initialize() nicht ausgeführt
+     * wurde oder key außerhalb des gültigen
+     * Wertebreichs liegt, wird 0 zurückgegeben.
+     *
+     * Diese Funktion verursacht keine Buslast.
+     * \pre initialize() muss aufgerufen worden sein.
+     */
+    uint32_t getPwmFrequency(unsigned key);
 	
 	/**
 	 * \brief Fragt die Auflösung der analogen Eingänge vom Gerät ab.
