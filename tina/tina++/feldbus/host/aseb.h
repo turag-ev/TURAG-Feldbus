@@ -52,9 +52,9 @@ public:
         uint16_t max_value;
         uint32_t frequency; /// [Hz]
         float speed; /// [%/s]
-        float value; /// [%]
+        float target; /// [%]
 
-        Pwm_t() : max_value(0), value(0) {}
+        Pwm_t() : max_value(0), target(0) {}
 	};
 	
 	
@@ -190,10 +190,19 @@ public:
      */
     bool setPwmSpeed(unsigned key, float speed);
 
-	/**
-	 * \brief Gibt den duty cycle eines PWM-Channels zurück.
+    /**
+     * \brief Gibt momentanen Duty-Cycle eines PWM-Channels zurück.
      * \param[in] key Key des auszugebenden Channels (0-15).
-	 * \return Duty cycle des Channels; mögliche Werte: 0 - 100 %.  
+     * \param[out] duty_cycle Duty-Cycle des Channels; mögliche Werte: 0 - 100 %.
+     * \return True bei Erfolg, ansonsten false
+     * \pre initialize() muss aufgerufen worden sein.
+     */
+    bool getCurrentPwmOutput(unsigned key, float* duty_cycle);
+
+    /**
+     * \brief Gibt den Ziel-Duty-Cycle eines PWM-Channels zurück.
+     * \param[in] key Key des auszugebenden Channels (0-15).
+     * \return Ziel-Duty-Cycle des Channels; mögliche Werte: 0 - 100 %.
 	 * Wenn initialize() nicht ausgeführt 
 	 * wurde oder key außerhalb des gültigen 
 	 * Wertebreichs liegt, wird 0.0f zurückgegeben.
@@ -201,16 +210,16 @@ public:
 	 * Diese Funktion verursacht keine Buslast.
 	 * \pre initialize() muss aufgerufen worden sein.
 	 */
-    float getPwmOutput(unsigned key);
+    float getTargetPwmOutput(unsigned key);
 	
 	/**
-	 * \brief Setzt den duty cycle eines PWM-Channels.
+     * \brief Setzt den Ziel-Duty-Cycle eines PWM-Channels.
 	 * \param[in] key Key das zu setzenden Channels (0-15).
 	 * \param[in] duty_cycle Duty-Cycle des Channels, angegeben in 0 - 100 %.
 	 * \return True bei Erfolg, ansonsten false.
 	 * \pre initialize() muss aufgerufen worden sein.
 	 */
-	bool setPwmOutput(unsigned key, float duty_cycle);
+    bool setTargetPwmOutput(unsigned key, float duty_cycle);
 
  	/**
 	 * \brief Fragt die Bezeichnung eines Channels ab.

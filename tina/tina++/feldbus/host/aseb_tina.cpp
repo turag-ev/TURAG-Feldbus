@@ -281,6 +281,19 @@ float Aseb::getAnalogInput(unsigned key) {
     }
 }
 
+
+float Aseb::getTargetPwmOutput(unsigned key) {
+    if (!isInitialized()) {
+        turag_errorf("%s: tried to call Aseb::getTargetPwmOutput prior to initialization", name());
+        return 0.0f;
+    } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
+        turag_errorf("%s: Wrong arguments to getTargetPwmOutput. Key must be in the range of 0 to %u (given %u).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        return 0.0f;
+    } else {
+        return pwmOutputs_[key].target;
+    }
+}
+
 bool Aseb::getDigitalInput(unsigned key) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getDigitalInput prior to initialization", name());
@@ -353,15 +366,20 @@ bool Aseb::setDigitalOutput(unsigned key, bool value) {
     }
 }
 
-float Aseb::getPwmOutput(unsigned key) {
+bool Aseb::getCurrentPwmOutput(unsigned key, float* duty_cycle) {
 	if (!isInitialized()) {
-        turag_errorf("%s: tried to call Aseb::getPwmOutput prior to initialization", name());
-        return 0.0f;
-    } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
+        turag_errorf("%s: tried to call Aseb::getCurrentPwmOutput prior to initialization", name());
+        return false;
+    } else if (key >= static_cast<unsigned>(pwmOutputSize_) || !duty_cycle) {
         turag_errorf("%s: Wrong arguments to getPwmOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
-        return 0.0f;
+        return false;
     } else {
-        return pwmOutputs_[key].value;
+        Request<uint8_t> request;
+        Response<AsebGetPwmValue> response;
+        request.data = TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT + key;
+        if(!transceive(request, &response)) return false;
+        *duty_cycle = static_cast<float>(response.data.value) * 100.0f / pwmOutputs_[key].max_value;
+        return true;
     }
 }
 
@@ -377,13 +395,21 @@ bool Aseb::initPwmOutputBuffer() {
         return false;
     }
 
-    Request<uint8_t> request;
+    Request<AsebGetInfo> request;
     Response<AsebGetPwmValue> response;
 
     for (int i = 0; i < size; ++i) {
-        request.data = i + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
-        if (!transceive(request, &response)) return false;
-        pwmOutputs_[i].value = static_cast<float>(response.data.value) * 100.0f / pwmOutputs_[i].max_value;
+        pwmOutputs_[i].target = 0.0f;
+
+        request.data.command = TURAG_FELDBUS_ASEB_PWM_SPEED;
+        request.data.index = i + TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
+        if(!transceive(request, &response)) return false;
+
+        if(response.data.value >= pwmOutputs_[i].max_value)
+            pwmOutputs_[i].speed = INFINITY;
+        else
+            pwmOutputs_[i].speed = static_cast<float>(pwmOutputs_[i].frequency) * static_cast<float>(response.data.value) * 100.0f /
+                    static_cast<float>(pwmOutputs_[i].max_value);
     }
     return true;
 }
@@ -424,22 +450,22 @@ bool Aseb::setPwmSpeed(unsigned key, float speed) {
 
     Response<> response;
     if (!transceive(request, &response)) {
-        turag_errorf("%s: Aseb setPWMSpeed transceive failed", name());
+        turag_errorf("%s: Aseb setPwmSpeed transceive failed", name());
         return false;
     }
     pwmOutputs_[key].speed = speed;
     return true;
 }
 
-bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
+bool Aseb::setTargetPwmOutput(unsigned key, float duty_cycle) {
 	if (!isInitialized()) {
-        turag_errorf("%s: tried to call Aseb::setPwmOutput prior to initialization", name());
+        turag_errorf("%s: tried to call Aseb::setTargetPwmOutput prior to initialization", name());
         return false;
     } else if (key >= static_cast<unsigned>(pwmOutputSize_)) {
-        turag_errorf("%s: Wrong arguments to setPwmOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
+        turag_errorf("%s: Wrong arguments to setTargetPwmOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
 	} else if (duty_cycle < 0.0f || duty_cycle > 100.0f) {
-		turag_errorf("%s: Wrong arguments to setPwmOutput: %.2f not within valid range (0 ... 100 %%)", name(), duty_cycle);
+        turag_errorf("%s: Wrong arguments to setTargetPwmOutput: %.2f not within valid range (0 ... 100 %%)", name(), duty_cycle);
 		return false;
 	} else {
         Request<AsebSet> request;
@@ -448,11 +474,11 @@ bool Aseb::setPwmOutput(unsigned key, float duty_cycle) {
 
         Response<> response;
         if (!transceive(request, &response)) {
-            turag_errorf("%s: Aseb setPWMOutput transceive failed", name());
+            turag_errorf("%s: Aseb setTargetPWMOutput transceive failed", name());
             return false;
         }
 
-        pwmOutputs_[key].value = duty_cycle;
+        pwmOutputs_[key].target = duty_cycle;
         return true;
     }
 }
