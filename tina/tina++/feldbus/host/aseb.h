@@ -50,9 +50,12 @@ public:
 	 */
 	struct Pwm_t {
         uint16_t max_value;
-        uint32_t frequency; /// [Hz]
-        float speed; /// [%/s]
-        float target; /// [%]
+        /// [Hz]
+        uint32_t frequency;
+        /// [%/s]
+        float speed;
+        /// [%]
+        float target;
 
         Pwm_t() : max_value(0), target(0) {}
 	};
