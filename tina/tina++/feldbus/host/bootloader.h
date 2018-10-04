@@ -41,6 +41,7 @@ public:
 	bool unlockBootloader(void);
 	bool isUnlocked(void) const { return unlocked; }
 	
+    static const char* getMcuName(uint16_t mcuId);
 private:
 	uint16_t myMcuId;
 	bool unlocked;
