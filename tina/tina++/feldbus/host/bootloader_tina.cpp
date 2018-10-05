@@ -58,6 +58,7 @@ uint16_t Bootloader::getMcuId(void) {
 	return myMcuId;
 }
 
+
 bool Bootloader::unlockBootloader(void) {
 	getMcuId();
 	
@@ -416,6 +417,28 @@ char BootloaderXmega::getRevisionId(void) {
 		}
 	}
 	return revisionId;
+}
+
+const char* Bootloader::getMcuName(uint16_t mcuId) {
+    switch(mcuId) {
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA8:   return "ATmega8";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA16:  return "ATmega16";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA32:  return "ATmega32";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA128: return "ATmega128";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA88:  return "ATmega88";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA168: return "ATmega168";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_ATMEGA644: return "ATmega644";
+
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA16D4: return "ATxmega16D4";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA32D4: return "ATxmega32D4";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA64D4: return "ATxmega64D4";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA128D4:return "ATxmega128D4";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA16E5: return "ATxmega16E5";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA32E5: return "ATxmega32E5";
+
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_STM32F051x8: return "STM32F051x8";
+    default: return "<unknown mcu id>";
+    }
 }
 
 } // namespace Feldbus

@@ -36,6 +36,11 @@ namespace Slave {
  * 
  * Dieser Treiber implementiert den plattform-abhängigen Teil des Feldbus-Slave
  * Treibers für die ChibiOS 2-Plattform.
+ * 
+ * \remark Zum Senden wird der DMA benutzt. Beim Empfang geht das nicht so ohne Weiteres, 
+ * da muss für jedes Zeichen ein Interrupt verarbeitet werden. Die Verwendung des 
+ * DMA für den Empfang wäre wünschenswert, ist aber nur auf Controllern vom Typ F0, 
+ * F3, F7, L0 und L4 möglich und dann auch nur ab ChibiOS-4.
  */
 class Driver {
 public:
