@@ -1064,9 +1064,9 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 				length - (2 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH), 
 				turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH]);
 		}
+		turag_feldbus_slave_activate_rx_interrupt();
 	}
 #endif
-	turag_feldbus_slave_activate_rx_interrupt();
 }
 
 #ifdef __cplusplus
