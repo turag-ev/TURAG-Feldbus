@@ -28,60 +28,47 @@ namespace TURAG {
 namespace Feldbus {
 namespace Slave {
 
-// should there ever be a need to run more than one slave
-// device on one board, all static functions
-// could be replaced with normal ones.
 /**
- * @brief Feldbus-Slave Treiber für ChibiOS 3.
+ * @brief Feldbus-Slave Treiber für ChibiOS 4.
  * 
  * Dieser Treiber implementiert den plattform-abhängigen Teil des Feldbus-Slave
- * Treibers für die ChibiOS 3-Plattform.
+ * Treibers für die ChibiOS 4-Plattform.
  */
 class Driver {
 public:
-	/**
-	 * @brief Feldbus-Konfigurationsstruktur.
-     * 
-     * Enthält sämtliche Informationen die für einen Betrieb als Feldbus-Slave
-     * in ChibiOS nötig sind.
-	 */
+    /**
+     * @brief Konfiguration für Software-Receive-Timeout.
+     */
+    struct RTOConfig {
+	GPTDriver* gptd; /// Zu verwendender General-Purpose-Timer.
+	uint32_t gpt_frequency; /// Frequenz des Timers.
+    };
+
     struct HardwareConfig {
-        /// Zu verwendender UART-Treiber.
-        UARTDriver *uartp;
-        /// UART-Config.
-        UARTConfig uartConfig;
-        /// Baudrate. Muss hier und in uartConfig angegeben werden.
-        uint32_t baudrate;		// must be set in uartConfig and in baudrate
-        /// Zu verwendender GPTimer.
-        GPTDriver * gptp;
-        /// GPTimer Config.
-        GPTConfig gptConfig;
-        /// Port an dem die LED angeschlossen ist.
-        ioportid_t ledPort;
-        /// Pin der LED.
-        unsigned ledPin;
-        /// Gibt an, ob das LED-Signal invertiert werden soll.
-        bool ledInverted;
-        /// Port an dem das RTS-Signal angeschlossen ist.
-        ioportid_t rtsPort;
-        /// Pin des RTS-Signals.
-        unsigned rtsPin;
-        /// Gibt an, ob das RTS-Signal invertiert werden soll.
-        bool rtsInverted;
+	/// Zu verwendender UART-Treiber.
+	UARTDriver *uartd;
+	/// Baudrate. 
+	uint32_t baudrate;
+	/// Konfiguration für Software-Receive-Timeout oder NULL für Hardware-Receive-Timeout.
+	RTOConfig* rto_config;
+	/// Port/Pin an dem die LED angeschlossen ist.
+	ioline_t led;
+	/// Gibt an, ob das LED-Signal invertiert werden soll.
+	bool led_inverted;
+	/// Port/Pin an dem das RTS-Signal (Driver-Enable) angeschlossen ist.
+	ioline_t rts;
+	/// Gibt an, ob das RTS-Signal invertiert werden soll.
+	bool rts_inverted;
+	/// Gibt an, ob das RTS-Signal in Software gesteuert werden soll.
+	bool rts_software;
     };
 
 
-    // sets up hardware-specific stuff
-    // should be called in hardware-dependent source-file
     /**
      * @brief Initialisiert die Hardware.
-     * @param[in] config Konfigurationsstruktur.
      * 
-     * Da diese Funktion einen Pointer auf eine plattform-abhängige
-     * Struktur benötigt, sollte sie im plattform-abhängigen Teil der 
-     * Applikation aufgerufen werden.
      */
-    static void init(HardwareConfig* config);
+    static void init(const HardwareConfig*);
 
     /**
      * @brief Startet den Betrieb des Feldbus-Slave-Treibers.
@@ -100,11 +87,8 @@ public:
      * Sie wird von Slave::Base benötigt.
      */
     static void toggleLed(void) {
-    	if (config->ledPort) {
-    		palTogglePad(config->ledPort, config->ledPin);
-    	}
+	palToggleLine(config->led);
     }
-
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED || defined(__DOXYGEN__)
     /**
     * @brief Sendet blockierend beliebige Daten z.B. zum debuggen.
@@ -117,6 +101,9 @@ public:
     static void transmitDebugData(const void* data, size_t length);
 #endif
 private:
+    //prevent instantiation
+    Driver() { }
+    
     struct Data {
         FeldbusSize_t rx_size;
         bool processing;    // set and cleared by thread
@@ -128,22 +115,19 @@ private:
         bool overflow;
     };
 
-    // disallow instances
-    Driver() {}
-    
     static void enableRts(void) {
-        if (config->rtsInverted) {
-            palClearPad(config->rtsPort, config->rtsPin);
+        if (config->rts_inverted) {
+            palClearLine(config->rts);
         } else {
-            palSetPad(config->rtsPort, config->rtsPin);
+            palSetLine(config->rts);
         }
     }
 
     static void disableRts(void) {
-        if (config->rtsInverted) {
-            palSetPad(config->rtsPort, config->rtsPin);
+        if (config->rts_inverted) {
+            palSetLine(config->rts);
         } else {
-            palClearPad(config->rtsPort, config->rtsPin);
+            palClearLine(config->rts);
         }
     }    
     
@@ -172,12 +156,15 @@ private:
     // callbacks
     static void thread_func();
     static void rxChar(UARTDriver *, uint16_t c);
-    static void rxComplete(GPTDriver *);
+    static void rxTimeoutSoftware(GPTDriver*);
+    static void rxTimeoutHardware(UARTDriver*);
+    static inline void rxComplete();
     static void rxErr(UARTDriver *, uartflags_t);
     static void txComplete(UARTDriver *);
-    
-    
-    static HardwareConfig* config;
+
+    static const HardwareConfig* config;
+    static UARTConfig uart_config;
+    static GPTConfig gpt_config;
     static Data data;
     
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
