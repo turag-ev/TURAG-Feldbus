@@ -89,7 +89,6 @@ void Driver::init(const HardwareConfig* config_) {
     } else {
 	palClearLine(config->led);
     }
-    palSetPadMode(GPIOA, GPIOA_PIN8, PAL_MODE_OUTPUT_PUSHPULL);
 }
 
 
