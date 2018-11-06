@@ -158,7 +158,7 @@ private:
     static void rxChar(UARTDriver *, uint16_t c);
     static void rxTimeoutSoftware(GPTDriver*);
     static void rxTimeoutHardware(UARTDriver*);
-    static inline void rxComplete();
+    static inline void rxCompleteI(); //use from lockzone only
     static void rxErr(UARTDriver *, uartflags_t);
     static void txComplete(UARTDriver *);
 

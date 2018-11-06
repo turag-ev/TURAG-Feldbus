@@ -211,15 +211,18 @@ void Driver::rxTimeoutHardware(UARTDriver* d) {
     chSysLockFromISR();
     data.rx_size = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - dmaStreamGetTransactionSize(d->dmarx);
     uartStopReceiveI(d);
-    chSysLockFromISR();
-    rxComplete();
+    rxCompleteI();
+    chSysUnlockFromISR();
 }
-void Driver::rxTimeoutSoftware(GPTDriver*) {
-    rxComplete();
-}
-inline void Driver::rxComplete() {
-    chSysLockFromISR();
 
+void Driver::rxTimeoutSoftware(GPTDriver*) {
+    chSysLockFromISR();
+    rxCompleteI();
+    chSysUnlockFromISR();
+}
+
+//call only from lockzone
+inline void Driver::rxCompleteI() {
     if (packetAdressedToMe()) {
 	if (data.overflow) {
 #if (TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE)
@@ -244,7 +247,6 @@ inline void Driver::rxComplete() {
 	data.rx_size = 0;
 	data.overflow = false;
     }
-    chSysUnlockFromISR();
 }
 
 
