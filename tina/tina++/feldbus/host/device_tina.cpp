@@ -212,6 +212,14 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         turag_warningf("%s: rs485 transceive failed: Checksum error", name_);
         myCurrentErrorCounter += attempt;
         return false;
+    default:
+        // C++ specifies that the range of enums (and enum classes) is the same
+        // as the range of the underlying type. So without this default case
+        // the compiler generates a warning.
+        // Anyway, if this case occurs, something is really fucked up.
+        turag_errorf("%s: rs485 transceive failed: Unknown error", name_);
+        myCurrentErrorCounter += attempt;
+        return false;
         }
     }
 
