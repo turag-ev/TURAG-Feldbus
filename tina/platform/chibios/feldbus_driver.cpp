@@ -10,7 +10,6 @@
 #include <tina++/time.h>
 #include <tina++/thread.h>
 #include <tina++/feldbus_driver.h>
-#include <platform/chibios/backplane.h>
 
 
 namespace TURAG {
@@ -22,7 +21,8 @@ FeldbusDriver::FeldbusDriver(const char* name, bool threadSafe) :
 {
 }
 
-bool FeldbusDriver::init(SerialDriver *serialDriver_, uint32_t baud_rate, TuragSystemTime timeout)
+bool FeldbusDriver::init(SerialDriver *serialDriver_, uint32_t baud_rate, TuragSystemTime timeout,
+                         RTSPad rtspad_)
 {
 	if (!serialDriver_)
 	{
@@ -40,6 +40,9 @@ bool FeldbusDriver::init(SerialDriver *serialDriver_, uint32_t baud_rate, TuragS
 
 	rs485_timeout = timeout;
 
+    rtspad = rtspad_;
+    palSetPadMode(rtspad.port, rtspad.pin, PAL_MODE_OUTPUT_PUSHPULL);
+    palClearPad(rtspad.port, rtspad.pin);
 
 	// flush transmit queue
 	uint8_t buf[1] = { 0 };
@@ -89,7 +92,7 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
 		int transmit_length_copy = *transmit_length;
 
 		// activate RS485 driver for sending
-		palSetPad(GPIOD, BPD_SC_RTS);
+        palSetPad(rtspad.port, rtspad.pin);
 		int ok = sdWriteTimeout(serialDriver, transmit, transmit_length_copy, MS2ST(5));
 		// TC interrupt handler sets the RTS pin after transmission is completed
 

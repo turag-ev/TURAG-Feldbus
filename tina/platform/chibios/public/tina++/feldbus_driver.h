@@ -13,6 +13,8 @@
 
 #include <hal.h>
 
+#include <platform/chibios/backplane.h>
+
 
 namespace TURAG {
 namespace Feldbus {
@@ -23,13 +25,19 @@ namespace Feldbus {
 */
 class FeldbusDriver : public FeldbusAbstraction {
 public:
+    struct RTSPad {
+        GPIO_TypeDef* port;
+        unsigned pin;
+    };
+
 	FeldbusDriver(const char* name, bool threadSafe = true);
 
 #if TURAG_USE_LIBSUPCPP_RUNTIME_SUPPORT
 	virtual ~FeldbusDriver(void) {}
 #endif
 
-	bool init(SerialDriver* serialDriver_, uint32_t baud_rate, TuragSystemTime timeout);
+    bool init(SerialDriver* serialDriver_, uint32_t baud_rate, TuragSystemTime timeout,
+              RTSPad rtspad_ = {GPIOD, BPD_SC_RTS});
 	bool isReady(void);
 
 	virtual void clearBuffer(void);
@@ -38,7 +46,8 @@ private:
 	virtual bool doTransceive(const uint8_t *transmit, int *transmit_length, uint8_t *receive, int *receive_length, bool delayTransmission);
 
 	SerialConfig serialConfig;
-	SerialDriver* serialDriver;
+    SerialDriver* serialDriver;
+    RTSPad rtspad;
 
 	HighResDelayTimer delay;
 	uint16_t bus_delay;
