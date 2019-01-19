@@ -55,25 +55,25 @@ void Driver::init(const HardwareConfig* config_) {
     uart_config.speed = config->baudrate;
     uart_config.txend2_cb = txComplete;
     uart_config.rxerr_cb = rxErr;
-    
+
     if(config->rto_config) {
-	//software receive timeout
-	uart_config.rxchar_cb = rxChar;
-	gpt_config.callback = rxTimeoutSoftware;
-	gpt_config.frequency = config->rto_config->gpt_frequency;
-	data.timerTicks = (gpt_config.frequency * 15 + config->baudrate / 2) / config->baudrate;
+        //software receive timeout
+        uart_config.rxchar_cb = rxChar;
+        gpt_config.callback = rxTimeoutSoftware;
+        gpt_config.frequency = config->rto_config->gpt_frequency;
+        data.timerTicks = (gpt_config.frequency * 15 + config->baudrate / 2) / config->baudrate;
     } else {
-	//hardware receive timeout
-	uart_config.timeout_cb = rxTimeoutHardware;
-	uart_config.cr1 = USART_CR1_RTOIE;
-	uart_config.cr2 = USART_CR2_RTOEN;
-	uart_config.timeout = 15;
+        //hardware receive timeout
+        uart_config.timeout_cb = rxTimeoutHardware;
+        uart_config.cr1 = USART_CR1_RTOIE;
+        uart_config.cr2 = USART_CR2_RTOEN;
+        uart_config.timeout = 15;
     }
     if(!config->rts_software) {
-	//hardware Driver-Enable
-	uart_config.cr3 = USART_CR3_DEM;
-	if(config->rts_inverted)
-	    uart_config.cr3 |= USART_CR3_DEP;
+        //hardware Driver-Enable
+        uart_config.cr3 = USART_CR3_DEM;
+        if(config->rts_inverted)
+            uart_config.cr3 |= USART_CR3_DEP;
     }
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
@@ -85,9 +85,9 @@ void Driver::init(const HardwareConfig* config_) {
     //always do this, since UART Driver is not running yet, controlling the pin
     disableRts();
     if(config->led_inverted) {
-	palSetLine(config->led);
+        palSetLine(config->led);
     } else {
-	palClearLine(config->led);
+        palClearLine(config->led);
     }
 }
 
@@ -95,7 +95,7 @@ void Driver::init(const HardwareConfig* config_) {
 void Driver::start(ThreadImpl* thread, int prio) {
     thread->start(prio, &thread_func);
     if(config->rto_config)
-	gptStart(config->rto_config->gptd, &gpt_config);
+        gptStart(config->rto_config->gptd, &gpt_config);
     uartStart(config->uartd, &uart_config);
 }
 
@@ -104,7 +104,7 @@ void Driver::start(ThreadImpl* thread, int prio) {
 void Driver::transmitDebugData(const void* data, size_t length) {
     chBSemWait(&tx_sem);
     if(config->rts_software)
-	enableRts();
+        enableRts();
     uartStartSend(config->uartd, length, data);
     chBSemWait(&tx_finished);
 }
@@ -115,56 +115,56 @@ void Driver::thread_func() {
     chRegSetThreadName("feldbus slave driver");
 
     while(1) {
-	if(!config->rto_config) //we can use DMA for receiving
-	    uartStartReceive(config->uartd, TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, data.rxbuf);
-	chSysLock();
-	// Reset packet data after it was processed
-	// at the end of this function. We do this here
-	// to save a call to chSysLockFromISR().
-	if (data.processing) {
-	    data.processing = false;
-	    data.packet_complete = false;
-	    data.rx_size = 0;
-	}
+        if(!config->rto_config) //we can use DMA for receiving
+            uartStartReceive(config->uartd, TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, data.rxbuf);
+        chSysLock();
+        // Reset packet data after it was processed
+        // at the end of this function. We do this here
+        // to save a call to chSysLockFromISR().
+        if (data.processing) {
+            data.processing = false;
+            data.packet_complete = false;
+            data.rx_size = 0;
+        }
 
-	// If there is a new packet waiting, we start working on it.
-	// Otherwise we go to sleep. We need to check new packets before 
-	// going to sleep to cover the rare case where we received a new 
-	// one while doing the led pattern.
-	if (data.packet_complete) {
-	    data.processing = true;
-	} else {
-	    // Sleep until there is a packet waiting to be processed
-	    // or we need to toggle our led.
-	    chBSemWaitTimeoutS(&rx_sem, MS2ST(20));
-            
-	    // Check whether there is a new packet. We need to do this while
-	    // we are still in syslock to prevent the packet getting overwritten
-	    // resulting in the loss of the current one.
-	    if (data.packet_complete) {
-		data.processing = true;
-	    }
-	}
-	chSysUnlock();
+        // If there is a new packet waiting, we start working on it.
+        // Otherwise we go to sleep. We need to check new packets before
+        // going to sleep to cover the rare case where we received a new
+        // one while doing the led pattern.
+        if (data.packet_complete) {
+            data.processing = true;
+        } else {
+            // Sleep until there is a packet waiting to be processed
+            // or we need to toggle our led.
+            chBSemWaitTimeoutS(&rx_sem, MS2ST(20));
+
+            // Check whether there is a new packet. We need to do this while
+            // we are still in syslock to prevent the packet getting overwritten
+            // resulting in the loss of the current one.
+            if (data.packet_complete) {
+                data.processing = true;
+            }
+        }
+        chSysUnlock();
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_FLASH_LED
-	// Heavy traffic will speed up the led pattern.
-	// That's a feature, not a bug.
-	// We blink with 50 Hz because we wait for 20 ms a few lines above.
-	Base::doLedPattern(50);
+        // Heavy traffic will speed up the led pattern.
+        // That's a feature, not a bug.
+        // We blink with 50 Hz because we wait for 20 ms a few lines above.
+        Base::doLedPattern(50);
 #endif
 
-	if (data.processing) {
-	    FeldbusSize_t length = Base::processPacket(data.rxbuf, data.rx_size, data.txbuf);
-	    if (length > 0) {
+        if (data.processing) {
+            FeldbusSize_t length = Base::processPacket(data.rxbuf, data.rx_size, data.txbuf);
+            if (length > 0) {
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-		chBSemWait(&tx_sem);
+                chBSemWait(&tx_sem);
 #endif
-		if(config->rts_software)
-		    enableRts();
-		uartStartSend(config->uartd, length, data.txbuf);
-	    }
-	}
+                if(config->rts_software)
+                    enableRts();
+                uartStartSend(config->uartd, length, data.txbuf);
+            }
+        }
     }
 }
 
@@ -173,35 +173,35 @@ void Driver::thread_func() {
 void Driver::rxChar(UARTDriver *, uint16_t c) {
     chSysLockFromISR();
     if (!data.processing) {
-	if (data.packet_complete) {
-	    // packet was ready, but there is a new one before
-	    // it was processed -> dump it and receive new one
-	    data.rx_size = 0;
-	    data.packet_complete = false;
+        if (data.packet_complete) {
+            // packet was ready, but there is a new one before
+            // it was processed -> dump it and receive new one
+            data.rx_size = 0;
+            data.packet_complete = false;
 #if (TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE)
-	    Base::increasePacketLost();
+            Base::increasePacketLost();
 #endif
-	}
+        }
 
-	if (data.rx_size == TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
-	    // Buffer overflow.
-	    // No need to reset rx_size here, because we stop filling
-	    // rxbuf, once it is full. This is important to correctly
-	    // identify whether the packet was meant for us.
-	    data.overflow = true;
-	} else {
-	    data.rxbuf[data.rx_size] = static_cast<uint8_t>(c);
-	    ++data.rx_size;
-	}
-	// restart timer to wait for more arriving data
-	if (config->rto_config->gptd->state != GPT_READY)
-	    gptStopTimerI(config->rto_config->gptd);
-	gptStartOneShotI(config->rto_config->gptd, data.timerTicks);
+        if (data.rx_size == TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
+            // Buffer overflow.
+            // No need to reset rx_size here, because we stop filling
+            // rxbuf, once it is full. This is important to correctly
+            // identify whether the packet was meant for us.
+            data.overflow = true;
+        } else {
+            data.rxbuf[data.rx_size] = static_cast<uint8_t>(c);
+            ++data.rx_size;
+        }
+        // restart timer to wait for more arriving data
+        if (config->rto_config->gptd->state != GPT_READY)
+            gptStopTimerI(config->rto_config->gptd);
+        gptStartOneShotI(config->rto_config->gptd, data.timerTicks);
     } else {
-	// Byte received, but package is processing -> ignore.
-	// This shouldn't happen if the data is really meant
-	// for us, unless we exceeded the masters timeout and it
-	// resent its request.
+        // Byte received, but package is processing -> ignore.
+        // This shouldn't happen if the data is really meant
+        // for us, unless we exceeded the masters timeout and it
+        // resent its request.
     }
     chSysUnlockFromISR();
 }
@@ -224,18 +224,18 @@ void Driver::rxTimeoutSoftware(GPTDriver*) {
 //call only from lockzone
 inline void Driver::rxCompleteI() {
     if (packetAdressedToMe()) {
-	if (data.overflow) {
+        if (data.overflow) {
 #if (TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE)
-	    // Only increase the overflow counter if the
-	    // packet was addressed to us.
-	    Base::increaseBufferOverflow();
+            // Only increase the overflow counter if the
+            // packet was addressed to us.
+            Base::increaseBufferOverflow();
 #endif
-	} else if (data.rx_size > TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
-	    // valid packet, addressed to us
-	    data.packet_complete = true;
-	    // wake up worker thread
-	    chBSemSignalI(&rx_sem);
-	}
+        } else if (data.rx_size > TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
+            // valid packet, addressed to us
+            data.packet_complete = true;
+            // wake up worker thread
+            chBSemSignalI(&rx_sem);
+        }
     }
     // If either
     // - we had an overflow or
@@ -244,8 +244,8 @@ inline void Driver::rxCompleteI() {
     // we get a complete reception bot no complete packet. Then we still need
     // to clear the packet buffer and the overflow flag which is potentially set.
     if (!data.packet_complete) {
-	data.rx_size = 0;
-	data.overflow = false;
+        data.rx_size = 0;
+        data.overflow = false;
     }
 }
 
@@ -259,8 +259,8 @@ void Driver::rxErr(UARTDriver *, uartflags_t) {
 // dma transmit receive complete
 void Driver::txComplete(UARTDriver *) {
     if(config->rts_software)
-	disableRts();
-    
+        disableRts();
+
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
     chSysLockFromISR();
     chBSemSignalI(&tx_sem);
@@ -270,9 +270,9 @@ void Driver::txComplete(UARTDriver *) {
 }
 
 
-}
-}
-}
+} // namespace Slave
+} // namespace Feldbus
+} // namespace TURAG
 
 
 #endif // TURAG_USE_TURAG_FELDBUS_SLAVE
