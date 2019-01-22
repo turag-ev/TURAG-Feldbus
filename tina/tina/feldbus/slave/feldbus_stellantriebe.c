@@ -1,5 +1,6 @@
 
 #include <tina/tina.h>
+#include <tina/feldbus/protocol/turag_feldbus_fuer_stellantriebe.h>
 #include "feldbus_stellantriebe.h"
 #include <string.h>
 
