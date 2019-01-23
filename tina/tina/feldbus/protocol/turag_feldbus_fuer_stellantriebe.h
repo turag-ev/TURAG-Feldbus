@@ -84,26 +84,26 @@
  * @name Command Keys für alle Stellantriebe
  * @{
  */
-#define RS485_STELLANTRIEBE_KEY_CURRENT_ANGLE		(0x01)	// current angle
+#define RS485_STELLANTRIEBE_KEY_CURRENT_ANGLE		(0x01)
 #define RS485_STELLANTRIEBE_KEY_DESIRED_ANGLE		(0x02)
 #define RS485_STELLANTRIEBE_KEY_MAX_ANGLE           (0x03)
 #define RS485_STELLANTRIEBE_KEY_MIN_ANGLE           (0x04)
 
-#define RS485_STELLANTRIEBE_KEY_CURRENT_VELOCITY    (0x05)	// current velocity
-#define RS485_STELLANTRIEBE_KEY_DESIRED_VELOCITY    (0x06)	// current velocity
-#define RS485_STELLANTRIEBE_KEY_MAX_VELOCITY		(0x07)	// current velocity
+#define RS485_STELLANTRIEBE_KEY_CURRENT_VELOCITY    (0x05)
+#define RS485_STELLANTRIEBE_KEY_DESIRED_VELOCITY    (0x06)
+#define RS485_STELLANTRIEBE_KEY_MAX_VELOCITY		(0x07)
 
-#define RS485_STELLANTRIEBE_KEY_CURRENT_CURRENT		(0x08)	// current motor current
-#define RS485_STELLANTRIEBE_KEY_DESIRED_CURRENT		(0x09)	// current motor current
-#define RS485_STELLANTRIEBE_KEY_MAX_CURRENT         (0x0A)	// current motor current
+#define RS485_STELLANTRIEBE_KEY_CURRENT_CURRENT		(0x08)
+#define RS485_STELLANTRIEBE_KEY_DESIRED_CURRENT		(0x09)
+#define RS485_STELLANTRIEBE_KEY_MAX_CURRENT         (0x0A)
 
-#define RS485_STELLANTRIEBE_KEY_CURRENT_PWM         (0x0B)	// current PWM ratio
-#define RS485_STELLANTRIEBE_KEY_DESIRED_PWM         (0x0C)	// current PWM ratio
-#define RS485_STELLANTRIEBE_KEY_MAX_PWM             (0x0D)	// current PWM ratio
+#define RS485_STELLANTRIEBE_KEY_CURRENT_PWM         (0x0B)
+#define RS485_STELLANTRIEBE_KEY_DESIRED_PWM         (0x0C)
+#define RS485_STELLANTRIEBE_KEY_MAX_PWM             (0x0D)
 
-#define RS485_STELLANTRIEBE_KEY_VOLTAGE             (0x0E)	// current supply voltage
-#define RS485_STELLANTRIEBE_KEY_STATUS              (0x0F)	// current status, see details below
-#define RS485_STELLANTRIEBE_KEY_CONTROL_STATE	    (0x10)	// control state
+#define RS485_STELLANTRIEBE_KEY_VOLTAGE             (0x0E)
+#define RS485_STELLANTRIEBE_KEY_STATUS              (0x0F)
+#define RS485_STELLANTRIEBE_KEY_CONTROL_STATE	    (0x10)
 
 ///@}
 													
