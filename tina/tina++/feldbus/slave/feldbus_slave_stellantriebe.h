@@ -33,23 +33,34 @@ namespace Slave {
  */
 class Stellantriebe {
 public:
-    // Better readability than boolean values
-    enum class Access {
-        RO,
-        RW,
+    /**
+     * @brief Gibt an, ob ein Wert über das Stellantriebe-Protokoll geschrieben werden kann.
+     */
+    enum class Access : bool {
+        RO = false,
+        RW = true,
     };
 
-    // Created using mk_cmd(...)
+    /**
+     * @brief Stellantriebe-Befehl
+     * 
+     * Diese Datenstruktur soll nicht direkt, sondern mit der funktion mk_cmd instanziiert werden.
+     */
     struct Command {
         void* value;
         const char *name;
         float factor;
         uint8_t id;
         uint8_t length;
-        bool write_access;
+        Access access;
     };
 
-    // 
+    /**
+     * @brief Initializiert die Stellantriebe-Implementierung.
+     * @param[in] commands Array mit Stellantriebe-Befehlen
+     * @param[in] packetProcessor Funktion, die Paket verarbeitet, falls das nicht konform zum Stellantriebe-Protokoll ist
+     * @param[in] broadcastProcessor Funktion, die Broadcast-Pakete verarbeitet
+     */
     template<size_t N>
     static
     void init(
@@ -63,7 +74,15 @@ public:
         command_set_size_ = N;
     }
 
-    //
+    /**
+     * @brief Erzeugt einen Stellantriebe-Befehl.
+     * @param[in] id Key des Stellantriebe-Befehls
+     * @param[in] value Pointer auf den Wert
+     * @param[in] name String, der Befehl verbal beschreibt
+     * @param[in] factor Umrechnungsfaktor zu Einheit
+     * @param[in] access Zugriffsart des Stellantriebe-Befehls
+     * @return Stellantriebe-Befehl
+     */
     template <typename T>
     static constexpr const
     Command mk_cmd(
@@ -74,10 +93,16 @@ public:
         Access access = Access::RO)
     {
         static_assert(sizeof(T) <= 4, "Stellantriebe command must not be larger than 4 bytes!");
-        return { value, name, factor, id, sizeof(T), access == Access::RW};
+        return { value, name, factor, id, sizeof(T), access};
     }
 
-    //
+    /**
+     * @brief Verarbeitet ein Feldbus-Paket nach dem Stellantriebe-Protokoll.
+     * @param[in] message Eingabebuffer des Pakets
+     * @param[in] message_length Länge des Pakets
+     * @param[out] Ausgabepuffer der Antwort
+     * @return Länge der Antwortnachricht
+     */
     static FeldbusSize_t process_feldbus_packet(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
 private:
     Stellantriebe();
