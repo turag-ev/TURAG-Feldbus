@@ -212,6 +212,10 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         turag_warningf("%s: rs485 transceive failed: Checksum error", name_);
         myCurrentErrorCounter += attempt;
         return false;
+    default:
+        turag_warningf("%s: rs485 transceive failed: Unknown error", name_);
+        myCurrentErrorCounter += attempt;
+        return false;
         }
     }
 

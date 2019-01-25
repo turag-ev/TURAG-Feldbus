@@ -318,11 +318,11 @@ bool turag_dxl_ping( int id ) {
 
     while (giBusUsing);
 
-	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
-	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_PING;
-	gbInstructionPacket[TURAG_DXL_LENGTH] = 2;
-	
-	turag_dxl_txrx_packet();
+    gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
+    gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_PING;
+    gbInstructionPacket[TURAG_DXL_LENGTH] = 2;
+
+    turag_dxl_txrx_packet();
 
     bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
 
@@ -336,16 +336,16 @@ bool turag_dxl_read_byte( int id, int address, int* output ) {
 
     while(giBusUsing);
 
-	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
-	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_READ;
-	gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
-	gbInstructionPacket[TURAG_DXL_PARAMETER+1] = 1;
-	gbInstructionPacket[TURAG_DXL_LENGTH] = 4;
-	
-	turag_dxl_txrx_packet();
+    gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
+    gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_READ;
+    gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
+    gbInstructionPacket[TURAG_DXL_PARAMETER+1] = 1;
+    gbInstructionPacket[TURAG_DXL_LENGTH] = 4;
 
-	*output = (int)gbStatusPacket[TURAG_DXL_PARAMETER];
-	
+    turag_dxl_txrx_packet();
+
+    *output = (int)gbStatusPacket[TURAG_DXL_PARAMETER];
+
     bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
 
     //turag_binary_semaphore_signal(&sem_);
@@ -358,14 +358,14 @@ bool turag_dxl_write_byte( int id, int address, int value ) {
 
     while(giBusUsing);
 
-	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
-	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_WRITE;
-	gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
-	gbInstructionPacket[TURAG_DXL_PARAMETER+1] = (unsigned char)value;
-	gbInstructionPacket[TURAG_DXL_LENGTH] = 4;
-	
-	turag_dxl_txrx_packet();
-	
+    gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
+    gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_WRITE;
+    gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
+    gbInstructionPacket[TURAG_DXL_PARAMETER+1] = (unsigned char)value;
+    gbInstructionPacket[TURAG_DXL_LENGTH] = 4;
+
+    turag_dxl_txrx_packet();
+
     bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
 
     //turag_binary_semaphore_signal(&sem_);
@@ -378,16 +378,16 @@ bool turag_dxl_read_word( int id, int address, int* output ) {
 
     while(giBusUsing);
 
-	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
-	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_READ;
-	gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
-	gbInstructionPacket[TURAG_DXL_PARAMETER+1] = 2;
-	gbInstructionPacket[TURAG_DXL_LENGTH] = 4;
-	
-	turag_dxl_txrx_packet();
+    gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
+    gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_READ;
+    gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
+    gbInstructionPacket[TURAG_DXL_PARAMETER+1] = 2;
+    gbInstructionPacket[TURAG_DXL_LENGTH] = 4;
 
-	*output = turag_dxl_makeword((int)gbStatusPacket[TURAG_DXL_PARAMETER], (int)gbStatusPacket[TURAG_DXL_PARAMETER+1]);
-	
+    turag_dxl_txrx_packet();
+
+    *output = turag_dxl_makeword((int)gbStatusPacket[TURAG_DXL_PARAMETER], (int)gbStatusPacket[TURAG_DXL_PARAMETER+1]);
+
     bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
 
     //turag_binary_semaphore_signal(&sem_);
@@ -400,15 +400,15 @@ bool turag_dxl_write_word( int id, int address, int value ) {
 
     while(giBusUsing);
 
-	gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
-	gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_WRITE;
-	gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
-	gbInstructionPacket[TURAG_DXL_PARAMETER+1] = (unsigned char)turag_dxl_get_lowbyte(value);
-	gbInstructionPacket[TURAG_DXL_PARAMETER+2] = (unsigned char)turag_dxl_get_highbyte(value);
-	gbInstructionPacket[TURAG_DXL_LENGTH] = 5;
-	
-	turag_dxl_txrx_packet();
-	
+    gbInstructionPacket[TURAG_DXL_ID] = (unsigned char)id;
+    gbInstructionPacket[TURAG_DXL_INSTRUCTION] = TURAG_DXL_INST_WRITE;
+    gbInstructionPacket[TURAG_DXL_PARAMETER] = (unsigned char)address;
+    gbInstructionPacket[TURAG_DXL_PARAMETER+1] = (unsigned char)turag_dxl_get_lowbyte(value);
+    gbInstructionPacket[TURAG_DXL_PARAMETER+2] = (unsigned char)turag_dxl_get_highbyte(value);
+    gbInstructionPacket[TURAG_DXL_LENGTH] = 5;
+
+    turag_dxl_txrx_packet();
+
     bool result = (gbCommStatus == TURAG_DXL_COMM_RXSUCCESS);
 
     //turag_binary_semaphore_signal(&sem_);
