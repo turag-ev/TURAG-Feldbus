@@ -17,89 +17,108 @@ namespace Feldbus {
 
 
 FeldbusDriver::FeldbusDriver(const char* name, bool threadSafe) :
-	FeldbusAbstraction(name, threadSafe), serialDriver(nullptr)
-{
+	FeldbusAbstraction(name, threadSafe), uart_driver_(nullptr)
+{ }
+
+void FeldbusDriver::rxEnd(UARTDriver* d) {
+	chSysLockFromISR();
+	FeldbusDriver* instance = reinterpret_cast<UARTConfigExt*>( const_cast<UARTConfig*>(d->config) )->instance;
+	chBSemSignalI(&instance->receive_sem_);
+	chSysUnlockFromISR();
 }
 
-bool FeldbusDriver::init(SerialDriver *serialDriver_, uint32_t baud_rate, TuragSystemTime timeout, ioline_t rts_)
+void FeldbusDriver::txEnd2(UARTDriver* d) {
+	chSysLockFromISR();
+	FeldbusDriver* instance = reinterpret_cast<UARTConfigExt*>( const_cast<UARTConfig*>(d->config) )->instance;
+	palClearLine(instance->rts_);
+	chBSemSignalI(&instance->send_sem_);
+	chSysUnlockFromISR();
+}
+
+bool FeldbusDriver::init(UARTDriver* uart_driver, uint32_t baud_rate, TuragSystemTime timeout, ioline_t rts)
 {
-	if (!serialDriver_)
+	uart_driver_ = uart_driver;
+	rts_ = rts;
+	rs485_timeout_ = timeout;
+
+	if (!uart_driver_)
 	{
 		turag_error("serialDriver_ must not be null.");
 		return false;
 	}
 
-	serialDriver = serialDriver_;
+	chBSemObjectInit(&send_sem_, true);
+	chBSemObjectInit(&receive_sem_, true);
+	
+	// TODO Hardware Driver-Enable where supported
+	uart_config_.cfg.speed = baud_rate;
+	uart_config_.cfg.cr1 = 0;
+	uart_config_.cfg.cr2 = 0;
+	uart_config_.cfg.cr3 = 0;
+	uart_config_.cfg.rxchar_cb = nullptr;
+	uart_config_.cfg.rxend_cb = rxEnd;
+	uart_config_.cfg.rxerr_cb = nullptr;
+	uart_config_.cfg.txend1_cb = nullptr;
+	uart_config_.cfg.txend2_cb = txEnd2;
+	uart_config_.instance = this;
+	uartStart(uart_driver_, reinterpret_cast<UARTConfig*>(&uart_config_));
 
-	serialConfig.speed = baud_rate;
-	serialConfig.cr1 = 0;
-	serialConfig.cr2 = 0;
-	serialConfig.cr3 = 0;
-	sdStart(serialDriver, &serialConfig);
+	palSetLineMode(rts_, PAL_MODE_OUTPUT_PUSHPULL);
+	palClearLine(rts_);
 
-	rs485_timeout = timeout;
-	rts = rts_;
-	palSetLineMode(rts, PAL_MODE_OUTPUT_PUSHPULL);
-	palClearLine(rts);
-
-	// flush transmit queue
-	uint8_t buf[1] = { 0 };
-	sdReadTimeout(serialDriver, buf, 1, TIME_IMMEDIATE);
-	sdWriteTimeout(serialDriver, buf, 1, TIME_IMMEDIATE);
-
+	
 	// wait until slaves left their bootloaders
 	chThdSleepMilliseconds(500);
 
-	turag_infof("RS485 init: %u baud, timeout %u ms -> status %d\n", (unsigned int)baud_rate, (unsigned int)timeout.value, serialDriver->state);
+	turag_infof("RS485 init: %u baud, timeout %u ms -> status %d\n", (unsigned int)baud_rate, (unsigned int)timeout.value, uart_driver_->state);
 
-	if (serialDriver->state != SD_READY) {
+	if (uart_driver_->state != UART_READY) {
 		turag_error("RS485 init FAILED!");
 	}
 
 	// calculate bus delay required for 15 frames distance of
 	// TURAG feldbus [us]
 	// we always round up.
-	bus_delay = (15 * 1000000 - 1) / baud_rate + 1;
-	delay.init();
+	bus_delay_ = (15 * 1000000 - 1) / baud_rate + 1;
+	delay_timer_.init();
 
-	return (serialDriver->state == SD_READY);
+	return (uart_driver_->state == UART_READY);
 }
 
 bool FeldbusDriver::isReady()
 {
-	return serialDriver && (serialDriver->state == SD_READY);
+	return uart_driver_ && (uart_driver_->state == UART_READY);
 }
 
-bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, uint8_t *receive, int *receive_length, bool delayTransmission)
+bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, uint8_t *receive, int *receive_length, bool delay_transmission)
 {
 	// prevents crashes
 	while (!isReady()) {
 		chThdSleepMilliseconds(10);
 	}
-
-	bool send_ok = true, recv_ok = true;
-	uint16_t transmit_delay = 0;
-
+	bool send_ok = false, recv_ok = false;
 	// Insert bus delay, if required. The timer is started after each transmission,
 	// making sure we never wait longer than necessary.
-	if (delayTransmission) {
-		delay.wait();
+	if (delay_transmission) {
+		delay_timer_.wait();
 	}
 
 	if (transmit && transmit_length && *transmit_length) {
-		int transmit_length_copy = *transmit_length;
-
-		// activate RS485 driver for sending
-		palSetLine(rts);
-		int ok = sdWriteTimeout(serialDriver, transmit, transmit_length_copy, MS2ST(5));
-		// TC interrupt handler sets the RTS pin after transmission is completed
-
-		// calculate transmit time in [us]
-		transmit_delay = 1000000 * 10 / serialConfig.speed * ok;
-
-		send_ok = (transmit_length_copy == ok);
-		*transmit_length = ok;
-		turag_debugf("%s: sending %d bytes, %d bytes written ok, driver state %d, OK: %d", name(), transmit_length_copy, ok, serialDriver->state, send_ok);
+		chBSemReset(&send_sem_, true);
+		// activate RS485 driver for sending, its reset by txEnd2 callback (or on timeout)
+		palSetLine(rts_);
+		//start sending data
+		uartStartSend(uart_driver_, *transmit_length, transmit);
+		//wait for completion
+		if(chBSemWaitTimeout(&send_sem_, MS2ST(5)) != MSG_OK) {
+			uartStopSend(uart_driver_);
+			palClearLine(rts_);
+			send_ok = false;
+			turag_criticalf("%s: UART send timed out.", name());
+		} else {
+			send_ok = true;
+		}
+		turag_debugf("%s: sending %d bytes, driver state %d, OK: %d", name(), *transmit_length, uart_driver_->state, send_ok);
 	}
 
 	if (!send_ok) {
@@ -110,24 +129,24 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
 	}
 
 	if (receive && receive_length && *receive_length) {
-		int receive_length_copy = *receive_length;
-
-		// read answer, timeout in systemticks!
-		int ok = sdReadTimeout(serialDriver, receive, receive_length_copy, rs485_timeout.value);
-
-		recv_ok = (ok == receive_length_copy);
-		*receive_length = ok;
-		turag_debugf("%s: receiving %d bytes, retval %d, driver state %d, OK: %d", name(), receive_length_copy, ok, serialDriver->state, recv_ok);
-
-		// Start the delay timer after communication is finished.
-		// On the next call of this function we can wait for the timeout.
-		// This way we can use the required delay time for computing if there
-		// is anything to be done.
-		delay.startTimeout_us(bus_delay);
-	} else {
-		// also wait for transmission to finish if we did not receive any data
-		delay.startTimeout_us(bus_delay + transmit_delay);
+		chBSemReset(&receive_sem_, true);
+		//start receiving data
+		uartStartReceive(uart_driver_, *receive_length, receive);
+		//wait for completion
+		if(chBSemWaitTimeout(&receive_sem_, MS2ST(5)) != MSG_OK) {
+			uartStopSend(uart_driver_);
+			recv_ok = false;
+			turag_criticalf("%s: UART receive timed out.", name());
+		} else {
+			recv_ok = true;
+		}
+		turag_debugf("%s: receiving %d bytes, driver state %d, OK : %d", name(), *receive_length, uart_driver_->state, recv_ok);
 	}
+	// Start the delay timer after communication is finished.
+	// On the next call of this function we can wait for the timeout.
+	// This way we can use the required delay time for computing if there
+	// is anything to be done.
+	delay_timer_.startTimeout_us(bus_delay_);
 
 	return (send_ok && recv_ok);
 }
@@ -137,8 +156,7 @@ void FeldbusDriver::clearBuffer()
 	while (!isReady()) {
 		chThdSleepMilliseconds(10);
 	}
-
-	while (sdGetTimeout(serialDriver, TIME_IMMEDIATE) != Q_TIMEOUT);
+	return;
 }
 
 

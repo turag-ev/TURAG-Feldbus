@@ -28,25 +28,37 @@ public:
 	virtual ~FeldbusDriver(void) {}
 #endif
 
-    bool init(SerialDriver* serialDriver_, uint32_t baud_rate, TuragSystemTime timeout, ioline_t rts);
+    bool init(UARTDriver* uart_driver, uint32_t baud_rate, TuragSystemTime timeout, ioline_t rts);
 	bool isReady(void);
 
 	virtual void clearBuffer(void);
 
 private:
-	virtual bool doTransceive(const uint8_t *transmit, int *transmit_length, uint8_t *receive, int *receive_length, bool delayTransmission);
+	virtual bool doTransceive(const uint8_t *transmit, int *transmit_length, uint8_t *receive, int *receive_length, bool delay_transmission);
+	//driver callbacks
+	static void rxEnd(UARTDriver*);  //receive buffer full
+	static void txEnd2(UARTDriver*); //physical end of transmission
 
-	SerialConfig serialConfig;
-    SerialDriver* serialDriver;
-    ioline_t rts;
+	//we extend UARTConfig so we can access some parts
+	//of the FeldbusDriver instance in the driver callbacks
+	struct UARTConfigExt {
+		UARTConfig cfg;
+		FeldbusDriver* instance;
+	};
+	//make sure the compiler didn't insert anything before the actual config struct
+	static_assert(offsetof(UARTConfigExt, cfg) == 0, "");
 
-	HighResDelayTimer delay;
-	uint16_t bus_delay;
-	TuragSystemTime rs485_timeout;
+	binary_semaphore_t send_sem_;
+	binary_semaphore_t receive_sem_;
+	ioline_t rts_;
+
+	UARTConfigExt uart_config_;
+    UARTDriver* uart_driver_;
+
+	HighResDelayTimer delay_timer_;
+	uint16_t bus_delay_;
+	TuragSystemTime rs485_timeout_;
 };
-
-
-
 
 } // namespace Feldbus
 } // namespace TURAG
