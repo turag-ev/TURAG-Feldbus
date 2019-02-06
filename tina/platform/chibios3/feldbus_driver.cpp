@@ -134,7 +134,7 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
 		uartStartReceive(uart_driver_, *receive_length, receive);
 		//wait for completion
 		if(chBSemWaitTimeout(&receive_sem_, MS2ST(5)) != MSG_OK) {
-			uartStopSend(uart_driver_);
+			uartStopReceive(uart_driver_);
 			recv_ok = false;
 			turag_criticalf("%s: UART receive timed out.", name());
 		} else {
