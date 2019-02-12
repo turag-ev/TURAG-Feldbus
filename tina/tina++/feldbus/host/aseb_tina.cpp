@@ -465,7 +465,7 @@ bool Aseb::setTargetPwmOutput(unsigned key, float duty_cycle) {
         turag_errorf("%s: Wrong arguments to setTargetPwmOutput. Key must be in the range of 0 to %d (given %d).", name(), static_cast<unsigned>(pwmOutputSize_) - 1, key);
         return false;
 	} else if (duty_cycle < 0.0f || duty_cycle > 100.0f) {
-        turag_errorf("%s: Wrong arguments to setTargetPwmOutput: %.2f not within valid range (0 ... 100 %%)", name(), duty_cycle);
+        turag_errorf("%s: Wrong arguments to setTargetPwmOutput: %.2f not within valid range (0 ... 100 %%)", name(), (double)duty_cycle);
 		return false;
 	} else {
         Request<AsebSet> request;
