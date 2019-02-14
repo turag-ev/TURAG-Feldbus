@@ -71,6 +71,17 @@ bool FeldbusDriver::isReady()
 	return uart_driver_ && (uart_driver_->state == UART_READY);
 }
 
+static inline constexpr
+const char * msg_to_str(msg_t msg) {
+    return (msg == MSG_OK)
+            ? "OK"
+            : (msg == MSG_TIMEOUT)
+              ? "TIMEOUT"
+              : (msg == MSG_RESET)
+                ? "RESET"
+                : "???";
+}
+
 bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, uint8_t *receive, int *receive_length, bool delay_transmission)
 {
 	// prevents crashes
@@ -91,7 +102,7 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
         msg_t tx_res = uartSendFullTimeout(uart_driver_, (size_t*)transmit_length, transmit, MS2ST(5));
         send_ok = (tx_res == MSG_OK);
         if (!send_ok)
-            turag_criticalf("%s: UART send failed for reason %li", name(), tx_res);
+            turag_criticalf("%s: UART send failed for reason %s", name(), msg_to_str(tx_res));
 
         palClearLine(rts_);
         turag_debugf("%s: sent %d bytes, driver state %d, tx state: %d, OK: %d",
@@ -109,9 +120,9 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
         msg_t rx_res = uartReceiveTimeout(uart_driver_, (size_t*)receive_length, receive, rs485_timeout_.value);
         recv_ok = (rx_res == MSG_OK);
         if (!recv_ok)
-            turag_criticalf("%s: UART receive failed for reason %li", name(), rx_res);
+            turag_criticalf("%s: UART receive failed for reason %s", name(), msg_to_str(rx_res));
 
-        turag_debugf("%s: receiving %d bytes, driver state %d, rx state: %d, OK : %d",
+        turag_debugf("%s: received %d bytes, driver state %d, rx state: %d, OK : %d",
                      name(), *receive_length, uart_driver_->state, uart_driver_->rxstate, recv_ok);
     } else {
         recv_ok = true;
