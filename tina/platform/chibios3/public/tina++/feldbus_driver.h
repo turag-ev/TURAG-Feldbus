@@ -35,24 +35,10 @@ public:
 
 private:
 	virtual bool doTransceive(const uint8_t *transmit, int *transmit_length, uint8_t *receive, int *receive_length, bool delay_transmission);
-	//driver callbacks
-	static void rxEnd(UARTDriver*);  //receive buffer full
-	static void txEnd2(UARTDriver*); //physical end of transmission
 
-	//we extend UARTConfig so we can access some parts
-	//of the FeldbusDriver instance in the driver callbacks
-	struct UARTConfigExt {
-		UARTConfig cfg;
-		FeldbusDriver* instance;
-	};
-	//make sure the compiler didn't insert anything before the actual config struct
-	static_assert(offsetof(UARTConfigExt, cfg) == 0, "");
+    ioline_t rts_;
 
-	binary_semaphore_t send_sem_;
-	binary_semaphore_t receive_sem_;
-	ioline_t rts_;
-
-	UARTConfigExt uart_config_;
+    UARTConfig uart_config_;
     UARTDriver* uart_driver_;
 
 	HighResDelayTimer delay_timer_;

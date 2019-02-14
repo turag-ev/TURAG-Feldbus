@@ -20,21 +20,6 @@ FeldbusDriver::FeldbusDriver(const char* name, bool threadSafe) :
 	FeldbusAbstraction(name, threadSafe), uart_driver_(nullptr)
 { }
 
-void FeldbusDriver::rxEnd(UARTDriver* d) {
-	chSysLockFromISR();
-	FeldbusDriver* instance = reinterpret_cast<UARTConfigExt*>( const_cast<UARTConfig*>(d->config) )->instance;
-	chBSemSignalI(&instance->receive_sem_);
-	chSysUnlockFromISR();
-}
-
-void FeldbusDriver::txEnd2(UARTDriver* d) {
-	chSysLockFromISR();
-	FeldbusDriver* instance = reinterpret_cast<UARTConfigExt*>( const_cast<UARTConfig*>(d->config) )->instance;
-	palClearLine(instance->rts_);
-	chBSemSignalI(&instance->send_sem_);
-	chSysUnlockFromISR();
-}
-
 bool FeldbusDriver::init(UARTDriver* uart_driver, uint32_t baud_rate, TuragSystemTime timeout, ioline_t rts)
 {
 	uart_driver_ = uart_driver;
@@ -46,22 +31,18 @@ bool FeldbusDriver::init(UARTDriver* uart_driver, uint32_t baud_rate, TuragSyste
 		turag_error("serialDriver_ must not be null.");
 		return false;
 	}
-
-	chBSemObjectInit(&send_sem_, true);
-	chBSemObjectInit(&receive_sem_, true);
 	
 	// TODO Hardware Driver-Enable where supported
-	uart_config_.cfg.speed = baud_rate;
-	uart_config_.cfg.cr1 = 0;
-	uart_config_.cfg.cr2 = 0;
-	uart_config_.cfg.cr3 = 0;
-	uart_config_.cfg.rxchar_cb = nullptr;
-	uart_config_.cfg.rxend_cb = rxEnd;
-	uart_config_.cfg.rxerr_cb = nullptr;
-	uart_config_.cfg.txend1_cb = nullptr;
-	uart_config_.cfg.txend2_cb = txEnd2;
-	uart_config_.instance = this;
-	uartStart(uart_driver_, reinterpret_cast<UARTConfig*>(&uart_config_));
+    uart_config_.speed = baud_rate;
+    uart_config_.cr1 = 0;
+    uart_config_.cr2 = 0;
+    uart_config_.cr3 = 0;
+    uart_config_.rxchar_cb = nullptr;
+    uart_config_.rxend_cb = nullptr; //rxEnd;
+    uart_config_.rxerr_cb = nullptr;
+    uart_config_.txend1_cb = nullptr;
+    uart_config_.txend2_cb = nullptr; //txEnd2;
+    uartStart(uart_driver_, &uart_config_);
 
 	palSetLineMode(rts_, PAL_MODE_OUTPUT_PUSHPULL);
 	palClearLine(rts_);
@@ -103,22 +84,18 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
 		delay_timer_.wait();
 	}
 
-	if (transmit && transmit_length && *transmit_length) {
-		chBSemReset(&send_sem_, true);
-		// activate RS485 driver for sending, its reset by txEnd2 callback (or on timeout)
-		palSetLine(rts_);
-		//start sending data
-		uartStartSend(uart_driver_, *transmit_length, transmit);
-		//wait for completion
-		if(chBSemWaitTimeout(&send_sem_, MS2ST(5)) != MSG_OK) {
-			uartStopSend(uart_driver_);
-			palClearLine(rts_);
-			send_ok = false;
-			turag_criticalf("%s: UART send timed out.", name());
-		} else {
-			send_ok = true;
-		}
-		turag_debugf("%s: sending %d bytes, driver state %d, OK: %d", name(), *transmit_length, uart_driver_->state, send_ok);
+    if (transmit && transmit_length && *transmit_length) {
+        // activate RS485 driver for sending
+        palSetLine(rts_);
+
+        msg_t tx_res = uartSendFullTimeout(uart_driver_, (size_t*)transmit_length, transmit, MS2ST(5));
+        send_ok = (tx_res == MSG_OK);
+        if (!send_ok)
+            turag_criticalf("%s: UART send failed for reason %li", name(), tx_res);
+
+        palClearLine(rts_);
+        turag_debugf("%s: sent %d bytes, driver state %d, tx state: %d, OK: %d",
+                     name(), *transmit_length, uart_driver_->state, uart_driver_->txstate, send_ok);
 	}
 
 	if (!send_ok) {
@@ -128,20 +105,18 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
 		return false;
 	}
 
-	if (receive && receive_length && *receive_length) {
-		chBSemReset(&receive_sem_, true);
-		//start receiving data
-		uartStartReceive(uart_driver_, *receive_length, receive);
-		//wait for completion
-		if(chBSemWaitTimeout(&receive_sem_, rs485_timeout_.value) != MSG_OK) {
-			uartStopReceive(uart_driver_);
-			recv_ok = false;
-			turag_criticalf("%s: UART receive timed out.", name());
-		} else {
-			recv_ok = true;
-		}
-		turag_debugf("%s: receiving %d bytes, driver state %d, OK : %d", name(), *receive_length, uart_driver_->state, recv_ok);
-	}
+    if (receive && receive_length && *receive_length) {
+        msg_t rx_res = uartReceiveTimeout(uart_driver_, (size_t*)receive_length, receive, rs485_timeout_.value);
+        recv_ok = (rx_res == MSG_OK);
+        if (!recv_ok)
+            turag_criticalf("%s: UART receive failed for reason %li", name(), rx_res);
+
+        turag_debugf("%s: receiving %d bytes, driver state %d, rx state: %d, OK : %d",
+                     name(), *receive_length, uart_driver_->state, uart_driver_->rxstate, recv_ok);
+    } else {
+        recv_ok = true;
+        turag_debugf("%s: This was a broadcast. There was no receive.", name());
+    }
 	// Start the delay timer after communication is finished.
 	// On the next call of this function we can wait for the timeout.
 	// This way we can use the required delay time for computing if there
