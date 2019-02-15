@@ -113,6 +113,7 @@
 // chosen (mainly because for STM32 there seems to be no unique
 // model nuber).
 #define TURAG_FELDBUS_BOOTLOADER_MCU_ID_STM32F051x8 0x1001
+#define TURAG_FELDBUS_BOOTLOADER_MCU_ID_STM32F030x4 0x1002
 
 //legacy ChibiOS based bootloaders
 #define TURAG_FELDBUS_BOOTLOADER_MCU_ID_CHIBIOS_STM32F411xE 0x1000

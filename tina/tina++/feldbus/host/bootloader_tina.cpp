@@ -437,6 +437,7 @@ const char* Bootloader::getMcuName(uint16_t mcuId) {
     case TURAG_FELDBUS_BOOTLOADER_MCU_ID_XMEGA32E5: return "ATxmega32E5";
 
     case TURAG_FELDBUS_BOOTLOADER_MCU_ID_STM32F051x8: return "STM32F051x8";
+    case TURAG_FELDBUS_BOOTLOADER_MCU_ID_STM32F030x4: return "STM32F030x4";
     default: return "<unknown mcu id>";
     }
 }
