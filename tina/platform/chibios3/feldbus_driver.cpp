@@ -1,5 +1,12 @@
 #define TURAG_DEBUG_LOG_SOURCE "H"
 
+// Note: Debug log is so slow that we are still printing
+// our debug log while we're receiving the answer.
+#if defined(TURAG_DEBUG_LEVEL) && TURAG_DEBUG_LEVEL > 3
+#undef TURAG_DEBUG_LEVEL
+#define TURAG_DEBUG_LEVEL 3
+#endif
+
 #include <tina++/tina.h>
 
 #if TURAG_USE_TURAG_FELDBUS_HOST
@@ -38,10 +45,10 @@ bool FeldbusDriver::init(UARTDriver* uart_driver, uint32_t baud_rate, TuragSyste
     uart_config_.cr2 = 0;
     uart_config_.cr3 = 0;
     uart_config_.rxchar_cb = nullptr;
-    uart_config_.rxend_cb = nullptr; //rxEnd;
+    uart_config_.rxend_cb = nullptr;
     uart_config_.rxerr_cb = nullptr;
     uart_config_.txend1_cb = nullptr;
-    uart_config_.txend2_cb = nullptr; //txEnd2;
+    uart_config_.txend2_cb = nullptr;
     uartStart(uart_driver_, &uart_config_);
 
 	palSetLineMode(rts_, PAL_MODE_OUTPUT_PUSHPULL);
