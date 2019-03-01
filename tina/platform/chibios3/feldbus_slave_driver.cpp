@@ -93,10 +93,10 @@ void Driver::init(const HardwareConfig* config_) {
 
 
 void Driver::start(ThreadImpl* thread, int prio) {
-    thread->start(prio, &thread_func);
     if(config->rto_config)
         gptStart(config->rto_config->gptd, &gpt_config);
     uartStart(config->uartd, &uart_config);
+    thread->start(prio, &thread_func);
 }
 
 
@@ -114,9 +114,23 @@ void Driver::transmitDebugData(const void* data, size_t length) {
 void Driver::thread_func() {
     chRegSetThreadName("feldbus slave driver");
 
+    if(!config->rto_config) {
+        //we can use DMA for receiving
+        while(1) {
+            size_t n = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
+            uartReceiveTimeout(config->uartd, &n, data.rxbuf, TIME_INFINITE);
+            FeldbusSize_t length = Base::processPacket(data.rxbuf, data.rx_size, data.txbuf);
+            if (length > 0) {
+                size_t l = length;
+                if(config->rts_software)
+                    enableRts();
+                uartSendFullTimeout(config->uartd, &l, data.txbuf, TIME_INFINITE);
+                if(config->rts_software)
+                    disableRts();
+            }
+        }
+    }
     while(1) {
-        if(!config->rto_config) //we can use DMA for receiving
-            uartStartReceive(config->uartd, TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, data.rxbuf);
         chSysLock();
         // Reset packet data after it was processed
         // at the end of this function. We do this here
