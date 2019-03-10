@@ -55,12 +55,10 @@ public:
 	ioline_t led;
 	/// Gibt an, ob das LED-Signal invertiert werden soll.
 	bool led_inverted;
-	/// Port/Pin an dem das RTS-Signal (Driver-Enable) angeschlossen ist.
-	ioline_t rts;
+	/// Port/Pin an dem das RTS-Signal (Driver-Enable) angeschlossen ist oder NULL für Hardware-Driver-Enable.
+	ioline_t* rts;
 	/// Gibt an, ob das RTS-Signal invertiert werden soll.
 	bool rts_inverted;
-	/// Gibt an, ob das RTS-Signal in Software gesteuert werden soll.
-	bool rts_software;
     };
 
 
@@ -116,6 +114,8 @@ private:
     };
 
     static void enableRts(void) {
+        if(!config->rts)
+            return; //Driver-Enable controlled by hardware
         if (config->rts_inverted) {
             palClearLine(config->rts);
         } else {
@@ -124,6 +124,8 @@ private:
     }
 
     static void disableRts(void) {
+        if(!config->rts)
+            return; //Driver-Enable controlled by hardware
         if (config->rts_inverted) {
             palSetLine(config->rts);
         } else {
