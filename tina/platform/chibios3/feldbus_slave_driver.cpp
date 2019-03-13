@@ -69,7 +69,7 @@ void Driver::init(const HardwareConfig* config_) {
         uart_config.cr2 = USART_CR2_RTOEN;
         uart_config.timeout = 15;
     }
-    if(!config->rts_software) {
+    if(!config->rts) {
         //hardware Driver-Enable
         uart_config.cr3 = USART_CR3_DEM;
         if(config->rts_inverted)
@@ -93,30 +93,57 @@ void Driver::init(const HardwareConfig* config_) {
 
 
 void Driver::start(ThreadImpl* thread, int prio) {
-    thread->start(prio, &thread_func);
     if(config->rto_config)
         gptStart(config->rto_config->gptd, &gpt_config);
     uartStart(config->uartd, &uart_config);
+    thread->start(prio, &thread_func);
 }
 
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 void Driver::transmitDebugData(const void* data, size_t length) {
     chBSemWait(&tx_sem);
-    if(config->rts_software)
-        enableRts();
+    enableRts();
     uartStartSend(config->uartd, length, data);
     chBSemWait(&tx_finished);
 }
 #endif
 
 
+void blinkCallback (void *t) {
+    Base::doLedPattern(50);
+    chSysLockFromISR();
+    chVTSetI(reinterpret_cast<virtual_timer_t*>(t), MS2ST(20), blinkCallback, t);
+    chSysUnlockFromISR();
+}
+
 void Driver::thread_func() {
     chRegSetThreadName("feldbus slave driver");
 
+    if(!config->rto_config) {
+        //we can use DMA for receiving
+        //use virtual timers for blinking. we could use a 20ms timeout for receive,
+        //but we might miss an incoming byte while were busy blinking :)
+        virtual_timer_t vt;
+        chVTObjectInit(&vt);
+        chVTSet(&vt, MS2ST(20), blinkCallback, &vt);
+        while(1) {
+            
+            size_t n = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE;
+            uartReceiveTimeout(config->uartd, &n, data.rxbuf, TIME_INFINITE);
+            if(n <= TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH || !packetAdressedToMe()) //packet must at least contain address and checksum
+                continue;
+            Base::doLedPattern(50);
+            FeldbusSize_t length = Base::processPacket(data.rxbuf, data.rx_size, data.txbuf);
+            if (length > 0) {
+                size_t l = length;
+                enableRts();
+                uartSendFullTimeout(config->uartd, &l, data.txbuf, TIME_INFINITE);
+                disableRts();
+            }
+        }
+    }
     while(1) {
-        if(!config->rto_config) //we can use DMA for receiving
-            uartStartReceive(config->uartd, TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, data.rxbuf);
         chSysLock();
         // Reset packet data after it was processed
         // at the end of this function. We do this here
@@ -160,8 +187,7 @@ void Driver::thread_func() {
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
                 chBSemWait(&tx_sem);
 #endif
-                if(config->rts_software)
-                    enableRts();
+                enableRts();
                 uartStartSend(config->uartd, length, data.txbuf);
             }
         }
@@ -258,8 +284,7 @@ void Driver::rxErr(UARTDriver *, uartflags_t) {
 
 // dma transmit receive complete
 void Driver::txComplete(UARTDriver *) {
-    if(config->rts_software)
-        disableRts();
+    disableRts();
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
     chSysLockFromISR();
