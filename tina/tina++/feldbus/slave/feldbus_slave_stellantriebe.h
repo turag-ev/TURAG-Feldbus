@@ -116,12 +116,29 @@ public:
             info{access, CommandType::LONG, factor}, value(value), name(name)
         { }
 
+        // Command as control value
         template<typename T>
         constexpr
         Command(const char* name, T* value, Access access = Access::READ) :
             Command(name, value,
                     TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE,
                     access)
+        { }
+
+        // Read-only command with const ptr
+        template<typename T>
+        constexpr
+        Command(const char* name, const T* value, float factor) :
+            Command(name, const_cast<T*>(value), factor, Access::READ)
+        { }
+
+        // Read-only command with const ptr as control value
+        template<typename T>
+        constexpr
+        Command(const char* name, const T* value) :
+            Command(name, const_cast<T*>(value),
+                    TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE,
+                    Access::READ)
         { }
 
         CommandInfo info;
