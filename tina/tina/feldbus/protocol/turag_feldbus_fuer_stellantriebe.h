@@ -21,6 +21,7 @@
 #define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_SERVO       (0x02)
 #define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_STEPPER     (0x03)
 #define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_POWERPLANE  (0x04)
+#define TURAG_FELDBUS_STELLANTRIEBE_DEVICE_TYPE_ESCON       (0x05)
 ///@}
 
 
@@ -159,5 +160,32 @@
                                                             // its current angle appropriately, takes velocity as argument
 ///@}
 
+/**
+ * @name Command Keys für Stepper
+ * @{
+ */
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_DESIRED_ANGLE "desiredAngle"
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_CURRENT_ANGLE "currentAngle"
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_MAX_VELOCITY  "maxVelocity"
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_HOME          "home"
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_STATUS        "status"
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_SYNC_ANGLE    "syncAngle"
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_SYNC_HOME     "syncHome"
+///@}
+
+/**
+ * @name Werte für Stepper Status
+ * @{
+ */
+#define TURAG_FELDBUS_STELLANTRIEBE_STEPPER_STATUS_ANGLE_REACHED (0x01)
+///@}
+
+/**
+ * @name Broadcasts für Stepper
+ * @{
+ */
+#define TURAG_FELDBUS_STELLANTRIEBE_BROADCAST_SYNC_ANGLE (0x01)
+#define TURAG_FELDBUS_STELLANTRIEBE_BROADCAST_SYNC_HOME  (0x02)
+///@}
 
 #endif
