@@ -3,6 +3,7 @@
 #include <tina++/feldbus/host/device.h>
 #include <tina++/feldbus/host/aktor.h>
 #include <type_traits>
+#include <cstring>
 
 namespace TURAG {
 namespace Feldbus {
