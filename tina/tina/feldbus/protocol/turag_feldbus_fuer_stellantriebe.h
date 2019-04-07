@@ -188,4 +188,23 @@
 #define TURAG_FELDBUS_STELLANTRIEBE_BROADCAST_SYNC_HOME  (0x02)
 ///@}
 
+/**
+ * @name Command Keys für ESCON-Motherboard
+ * @{
+ */
+#define TURAG_FELDBUS_STELLANTRIEBE_ESCON_CURRENT_CURRENT   "current_current"
+#define TURAG_FELDBUS_STELLANTRIEBE_ESCON_CURRENT_RPM       "current_rpm"
+#define TURAG_FELDBUS_STELLANTRIEBE_ESCON_CURRENT_STATUS    "current_status"
+#define TURAG_FELDBUS_STELLANTRIEBE_ESCON_SET_ENABLE        "set_enable"
+#define TURAG_FELDBUS_STELLANTRIEBE_ESCON_SET_DIRECTION     "set_direction"
+#define TURAG_FELDBUS_STELLANTRIEBE_ESCON_DESIRED_CURRENT   "desired_current"
+///@}
+
+/**
+ * @name Broadcasts für ESCON-Motherboard
+ * @{
+ */
+#define TURAG_FELDBUS_STELLANTRIEBE_BROADCAST_SYNC_ESCON (0x03)
+///@}
+
 #endif
