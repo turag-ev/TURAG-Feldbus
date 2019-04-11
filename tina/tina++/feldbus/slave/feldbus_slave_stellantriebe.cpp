@@ -29,15 +29,28 @@ FeldbusSize_t Stellantriebe::process_feldbus_packet(const uint8_t* message, Feld
         if (message_length == 1)
         {
             // read request
-            if (command.info.type == Stellantriebe::CommandType::NONE
-                || command.info.type == Stellantriebe::CommandType::NONE_TEXT)
+            switch (command.info.type)
             {
-                return TURAG_FELDBUS_IGNORE_PACKAGE;
+            case CommandType::CHAR:
+            {
+                int8_t tmp = *static_cast<int8_t*>(command.value);
+                memcpy(response, &tmp, get_command_length(CommandType::CHAR));
+                return get_command_length(CommandType::CHAR);
             }
-            else
+            case CommandType::SHORT:
             {
-                memcpy(response, command.value, get_command_length(command.info.type));
-                return get_command_length(command.info.type);
+                int16_t tmp = *static_cast<int16_t*>(command.value);
+                memcpy(response, &tmp, get_command_length(CommandType::SHORT));
+                return get_command_length(CommandType::SHORT);
+            }
+            case CommandType::LONG:
+            {
+                int32_t tmp = *static_cast<int32_t*>(command.value);
+                memcpy(response, &tmp, get_command_length(CommandType::LONG));
+                return get_command_length(CommandType::LONG);
+            }
+            default:
+                return TURAG_FELDBUS_IGNORE_PACKAGE;
             }
         }
         else if (message_length != 4)
