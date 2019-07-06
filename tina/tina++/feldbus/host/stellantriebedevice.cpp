@@ -1,3 +1,8 @@
+/* We are not doing anything special with float values, but we need to check
+ * whether a passed value (factor) is equal to a special value.
+ * See TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE */
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+
 #include <tina++/debug.h>
 #include "stellantriebedevice.h"
 

@@ -6,6 +6,11 @@
  *
  */
 
+/* We are not doing anything special with float values, but we need to check
+ * whether a passed value (factor) is equal to a special value.
+ * See TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE */
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
 #include <tina++/tina.h>
