@@ -2,9 +2,9 @@
 
 // Note: Debug log is so slow that we are still printing
 // our debug log while we're receiving the answer.
-#if defined(TURAG_DEBUG_LEVEL) && TURAG_DEBUG_LEVEL > 3
+#if defined(TURAG_DEBUG_LEVEL) && TURAG_DEBUG_LEVEL > 4
 #undef TURAG_DEBUG_LEVEL
-#define TURAG_DEBUG_LEVEL 3
+#define TURAG_DEBUG_LEVEL 4
 #endif
 
 #include <tina++/tina.h>
@@ -109,7 +109,7 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
         msg_t tx_res = uartSendFullTimeout(uart_driver_, (size_t*)transmit_length, transmit, MS2ST(5));
         send_ok = (tx_res == MSG_OK);
         if (!send_ok)
-            turag_criticalf("%s: UART send failed for reason %s", name(), msg_to_str(tx_res));
+            turag_debugf("%s: UART send failed for reason %s", name(), msg_to_str(tx_res));
 
         palClearLine(rts_);
         turag_debugf("%s: sent %d bytes, driver state %d, tx state: %d, OK: %d",
@@ -127,7 +127,7 @@ bool FeldbusDriver::doTransceive(const uint8_t *transmit, int *transmit_length, 
         msg_t rx_res = uartReceiveTimeout(uart_driver_, (size_t*)receive_length, receive, rs485_timeout_.value);
         recv_ok = (rx_res == MSG_OK);
         if (!recv_ok)
-            turag_criticalf("%s: UART receive failed for reason %s", name(), msg_to_str(rx_res));
+            turag_debugf("%s: UART receive failed for reason %s", name(), msg_to_str(rx_res));
 
         turag_debugf("%s: received %d bytes, driver state %d, rx state: %d, OK : %d",
                      name(), *receive_length, uart_driver_->state, uart_driver_->rxstate, recv_ok);
