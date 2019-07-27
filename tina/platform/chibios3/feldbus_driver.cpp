@@ -64,10 +64,9 @@ bool FeldbusDriver::init(UARTDriver* uart_driver, uint32_t baud_rate, TuragSyste
 		turag_error("RS485 init FAILED!");
 	}
 
-	// calculate bus delay required for 15 frames distance of
-	// TURAG feldbus [us]
-	// we always round up.
-	bus_delay_ = (15 * 1000000 - 1) / baud_rate + 1;
+	// Calculate bus delay required for at least 1.5 frames (10 bit per frame)
+    // distance of TURAG feldbus [us]. We always round up.
+	bus_delay_ = (16 * 1000000 - 1) / baud_rate + 1;
 	delay_timer_.init();
 
 	return (uart_driver_->state == UART_READY);
