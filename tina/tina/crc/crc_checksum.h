@@ -107,8 +107,8 @@ TURAG_INLINE uint8_t turag_crc8_calculate(const void* data, size_t length) {
 	uint8_t crc = 0xfd;
 
     while (length--) {
-        crc = turag_crc_crc8_table[crc ^ *(uint8_t*)data];
-		data = (uint8_t*)data + 1;
+        crc = turag_crc_crc8_table[crc ^ *(const uint8_t*)data];
+        data = (const uint8_t*)data + 1;
 	}
     return crc;
 }
@@ -132,7 +132,7 @@ TURAG_INLINE uint8_t turag_crc8_calculate(const void* data_, size_t length) {
 	uint8_t i;
     uint8_t bit;
     uint8_t c;
-	uint8_t* data = (uint8_t*)data_;
+    const uint8_t* data = (const uint8_t*)data_;
 
     while (length--) {
         c = *data++;
@@ -170,7 +170,7 @@ extern const uint8_t turag_crc_crc8_table[16];
 TURAG_INLINE uint8_t turag_crc8_calculate(const void* data_, size_t length) {
 	uint8_t crc = 0xfd;
 	uint8_t tbl_idx;
-	uint8_t* data = (uint8_t*)data_;
+    const uint8_t* data = (const uint8_t*)data_;
 
     while (length--) {
         tbl_idx = (crc >> 4) ^ (*data >> 4);
@@ -225,8 +225,8 @@ TURAG_INLINE uint8_t turag_crc8_mow_calculate(const void* data, size_t length) {
 	uint8_t crc = 0x00;
 
     while (length--) {
-        crc = turag_crc_crc8_mow_table[crc ^ *(uint8_t*)data];
-		data = (uint8_t*)data + 1;
+        crc = turag_crc_crc8_mow_table[crc ^ *(const uint8_t*)data];
+        data = (const uint8_t*)data + 1;
 	}
     return crc;
 }
@@ -282,8 +282,8 @@ TURAG_INLINE uint16_t turag_crc16_calculate(const void* data, size_t length) {
     uint16_t crc = 0xffff;
 
     while (length--) {
-		crc = turag_crc_crc16_table[(crc ^ *(uint8_t*)data) & 0xff] ^ (crc >> 8);
-		data = (uint8_t*)data + 1;
+        crc = turag_crc_crc16_table[(crc ^ *(const uint8_t*)data) & 0xff] ^ (crc >> 8);
+        data = (const uint8_t*)data + 1;
 	}
     return crc;
 }
@@ -297,7 +297,7 @@ TURAG_INLINE uint16_t turag_crc16_calculate(const void* data, unsigned size) {
 	
 	uint8_t i;
 	for (i=0; i < size; ++i) {
-		data_byte = ((uint8_t*)data)[i] ^ turag_lowbyte(chksum);
+        data_byte = ((const uint8_t*)data)[i] ^ turag_lowbyte(chksum);
 		data_byte ^= data_byte << 4;
 		
 		chksum = (((uint16_t)data_byte << 8) | turag_highbyte(chksum)) ^

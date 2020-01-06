@@ -44,7 +44,7 @@ FeldbusAbstraction::ResultStatus FeldbusAbstraction::transceive(const uint8_t *t
 	// afterwards, which I felt would in most cases probably be more costly.
 	if (transceiveSuccessful)
 	{
-		if (!receive || receive_length == 0) {
+        if (!receive || !receive_length || *receive_length == 0) {
 			// if the caller doesn't want to receive anything and the transmission was successful
 			// we can't check the checksum
 			status = ResultStatus::Success;
