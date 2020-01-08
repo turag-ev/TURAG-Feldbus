@@ -49,7 +49,8 @@ bool StellantriebeDevice::init() {
     name_req[3] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     name_req[4] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     //buffer for fieldbus package containing command name
-    char name_resp[255+addressLength()+1] = { 0 };
+    char name_resp[255+addressLength()+1];
+    memset(name_resp, 0, 255+addressLength()+1);
 
     Request<GetCommandInfo> cmd_info_req;
     cmd_info_req.data.cmd0 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET;
