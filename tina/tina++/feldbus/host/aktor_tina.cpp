@@ -196,6 +196,8 @@ bool Aktor::getValue(uint8_t key, float* value) {
                 static_cast<float>(response.data.value) * command->factor;
             break;
         }
+        default:
+            break;
         }
 
         // protocol definition: writable values are bufferable
@@ -266,6 +268,8 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
             command->buffer.intValue = response.data.value;
             break;
         }
+        default:
+            break;
         }
 
         // protocol definition: writable values are bufferable
@@ -348,6 +352,8 @@ bool Aktor::setValue(uint8_t key, float value) {
         }
         break;
     }
+    default:
+        break;
     }
     return true;
 }
@@ -421,6 +427,8 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
         }
         break;
     }
+    default:
+        break;
     }
     return true;
 }
