@@ -60,6 +60,7 @@ public:
         SHORT = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_SHORT,
         LONG = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG,
         NONE_TEXT = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE_TEXT,
+        FLOAT = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_FLOAT
     };
 
     struct CommandInfo
@@ -79,7 +80,9 @@ public:
                   ? sizeof(int16_t)
                   : t == CommandType::LONG
                     ? sizeof(int32_t)
-                    : 0;
+                    : t == CommandType::FLOAT
+                        ? sizeof(float)
+                        : 0;
     }
 
     struct Command
@@ -114,6 +117,12 @@ public:
         Command(const char* name, int32_t* value, float factor,
                 Access access = Access::READ) :
             info{access, CommandType::LONG, factor}, value(value), name(name)
+        { }
+
+        constexpr
+        Command(const char* name, float* value, float factor = 1.0f,
+                Access access = Access::READ) :
+            info{access, CommandType::FLOAT, factor}, value(value), name(name)
         { }
 
         // Command as control value

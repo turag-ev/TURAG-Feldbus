@@ -36,6 +36,10 @@ struct AktorGetLong {
     int32_t value;
 } _packed;
 
+struct AktorGetFloat {
+    float value;
+} _packed;
+
 struct AktorSetChar {
     uint8_t key;
     int8_t value;
@@ -49,6 +53,11 @@ struct AktorSetShort {
 struct AktorSetLong {
     uint8_t key;
     int32_t value;
+} _packed;
+
+struct AktorSetFloat {
+    uint8_t key;
+    float value;
 } _packed;
 
 struct AktorGetCommandInfo {
@@ -67,8 +76,7 @@ struct AktorGetCommandInfoResponse {
 struct AktorGetStructuredOutputControl {
     uint8_t key;
     uint8_t cmd;
-};
-
+} _packed;
 
 unsigned int Aktor::getCommandsetLength(void) {
     if (commandSetPopulated) {
@@ -151,24 +159,43 @@ bool Aktor::getValue(uint8_t key, float* value) {
         Request<uint8_t> request;
         request.data = key;
 
-        if (command->length == Command_t::CommandLength::length_char) {
+        switch (command->length) {
+        case Command_t::CommandLength::length_char: {
             Response<int8_t> response;
             if (!transceive(request, &response)) {
                 return false;
             }
-            command->buffer.floatValue = static_cast<float>(response.data) * command->factor;
-        } else if (command->length == Command_t::CommandLength::length_short) {
+            command->buffer.floatValue =
+                static_cast<float>(response.data) * command->factor;
+            break;
+        }
+        case Command_t::CommandLength::length_short: {
             Response<AktorGetShort> response;
             if (!transceive(request, &response)) {
                 return false;
             }
-            command->buffer.floatValue = static_cast<float>(response.data.value) * command->factor;
-        } else {
+            command->buffer.floatValue =
+                static_cast<float>(response.data.value) * command->factor;
+            break;
+        }
+        case Command_t::CommandLength::length_long: {
             Response<AktorGetLong> response;
             if (!transceive(request, &response)) {
                 return false;
             }
-            command->buffer.floatValue = static_cast<float>(response.data.value) * command->factor;
+            command->buffer.floatValue =
+                static_cast<float>(response.data.value) * command->factor;
+            break;
+        }
+        case Command_t::CommandLength::length_float: {
+            Response<AktorGetFloat> response;
+            if (!transceive(request, &response)) {
+                return false;
+            }
+            command->buffer.floatValue =
+                static_cast<float>(response.data.value) * command->factor;
+            break;
+        }
         }
 
         // protocol definition: writable values are bufferable
@@ -206,24 +233,39 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
         Request<uint8_t> request;
         request.data = key;
 
-        if (command->length == Command_t::CommandLength::length_char) {
+        switch (command->length) {
+        case Command_t::CommandLength::length_char: {
             Response<int8_t> response;
             if (!transceive(request, &response)) {
                 return false;
             }
             command->buffer.intValue = response.data;
-        } else if (command->length == Command_t::CommandLength::length_short) {
+            break;
+        }
+        case Command_t::CommandLength::length_short: {
             Response<AktorGetShort> response;
             if (!transceive(request, &response)) {
                 return false;
             }
             command->buffer.intValue = response.data.value;
-        } else {
+            break;
+        }
+        case Command_t::CommandLength::length_long: {
             Response<AktorGetLong> response;
             if (!transceive(request, &response)) {
                 return false;
             }
             command->buffer.intValue = response.data.value;
+            break;
+        }
+        case Command_t::CommandLength::length_float: {
+            Response<AktorGetFloat> response;
+            if (!transceive(request, &response)) {
+                return false;
+            }
+            command->buffer.intValue = response.data.value;
+            break;
+        }
         }
 
         // protocol definition: writable values are bufferable
@@ -265,7 +307,8 @@ bool Aktor::setValue(uint8_t key, float value) {
     command->bufferValid = false;
     Response<> response;
 
-    if (command->length == Command_t::CommandLength::length_char) {
+    switch (command->length) {
+    case Command_t::CommandLength::length_char: {
         Request<AktorSetChar> request;
         request.data.key = key;
         request.data.value = static_cast<int8_t>(value / command->factor);
@@ -273,7 +316,9 @@ bool Aktor::setValue(uint8_t key, float value) {
         if (!transceive(request, &response)) {
             return false;
         }
-    } else if (command->length == Command_t::CommandLength::length_short) {
+        break;
+    }
+    case Command_t::CommandLength::length_short: {
         Request<AktorSetShort> request;
         request.data.key = key;
         request.data.value = static_cast<int16_t>(value / command->factor);
@@ -281,7 +326,9 @@ bool Aktor::setValue(uint8_t key, float value) {
         if (!transceive(request, &response)) {
             return false;
         }
-    } else {
+        break;
+    }
+    case Command_t::CommandLength::length_long: {
         Request<AktorSetLong> request;
         request.data.key = key;
         request.data.value = static_cast<int32_t>(value / command->factor);
@@ -289,6 +336,18 @@ bool Aktor::setValue(uint8_t key, float value) {
         if (!transceive(request, &response)) {
             return false;
         }
+        break;
+    }
+    case Command_t::CommandLength::length_float: {
+        Request<AktorSetFloat> request;
+        request.data.key = key;
+        request.data.value = (value / command->factor);
+
+        if (!transceive(request, &response)) {
+            return false;
+        }
+        break;
+    }
     }
     return true;
 }
@@ -321,7 +380,8 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
     command->bufferValid = false;
     Response<> response;
 
-    if (command->length == Command_t::CommandLength::length_char) {
+    switch (command->length) {
+    case Command_t::CommandLength::length_char: {
         Request<AktorSetChar> request;
         request.data.key = key;
         request.data.value = static_cast<int8_t>(value);
@@ -329,7 +389,9 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
         if (!transceive(request, &response)) {
             return false;
         }
-    } else if (command->length == Command_t::CommandLength::length_short) {
+        break;
+    }
+    case Command_t::CommandLength::length_short: {
         Request<AktorSetShort> request;
         request.data.key = key;
         request.data.value = static_cast<int16_t>(value);
@@ -337,7 +399,9 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
         if (!transceive(request, &response)) {
             return false;
         }
-    } else {
+        break;
+    }
+    case Command_t::CommandLength::length_long: {
         Request<AktorSetLong> request;
         request.data.key = key;
         request.data.value = static_cast<int32_t>(value);
@@ -345,6 +409,18 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
         if (!transceive(request, &response)) {
             return false;
         }
+        break;
+    }
+    case Command_t::CommandLength::length_float: {
+        Request<AktorSetLong> request;
+        request.data.key = key;
+        request.data.value = static_cast<int32_t>(value);
+
+        if (!transceive(request, &response)) {
+            return false;
+        }
+        break;
+    }
     }
     return true;
 }
@@ -497,6 +573,9 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
         case Command_t::CommandLength::length_long:
             data_size += 4;
             break;
+        case Command_t::CommandLength::length_float:
+            data_size += 4;
+            break;
         default:
             return false;
         }
@@ -526,7 +605,11 @@ bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
                 pValue += 2;
                 break;
             case Command_t::CommandLength::length_long:
-                device_value = *(reinterpret_cast<int32_t*>(pValue));
+                device_value = *(reinterpret_cast<int32_t *>(pValue));
+                pValue += 4;
+                break;
+            case Command_t::CommandLength::length_float:
+                device_value = *(reinterpret_cast<float *>(pValue));
                 pValue += 4;
                 break;
             default:

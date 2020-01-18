@@ -49,6 +49,12 @@ FeldbusSize_t Stellantriebe::process_feldbus_packet(const uint8_t* message, Feld
                 memcpy(response, &tmp, get_command_length(CommandType::LONG));
                 return get_command_length(CommandType::LONG);
             }
+            case CommandType::FLOAT:
+            {
+                float tmp = *static_cast<float*>(command.value);
+                memcpy(response, &tmp, get_command_length(CommandType::FLOAT));
+                return get_command_length(CommandType::FLOAT);
+            }
             default:
                 return TURAG_FELDBUS_IGNORE_PACKAGE;
             }
