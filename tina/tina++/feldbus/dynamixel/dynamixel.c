@@ -1,7 +1,5 @@
 #define TURAG_DEBUG_LOG_SOURCE "B"
 
-#include <tina/thread.h>
-
 #include "dxl_hal.h"
 #include "dynamixel.h"
 
@@ -59,7 +57,6 @@ static int giBusUsing = 0;
 
 
 #warning Shit not thread-safe. DO NOT use this code from multiple threads.
-//static TuragBinarySemaphore sem_;
 
 
 int turag_dxl_initialize(void *bus) {
