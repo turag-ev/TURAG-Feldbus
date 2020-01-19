@@ -486,7 +486,7 @@ bool DynamixelDevice::setBaudRate(float targetRate) {
     int data = (2000000 + targetRate / 2) / targetRate - 1;
 	float setRate = 2000000.0f / (static_cast<float>(data) + 1.0f);
     float tolerance = (targetRate - setRate) / targetRate;
-    if ((tolerance >= -0.03) && (tolerance<=0.03)) {
+    if ((tolerance >= -0.03f) && (tolerance<=0.03f)) {
         return writeByte(TURAG_DXL_ADDRESS_BAUDRATE, data);
     } else {
         return false;
