@@ -186,7 +186,8 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress,
 	uint8_t request[addressLength() + 1 + 4 + myPageSize + 1];
 	request[addressLength()] = TURAG_FELDBUS_BOOTLOADER_AVR_PAGE_WRITE;
 	
-	uint8_t response[addressLength() + 1 + 1];
+    const int response_len = addressLength() + 1 + 1;
+	uint8_t response[2 + 1 + 1];
 	
 	uint32_t targetAddress = byteAddress;
 	
@@ -202,7 +203,7 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::writeFlash(uint32_t byteAddress,
 		
 		unsigned k = 0;
 		for (k = 0; k < maxTriesForWriting; ++k) {
-			if (!transceive(request, sizeof(request), response, sizeof(response))) {
+			if (!transceive(request, sizeof(request), response, response_len)) {
 				return ErrorCode::transceive_error;
 			}
 			if (response[addressLength()] == TURAG_FELDBUS_BOOTLOADER_AVR_RESPONSE_SUCCESS) {
@@ -253,7 +254,8 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 		++packets;
 	}
 
-	uint8_t request[addressLength() + 1 + 4 + 2 + 1];
+    const int request_len = addressLength() + 1 + 4 + 2 + 1;
+	uint8_t request[2 + 1 + 4 + 2 + 1];
 	request[addressLength()] = TURAG_FELDBUS_BOOTLOADER_AVR_DATA_READ;
 	
 	uint32_t targetAddress = byteAddress;
@@ -272,7 +274,7 @@ BootloaderAvrBase::ErrorCode BootloaderAvrBase::readFlash(uint32_t byteAddress, 
 
 		uint8_t response[addressLength() + 1 + currentPacketSize + 1];
 		
-		if (!transceive(request, sizeof(request), response, sizeof(response))) {
+		if (!transceive(request, request_len, response, sizeof(response))) {
 			return ErrorCode::transceive_error;
 		}
 		// this shouldn't happen

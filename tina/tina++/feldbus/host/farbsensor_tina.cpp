@@ -79,8 +79,9 @@ void Farbsensor::setColorThresholds(Color color_index, uint16_t h_min, uint16_t 
 }
 
 bool Farbsensor::initiateMeasurement() {
-	uint8_t msg[addressLength() + 1];
-    return transceive(msg, sizeof(msg), nullptr, 0);
+    const int msg_len = addressLength() + 1;
+	uint8_t msg[2 + 1];
+    return transceive(msg, msg_len, nullptr, 0);
 }
 
 bool Farbsensor::getRGB(rgb_t* rgb) {

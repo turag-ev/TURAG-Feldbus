@@ -313,12 +313,13 @@ bool Device::receiveString(uint8_t command, uint8_t stringLength, char* out_stri
         uint8_t b;
     };
 
-	uint8_t request[myAddressLength + 2 + 1];
+    const int request_len = myAddressLength + 2 + 1;
+	uint8_t request[2 + 2 + 1];
 	request[myAddressLength] = 0;
 	request[myAddressLength + 1] = command;
 	
     if (!transceive(request,
-                      sizeof(request),
+                      request_len,
                       reinterpret_cast<uint8_t*>(recvBuffer),
                       stringLength + myAddressLength + 1)) {
         return false;

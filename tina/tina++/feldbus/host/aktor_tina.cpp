@@ -476,14 +476,16 @@ bool Aktor::getCommandName(uint8_t key, char* out_name) {
         return false;
     }
     
-	uint8_t request[addressLength() + 4 + 1];
+    // Do not use whole buffer for one byte address
+    const int request_len = addressLength() + 4 + 1;
+	uint8_t request[2 + 4 + 1];
 	request[addressLength()] = key;
 	request[addressLength() + 1] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
 	request[addressLength() + 2] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
 	request[addressLength() + 3] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     
     if (!transceive(request,
-                    sizeof(request),
+                    request_len,
                     reinterpret_cast<uint8_t*>(out_name),
 					name_length + addressLength() + 1)) {
         return false;

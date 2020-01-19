@@ -44,12 +44,13 @@ bool StellantriebeDevice::init() {
     name_length_req.data.cmd1 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
     name_length_req.data.cmd2 = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME_LENGTH;
 
-    uint8_t name_req[addressLength() + 4 + 1];
+    const int name_req_len = addressLength() + 4 + 1;
+    uint8_t name_req[2 + 4 + 1];
     name_req[2] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     name_req[3] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     name_req[4] = TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET_NAME;
     //buffer for fieldbus package containing command name
-    char name_resp[255+addressLength()+1];
+    char name_resp[255+2+1];
     memset(name_resp, 0, 255+addressLength()+1);
 
     Request<GetCommandInfo> cmd_info_req;
@@ -76,7 +77,7 @@ bool StellantriebeDevice::init() {
                 continue;
 
             //query command name
-            if(!transceive(name_req, sizeof(name_req),
+            if(!transceive(name_req, name_req_len,
                            reinterpret_cast<uint8_t*>(name_resp), name_length_resp.data + addressLength() + 1)) {
                 turag_errorf("%s: Failed to query name of key %u.", name(), i);
                 return false;
