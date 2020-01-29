@@ -126,13 +126,6 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
         }
 
 
-//            turag_infof("%s: transceive tx [", name);
-//            for (int i = 0; i < transmit_length; ++i) {
-//                turag_infof("%.2x", transmit[i]);
-//            }
-//            turag_info("]\n");
-
-
 	FeldbusAbstraction::ResultStatus status = FeldbusAbstraction::ResultStatus::TransmissionError;
         unsigned int attempt = 0;
 		
@@ -178,13 +171,6 @@ bool Device::transceive(uint8_t *transmit, int transmit_length, uint8_t *receive
             ++attempt;
         }
 	myTotalTransmissions += attempt;
-
-
-//            turag_infof("%s: transceive rx success(%x|%x) [", name, success, checksum_correct);
-//            for (int j = 0; j < receive_length; ++j) {
-//                turag_infof("%.2x", receive[j]);
-//            }
-//            turag_info("]\n");
 
 
     switch (status)
