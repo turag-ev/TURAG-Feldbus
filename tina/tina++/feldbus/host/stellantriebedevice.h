@@ -60,6 +60,8 @@ protected:
     struct TypeCommandLength<int16_t,dummy> { static constexpr auto value = CommandLength::length_short; };
     template<typename dummy>
     struct TypeCommandLength<int32_t,dummy> { static constexpr auto value = CommandLength::length_long; };
+    template<typename dummy>
+    struct TypeCommandLength<float,dummy>   { static constexpr auto value = CommandLength::length_float; };
 
     class CommandBase {
     public:
