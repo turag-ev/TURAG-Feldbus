@@ -193,50 +193,6 @@ protected:
 
 };
 
-/**
- * @brief RS485-Servo-Klasse.
- *
- * Diese Klasse bildet einen vollwertigen RS485-Servo ab.
- *
- * \see https://intern.turag.de/wiki/doku.php/id,03_elektronik;turag_feldbus;servoregler
- */
-class Servo : public ServoBase {
-protected:
-	Aktor::Command_t command_set[24];
-
-public:
-	/**
-	 * @brief Servo
-	 * @param name
-	 * @param address
-	 * \param[in] feldbus
-	 * @param type
-	 * @param addressLength
-	 */
-	Servo(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
-		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-		ServoBase(name, address, feldbus, type, addressLength) {}
-
-	/**
-	 * @brief initialize
-	 * @return
-	 */
-	bool initialize(void) { return populateCommandSet(command_set, 24); }
-
-	/**
-	 * @brief getCurrentFeedForward
-	 * @param feedForward
-	 * @return
-	 */
-	bool getCurrentFeedForward(float* feedForward) { return getValue(RS485_STELLANTRIEBE_SERVO_KEY_CTRL_CUR_STATIC_FF, feedForward); }
-	/**
-	 * @brief setCurrentFeedForward
-	 * @param feedForward
-	 * @return
-	 */
-	bool setCurrentFeedForward(float feedForward) { return setValue(RS485_STELLANTRIEBE_SERVO_KEY_CTRL_CUR_STATIC_FF, feedForward); }
-};
-
 } // namespace Feldbus
 } // namespace TURAG
 
