@@ -17,8 +17,8 @@ struct GetCommandInfo {
 } _packed;
 
 struct GetCommandInfoResponse {
-    Aktor::Command_t::WriteAccess writeAccess;
-    Aktor::Command_t::CommandLength length;
+    LegacyStellantriebeDevice::Command_t::WriteAccess writeAccess;
+    LegacyStellantriebeDevice::Command_t::CommandLength length;
     float factor;
 } _packed;
 

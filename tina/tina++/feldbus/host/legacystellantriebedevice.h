@@ -35,7 +35,7 @@ namespace Feldbus {
  * benötigt wird.
  * 
  */
-class Aktor : public TURAG::Feldbus::Device {
+class LegacyStellantriebeDevice : public TURAG::Feldbus::Device {
 public:
 	
 	/**
@@ -108,12 +108,12 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	Aktor(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	LegacyStellantriebeDevice(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
 				Device(name, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false),
                 structuredOutputTableLength(-1)  { }
 #else
-	Aktor(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	LegacyStellantriebeDevice(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
 				Device(name, address, feldbus, type, addressLength), commandSet(nullptr), commandSetLength(0), commandSetPopulated(false) { }
 #endif

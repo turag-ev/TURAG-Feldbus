@@ -18,7 +18,7 @@
 #if TURAG_USE_TURAG_FELDBUS_HOST
 
 
-#include "aktor.h"
+#include "legacystellantriebedevice.h"
 
 #include <tina/debug/print.h>
 
@@ -68,8 +68,8 @@ struct AktorGetCommandInfo {
 } _packed;
 
 struct AktorGetCommandInfoResponse {
-    Aktor::Command_t::WriteAccess writeAccess;
-    Aktor::Command_t::CommandLength length;
+    LegacyStellantriebeDevice::Command_t::WriteAccess writeAccess;
+    LegacyStellantriebeDevice::Command_t::CommandLength length;
     float factor;
 } _packed;
 
@@ -78,7 +78,7 @@ struct AktorGetStructuredOutputControl {
     uint8_t cmd;
 } _packed;
 
-unsigned int Aktor::getCommandsetLength(void) {
+unsigned int LegacyStellantriebeDevice::getCommandsetLength(void) {
     if (commandSetPopulated) {
         return commandSetLength;
     } else {
@@ -96,7 +96,7 @@ unsigned int Aktor::getCommandsetLength(void) {
     }
 }
 
-bool Aktor::populateCommandSet(Command_t* commandSet_, unsigned int commandSetLength_) {
+bool LegacyStellantriebeDevice::populateCommandSet(Command_t* commandSet_, unsigned int commandSetLength_) {
     if (!commandSet_) return false;
     
     unsigned int deviceCommandSetLength = getCommandsetLength();
@@ -134,7 +134,7 @@ bool Aktor::populateCommandSet(Command_t* commandSet_, unsigned int commandSetLe
     return true;
 }
 
-bool Aktor::getValue(uint8_t key, float* value) {
+bool LegacyStellantriebeDevice::getValue(uint8_t key, float* value) {
     if (!commandSetPopulated) {
         turag_errorf("%s: commandSet not populated", name());
         return false;
@@ -210,7 +210,7 @@ bool Aktor::getValue(uint8_t key, float* value) {
     return true;
 }
 
-bool Aktor::getValue(uint8_t key, int32_t* value) {
+bool LegacyStellantriebeDevice::getValue(uint8_t key, int32_t* value) {
     if (!commandSetPopulated) {
         turag_errorf("%s: commandSet not populated", name());
         return false;
@@ -283,7 +283,7 @@ bool Aktor::getValue(uint8_t key, int32_t* value) {
 }
 
 
-bool Aktor::setValue(uint8_t key, float value) {
+bool LegacyStellantriebeDevice::setValue(uint8_t key, float value) {
     if (!commandSetPopulated) {
         turag_errorf("%s: commandSet not populated", name());
         return false;
@@ -358,7 +358,7 @@ bool Aktor::setValue(uint8_t key, float value) {
     return true;
 }
 
-bool Aktor::setValue(uint8_t key, int32_t value) {
+bool LegacyStellantriebeDevice::setValue(uint8_t key, int32_t value) {
     if (!commandSetPopulated) {
         turag_errorf("%s: commandSet not populated", name());
         return false;
@@ -433,7 +433,7 @@ bool Aktor::setValue(uint8_t key, int32_t value) {
     return true;
 }
 
-unsigned int Aktor::getCommandNameLength(uint8_t key) {
+unsigned int LegacyStellantriebeDevice::getCommandNameLength(uint8_t key) {
     if (!commandSetPopulated) {
         turag_errorf("%s: commandSet not populated", name());
         return false;
@@ -465,7 +465,7 @@ unsigned int Aktor::getCommandNameLength(uint8_t key) {
     }
 }
 
-bool Aktor::getCommandName(uint8_t key, char* out_name) {
+bool LegacyStellantriebeDevice::getCommandName(uint8_t key, char* out_name) {
     if (!out_name) {
         return false;
     }
@@ -502,7 +502,7 @@ bool Aktor::getCommandName(uint8_t key, char* out_name) {
 
 #if TURAG_FELDBUS_AKTOR_STRUCTURED_OUTPUT_AVAILABLE
 
-int Aktor::getStructuredOutputTableLength(void) {
+int LegacyStellantriebeDevice::getStructuredOutputTableLength(void) {
     if (structuredOutputTableLength != -1) {
         return structuredOutputTableLength;
     } else {
@@ -521,7 +521,7 @@ int Aktor::getStructuredOutputTableLength(void) {
 }
 
 
-bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
+bool LegacyStellantriebeDevice::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
 	if (static_cast<int>(keys.size()) > getStructuredOutputTableLength()) {
 		turag_errorf("%s: output table in device too small for number of provided keys", name());
         return false;
@@ -561,7 +561,7 @@ bool Aktor::setStructuredOutputTable(const std::vector<uint8_t>& keys) {
 }
 
 
-bool Aktor::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
+bool LegacyStellantriebeDevice::getStructuredOutput(std::vector<StructuredDataPair_t>* values) {
     if (structuredOutputTable.size() == 0) {
 		turag_errorf("%s: structured output mapping empty", name());
         return false;

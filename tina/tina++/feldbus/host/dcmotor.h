@@ -10,7 +10,7 @@
 #ifndef TURAGFELDBUSDCMOTOR_H_
 #define TURAGFELDBUSDCMOTOR_H_
 
-#include "aktor.h"
+#include "legacystellantriebedevice.h"
 
 namespace TURAG {
 namespace Feldbus {
@@ -18,11 +18,11 @@ namespace Feldbus {
 /*
  *
  */
-class DCMotor : public TURAG::Feldbus::Aktor {
+class DCMotor : public TURAG::Feldbus::LegacyStellantriebeDevice {
 public:
     DCMotor(const char* name, unsigned address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
         const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
-        Aktor(name, address, feldbus, type, addressLength) {}
+        LegacyStellantriebeDevice(name, address, feldbus, type, addressLength) {}
 
     bool initialize(void) { return populateCommandSet(command_set, 19); }
 
@@ -181,7 +181,7 @@ public:
     bool driveHome(float velocity) { return setValue(RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME, velocity); }
 
 private:
-    Aktor::Command_t command_set[19];
+    LegacyStellantriebeDevice::Command_t command_set[19];
 };
 
 } // namespace Feldbus
