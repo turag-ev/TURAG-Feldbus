@@ -33,7 +33,7 @@ namespace Feldbus {
  * Stattdessen sollte \ref AsebTemplate benutzt werden.
  * 
  */
-class Aseb : public TURAG::Feldbus::Device {
+class ASEBBase : public TURAG::Feldbus::Device {
 public:
 		/**
 	 * \brief Repräsentiert einen analogen Eingang.
@@ -69,7 +69,7 @@ public:
 	 * \param[in] type
 	 * \param[in] addressLength
 	 */
-	Aseb(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
+	ASEBBase(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE,
 		const AddressLength addressLength = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH) :
 				Device(name, address, feldbus, type, addressLength),
 				analogInputs_(nullptr), pwmOutputs_(nullptr), syncBuffer_(nullptr),
@@ -361,7 +361,7 @@ private:
  */
 template<std::size_t AnalogInputSize, std::size_t PwmOutputSize, bool HasDigitalInputs,
          Device::AddressLength AddressSize = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_ADDRESS_LENGTH>
-class AsebTemplate : public Aseb {
+class ASEB : public ASEBBase {
 public:
     static constexpr std::size_t SyncSize = static_cast<uint8_t>(AddressSize) + 2*AnalogInputSize + (HasDigitalInputs?2:0) + 1;
 	/**
@@ -371,15 +371,15 @@ public:
      * \param[in] feldbus Referenz auf eine FeldbusAbstraction-Instanz, die den zu verwendenden Bus repräsentiert.
      * \param[in] type Typ der verwendeten Checksumme.
 	 */
-    AsebTemplate(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE):
-        Aseb(name, address, feldbus, type, AddressSize)  { }
+    ASEB(const char* name, unsigned int address, FeldbusAbstraction& feldbus, ChecksumType type = TURAG_FELDBUS_DEVICE_CONFIG_STANDARD_CHECKSUM_TYPE):
+        ASEBBase(name, address, feldbus, type, AddressSize)  { }
 	
 	/**
 	 * \brief Initialisiert das Gerät.
 	 * \return True bei Erfolg, ansonsten false.
 	 */
     bool initialize(void) {
-        return Aseb::initialize(syncBuffer.get(), SyncSize, analog.get(), AnalogInputSize, pwm.get(), PwmOutputSize);
+        return ASEBBase::initialize(syncBuffer.get(), SyncSize, analog.get(), AnalogInputSize, pwm.get(), PwmOutputSize);
     }
 
 private:

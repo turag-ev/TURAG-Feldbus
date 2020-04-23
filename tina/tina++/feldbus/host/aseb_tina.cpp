@@ -52,7 +52,7 @@ struct AsebGetPwmFrequency {
 } _packed;
 
 
-bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
+bool ASEBBase::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
                       Analog_t* analogInputs, unsigned analogInputSize,
                       Pwm_t* pwmOutputs, unsigned pwmOutputSize) {
 
@@ -152,7 +152,7 @@ bool Aseb::initialize(uint8_t* sync_buffer, unsigned sync_buffer_size,
 }
 	
 
-bool Aseb::getDigitalOutputSize(int* size) {
+bool ASEBBase::getDigitalOutputSize(int* size) {
     if (digitalOutputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_DIGITAL_OUTPUTS;
@@ -167,7 +167,7 @@ bool Aseb::getDigitalOutputSize(int* size) {
     return true;
 }
 
-bool Aseb::getDigitalInputSize(int* size) {
+bool ASEBBase::getDigitalInputSize(int* size) {
     if (digitalInputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_DIGITAL_INPUTS;
@@ -182,7 +182,7 @@ bool Aseb::getDigitalInputSize(int* size) {
     return true;
 }
 
-bool Aseb::getAnalogInputSize(int * size) {
+bool ASEBBase::getAnalogInputSize(int * size) {
     if (analogInputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_ANALOG_INPUTS;
@@ -197,7 +197,7 @@ bool Aseb::getAnalogInputSize(int * size) {
     return true;
 }
 
-bool Aseb::getPwmOutputSize(int* size) {
+bool ASEBBase::getPwmOutputSize(int* size) {
     if (pwmOutputSize_ == -1) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_NUMBER_OF_PWM_OUTPUTS;
@@ -213,7 +213,7 @@ bool Aseb::getPwmOutputSize(int* size) {
 }
 
 
-bool Aseb::getSyncSize(int* size) {
+bool ASEBBase::getSyncSize(int* size) {
 	if (!isInitialized()) {
         Request<uint8_t> request;
         request.data = TURAG_FELDBUS_ASEB_SYNC_SIZE;
@@ -230,7 +230,7 @@ bool Aseb::getSyncSize(int* size) {
 
 
 
-bool Aseb::sync(void) {
+bool ASEBBase::sync(void) {
     isSynced_ = false;
 
 	if (!isInitialized()) {
@@ -271,7 +271,7 @@ bool Aseb::sync(void) {
     return true;
 }
 
-float Aseb::getAnalogInput(unsigned key) {
+float ASEBBase::getAnalogInput(unsigned key) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getAnalogInput prior to initialization", name());
         return 0.0f;
@@ -284,7 +284,7 @@ float Aseb::getAnalogInput(unsigned key) {
 }
 
 
-float Aseb::getTargetPwmOutput(unsigned key) {
+float ASEBBase::getTargetPwmOutput(unsigned key) {
     if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getTargetPwmOutput prior to initialization", name());
         return 0.0f;
@@ -296,7 +296,7 @@ float Aseb::getTargetPwmOutput(unsigned key) {
     }
 }
 
-bool Aseb::getDigitalInput(unsigned key) {
+bool ASEBBase::getDigitalInput(unsigned key) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getDigitalInput prior to initialization", name());
         return false;
@@ -308,7 +308,7 @@ bool Aseb::getDigitalInput(unsigned key) {
     }
 }
 
-bool Aseb::getDigitalOutput(unsigned key) {
+bool ASEBBase::getDigitalOutput(unsigned key) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getDigitalOutput prior to initialization", name());
         return false;
@@ -320,7 +320,7 @@ bool Aseb::getDigitalOutput(unsigned key) {
     }
 }
 
-bool Aseb::initDigitalOutputBuffer() {
+bool ASEBBase::initDigitalOutputBuffer() {
     int size;
     if (!getDigitalOutputSize(&size)) {
         turag_errorf("%s: call to Aseb::initDigitalOutputBuffer() failed", name());
@@ -338,7 +338,7 @@ bool Aseb::initDigitalOutputBuffer() {
     return true;
 }
 
-bool Aseb::setDigitalOutput(unsigned key, bool value) {
+bool ASEBBase::setDigitalOutput(unsigned key, bool value) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::setDigitalOutput prior to initialization", name());
         return false;
@@ -368,7 +368,7 @@ bool Aseb::setDigitalOutput(unsigned key, bool value) {
     }
 }
 
-bool Aseb::getCurrentPwmOutput(unsigned key, float* duty_cycle) {
+bool ASEBBase::getCurrentPwmOutput(unsigned key, float* duty_cycle) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getCurrentPwmOutput prior to initialization", name());
         return false;
@@ -385,7 +385,7 @@ bool Aseb::getCurrentPwmOutput(unsigned key, float* duty_cycle) {
     }
 }
 
-bool Aseb::initPwmOutputBuffer() {
+bool ASEBBase::initPwmOutputBuffer() {
     int size;
     if (!getPwmOutputSize(&size)) {
         turag_errorf("%s: call to Aseb::initPwmOutputBuffer() failed", name());
@@ -416,7 +416,7 @@ bool Aseb::initPwmOutputBuffer() {
     return true;
 }
 
-float Aseb::getPwmSpeed(unsigned key) {
+float ASEBBase::getPwmSpeed(unsigned key) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getPwmSpeed prior to initialization", name());
         return false;
@@ -428,7 +428,7 @@ float Aseb::getPwmSpeed(unsigned key) {
     }
 }
 
-bool Aseb::setPwmSpeed(unsigned key, float speed) {
+bool ASEBBase::setPwmSpeed(unsigned key, float speed) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::setPwmSpeed prior to initialization", name());
         return false;
@@ -459,7 +459,7 @@ bool Aseb::setPwmSpeed(unsigned key, float speed) {
     return true;
 }
 
-bool Aseb::setTargetPwmOutput(unsigned key, float duty_cycle) {
+bool ASEBBase::setTargetPwmOutput(unsigned key, float duty_cycle) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::setTargetPwmOutput prior to initialization", name());
         return false;
@@ -486,7 +486,7 @@ bool Aseb::setTargetPwmOutput(unsigned key, float duty_cycle) {
 }
 
 
-unsigned int Aseb::getCommandNameLength(unsigned key) {
+unsigned int ASEBBase::getCommandNameLength(unsigned key) {
 	if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getCommandNameLength prior to initialization", name());
         return false;
@@ -506,7 +506,7 @@ unsigned int Aseb::getCommandNameLength(unsigned key) {
 }
 
 
-bool Aseb::getCommandName(unsigned key, char* out_name) {
+bool ASEBBase::getCommandName(unsigned key, char* out_name) {
     if (!out_name) {
         return false;
     }
@@ -539,7 +539,7 @@ bool Aseb::getCommandName(unsigned key, char* out_name) {
 
 }
 
-uint32_t Aseb::getPwmFrequency(unsigned key) {
+uint32_t ASEBBase::getPwmFrequency(unsigned key) {
     if (!isInitialized()) {
         turag_errorf("%s: tried to call Aseb::getPwmFrequency prior to initialization", name());
         return 0;
@@ -551,7 +551,7 @@ uint32_t Aseb::getPwmFrequency(unsigned key) {
     }
 }
 
-bool Aseb::getAnalogResolution(unsigned* resolution) {
+bool ASEBBase::getAnalogResolution(unsigned* resolution) {
     Request<uint8_t> request;
     request.data = TURAG_FELDBUS_ASEB_ANALOG_INPUT_RESOLUTION;
 
