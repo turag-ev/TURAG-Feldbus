@@ -144,8 +144,7 @@
  * @{
  */
 #define RS485_STELLANTRIEBE_DC_KEY_SWITCH_STATUS (0x11)
-#define RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME (0x12) // requests the slave to return to some defined position where it adjusts \
-                                                         // its current angle appropriately, takes velocity as argument
+#define RS485_STELLANTRIEBE_DC_KEY_RETURN_TO_HOME (0x12) // requests the slave to return to some defined position where it adjusts its current angle appropriately, takes velocity as argument
 ///@}
 
 /**
