@@ -129,5 +129,14 @@ bool StellantriebeDevice::init() {
     return true;
 }
 
+bool StellantriebeDevice::CommandBase::assert_initialized() const {
+    if (key_ == 0) {
+        turag_errorf("StellantriebeDevice command \"%s\" is not initialized!", name_);
+        return false;
+    } else {
+        return true;
+    }
+}
+
 } // namespace IM
 } // namespace TURAG

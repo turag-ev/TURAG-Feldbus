@@ -66,7 +66,7 @@ protected:
     class CommandBase {
     public:
         CommandBase(const char* name, StellantriebeDevice* dev):
-            name_(name), dev_(dev), next_(nullptr)
+            name_(name), dev_(dev), key_(0), next_(nullptr)
         {
             //append to command list of device
             if(!dev_->first_command_) {
@@ -88,6 +88,7 @@ protected:
         //let StellantriebeDevice set properties obtained from device (TODO: clean design)
         virtual void setConversionFactor(float) = 0;
         void setKey(uint8_t key) { key_ = key; }
+        bool assert_initialized() const;
 
         CommandBase* next() const { return next_; }
     protected:
@@ -118,23 +119,29 @@ protected:
         typename std::enable_if<condition, bool>::type
         getValue(InterfaceType* value) {
             //return value from cache
-            *value = this->value_;
+            if (value)
+                *value = this->value_;
             return true;
         }
         template<bool condition = (writeaccess == WriteAccess::write)>
         typename std::enable_if<!condition, bool>::type
         getValue(InterfaceType* value) {
+            if (!assert_initialized())
+                return false;
             //read value from device
             T v;
             if(!dev_->getValue<T>(key_, &v)) {
                 return false;
             } else {
-                *value = this->fromDevice(v);
+                if (value)
+                    *value = this->fromDevice(v);
                 return true;
             }
         }
         bool setValue(InterfaceType value) {
             static_assert(writeaccess == WriteAccess::write, "Command does not have write access!");
+            if (!assert_initialized())
+                return false;
             this->value_ = value;
             return dev_->setValue<T>(key_, this->toDevice(value));
         }
@@ -149,7 +156,8 @@ private:
         Response<T> resp;
         if(!transceive(req,&resp))
             return false;
-        *value = resp.data; //assumes host is little-endian!
+        if (value)
+            *value = resp.data; //assumes host is little-endian!
         return true;
     }
     template<typename T>
