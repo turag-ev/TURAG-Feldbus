@@ -88,7 +88,7 @@ protected:
         //let StellantriebeDevice set properties obtained from device (TODO: clean design)
         virtual void setConversionFactor(float) = 0;
         void setKey(uint8_t key) { key_ = key; }
-        bool assert_initialized() const;
+        bool assertInitialized() const;
 
         CommandBase* next() const { return next_; }
     protected:
@@ -126,7 +126,7 @@ protected:
         template<bool condition = (writeaccess == WriteAccess::write)>
         typename std::enable_if<!condition, bool>::type
         getValue(InterfaceType* value) {
-            if (!assert_initialized())
+            if (!assertInitialized())
                 return false;
             //read value from device
             T v;
@@ -140,7 +140,7 @@ protected:
         }
         bool setValue(InterfaceType value) {
             static_assert(writeaccess == WriteAccess::write, "Command does not have write access!");
-            if (!assert_initialized())
+            if (!assertInitialized())
                 return false;
             this->value_ = value;
             return dev_->setValue<T>(key_, this->toDevice(value));

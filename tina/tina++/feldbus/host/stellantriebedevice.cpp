@@ -129,9 +129,9 @@ bool StellantriebeDevice::init() {
     return true;
 }
 
-bool StellantriebeDevice::CommandBase::assert_initialized() const {
+bool StellantriebeDevice::CommandBase::assertInitialized() const {
     if (key_ == 0) {
-        turag_errorf("StellantriebeDevice command \"%s\" is not initialized!", name_);
+        turag_errorf("%s: Command \"%s\" is not initialized!", dev_ ? dev_->name() : "Invalid device", name_);
         return false;
     } else {
         return true;
