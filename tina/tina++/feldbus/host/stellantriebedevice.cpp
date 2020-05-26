@@ -134,7 +134,7 @@ bool StellantriebeDevice::init() {
             break;
         }
         if(!found) {
-            turag_errorf("%s: Command \"%s\" not found in device command set.", name(), cmd->name());
+            turag_errorf("%s: Command \"%s\" not valid or found in device command set.", name(), cmd->name());
             all_successful = false;
             continue;
         }
