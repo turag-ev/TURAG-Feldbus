@@ -60,6 +60,7 @@ bool StellantriebeDevice::init() {
     Response<GetCommandInfoResponse> cmd_info_resp;
 
     //try to find all commands in the command set
+    bool all_successful = true;
     for(CommandBase* cmd = first_command_; cmd != nullptr; cmd = cmd->next()) {
         bool found = false;
         //valid keys start at 1
@@ -71,40 +72,50 @@ bool StellantriebeDevice::init() {
             //query length of command name
             if(!transceive(name_length_req, &name_length_resp)) {
                 turag_errorf("%s: Failed to query name length of key %u.", name(), i);
-                return false;
-            }
-            if(name_length_resp.data == 0)
+                all_successful = false;
                 continue;
+            }
+            if(name_length_resp.data == 0) {
+                turag_debugf("%s: Name of key %u has zero length. (Looking for name \"%s\")", name(), i, cmd->name());
+                continue;
+            }
 
             //query command name
             if(!transceive(name_req, name_req_len,
                            reinterpret_cast<uint8_t*>(name_resp), name_length_resp.data + addressLength() + 1)) {
                 turag_errorf("%s: Failed to query name of key %u.", name(), i);
-                return false;
+                all_successful = false;
+                continue;
             }
 
             //add null-termination and check name (it is offset by addressLength())
             name_resp[addressLength() + name_length_resp.data] = 0;
-            if(strcmp(&name_resp[addressLength()], cmd->name()))
+            if(strcmp(&name_resp[addressLength()], cmd->name())) {
+                turag_debugf("%s: Name of key %u (\"%s\") does not match (looking for name \"%s\"). Skipping.",
+                             name(), i, &name_resp[addressLength()], cmd->name());
                 continue; //no match
+            }
 
             //names match, query properties
             if(!transceive(cmd_info_req, &cmd_info_resp)) {
                 turag_errorf("%s: Failed to query command info for %s (key %u).", name(), cmd->name(), i);
-                return false;
+                all_successful = false;
+                continue;
             }
             //check properties
             if(cmd_info_resp.data.length != cmd->length()) {
                 turag_errorf("%s: Command \"%s\" length mismatched, device reports %u, required %u.",
                              name(), cmd->name(),
                              unsigned(cmd_info_resp.data.length), unsigned(cmd->length()));
-                return false;
+                all_successful = false;
+                continue;
             }
             if(cmd_info_resp.data.writeAccess != cmd->access()) {
                 turag_errorf("%s: Command \"%s\" write access mismatched, device reports %u, required %u.",
                              name(), cmd->name(),
                              unsigned(cmd_info_resp.data.writeAccess), unsigned(cmd->access()));
-                return false;
+                all_successful = false;
+                continue;
             }
             bool dev_ctrl = cmd_info_resp.data.factor == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_FACTOR_CONTROL_VALUE;
             bool cmd_ctrl = cmd->type() == CommandType::control;
@@ -113,20 +124,22 @@ bool StellantriebeDevice::init() {
                              name(), cmd->name(),
                              dev_ctrl?"control":"real",
                              cmd_ctrl?"control":"real");
-                return false;
+                all_successful = false;
+                continue;
             }
-            //all checks successful
+            //all checks for this command successful
             cmd->setKey(i);
             cmd->setConversionFactor(cmd_info_resp.data.factor);
             found = true;
             break;
         }
         if(!found) {
-            turag_errorf("%s: Command %s not found in device command set.", name(), cmd->name());
-            return false;
+            turag_errorf("%s: Command \"%s\" not found in device command set.", name(), cmd->name());
+            all_successful = false;
+            continue;
         }
     }
-    return true;
+    return all_successful;
 }
 
 bool StellantriebeDevice::CommandBase::assertInitialized() const {
