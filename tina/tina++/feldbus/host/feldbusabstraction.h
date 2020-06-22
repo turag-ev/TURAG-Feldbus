@@ -93,19 +93,19 @@ public:
 	 * effizienten Einhalten des 15-Frame-Delays zwischen Transmissionen nötig,
 	 * da diese Klasse keine Information über die im Paket verwendete Adresslänge hat).
 	 * \param[in] checksumType Checksummentyp, mit der die Transmission abgesichert wird.
-     * \return True wenn die korrekte Menge Daten gesendet und empfangen wurden, ansonsten false.
-     *
-     * Diese Funktion sendet blockierend einen Satz Daten auf den Bus und empfängt
-     * danach die angegebene Menge an Daten. Die Funktion kehrt zurück, sobald alle Daten
+	 * \return True wenn die korrekte Menge Daten gesendet und empfangen wurden, ansonsten false.
+	 *
+	 * Diese Funktion sendet blockierend einen Satz Daten auf den Bus und empfängt
+	 * danach die angegebene Menge an Daten. Die Funktion kehrt zurück, sobald alle Daten
 	 * gesendet und empfangen wurden oder wenn ein Timeout erreicht wurde. Dieser ist durch
 	 * die Subklasse weiter zu definieren, die außerdem eine Möglichkeit zur Anpassung
 	 * desselben bieten sollte.
-     *
+	 *
 	 * Der Sendepuffer muss sowohl Adresse als auch die Checksumme enthalten.
 	 *
-     * Es ist zulässig, wenn receive_length auf null verweist oder 0 enthält: dann werden
-     * nur Daten gesendet, aber keine empfangen.
-     *
+	 * Es ist zulässig, wenn receive_length auf null verweist oder 0 enthält: dann werden
+	 * nur Daten gesendet, aber keine empfangen.
+	 *
 	 * Wenn die Übertragung schon beim Senden scheitert, steht in receive_length 0.
      *
      */
