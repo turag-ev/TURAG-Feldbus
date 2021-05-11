@@ -99,6 +99,35 @@
 /// @brief Alle 4 Paketanzahlen werden auf 0 zurückgesetzt
 #define TURAG_FELDBUS_SLAVE_COMMAND_RESET_PACKAGE_COUNT				0x08
 
+/// @brief Returns UUID of the device
+#define TURAG_FELDBUS_SLAVE_COMMAND_GET_UUID						0x09
+
+
+///@}
+/**
+ * @name Reserved broadcasts with broadcast ID 0x00
+ * @{
+ */
+
+/// @brief Ping any device to return UUID
+#define TURAG_FELDBUS_SLAVE_BROADCAST_UUID						0x00
+
+/// @brief get/set bus address of device with given UUID
+#define TURAG_FELDBUS_SLAVE_BROADCAST_UUID_ADDRESS				0x00
+
+/// @brief reset bus address of specified device
+#define TURAG_FELDBUS_SLAVE_BROADCAST_UUID_RESET_ADDRESS		0x01
+
+/// @brief enable bus neighbors
+#define TURAG_FELDBUS_SLAVE_BROADCAST_ENABLE_NEIGHBOURS			0x01
+
+/// @brief disable bus neighbors
+#define TURAG_FELDBUS_SLAVE_BROADCAST_DISABLE_NEIGHBOURS		0x02
+
+/// @brief disable bus neighbors
+#define TURAG_FELDBUS_SLAVE_BROADCAST_RESET_ADDRESSES			0x03
+
+
 
 ///@}
 

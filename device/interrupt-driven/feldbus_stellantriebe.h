@@ -59,7 +59,6 @@
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
 
-#include <tina/tina.h>
 #include <tina/feldbus/slave/feldbus_config_check.h>
 
 
@@ -74,7 +73,7 @@ extern "C" {
 
 // do not change this structure!!! Otherwise the device will send 
 // corrupted command info packages.
-typedef struct _packed {
+typedef struct __attribute__ ((packed)) {
 	/// pointer to the actual value
     void* value;  
 	/// is the value allowed to be altered by the host?

@@ -128,14 +128,6 @@
 
 
 /**
- * If set to one, the device listens for broadcasts messages.
- * If set to zero, these packages are droppped which saves some
- * processing time and reduces codesize.
- */
-#define TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE		0
-
-
-/**
  * Legt die Frequenz[Hz] fest, mit der turag_feldbus_slave_increase_uptime_counter()
  * aufgerufen wird.
  * 
@@ -158,17 +150,6 @@
  * ungleich 0 konfiguriert ist.
  */
 #define TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK	1
-
-/**
- * Legt fest, ob das Slave-Gerät Informationen über
- * das Auftreten von Fehlern bei Transaktionen sammelt.
- * 
- * Werden diese Informationen nicht benötigt oder ist der Speicher
- * auf dem Zielgerät sehr begrenzt, kann dieses Feature deaktiviert werden.
- * In diesem Falle antwortet das Gerät auf die Anfragen zwar korrekt,
- * allerdings stets mit einem Wert von 0.
- */
-#define TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE 1
 
 #endif /* FELDBUS_CONFIG_AVR_H_ */
  

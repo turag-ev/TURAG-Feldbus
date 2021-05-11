@@ -1,5 +1,7 @@
 
 #include "avr_feldbus_base.h"
+#include <tina/crc/murmurhash3.h>
+
 
 #ifdef TURAG_FELDBUS_SLAVE_BASE_IMPLEMENTATION_IS_AVR_VERSION
 
@@ -9,34 +11,31 @@ turag_feldbus_slave_uart_t turag_feldbus_slave_uart = {
 	.rxOffset = 0,
 	.rx_length = 0,
 	.overflow = 0,
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	.package_lost_flag = 0,
 	.buffer_overflow_flag = 0,
-#endif
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 	.transmission_active = 0,
 #endif	
 #if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
 	.toggleLedBlocked = 0,
 #endif
+	.my_address = MY_ADDR,
 };
 
 turag_feldbus_slave_info_t turag_feldbus_slave_info = {
 	.name = TURAG_FELDBUS_DEVICE_NAME,
 	.versioninfo = TURAG_FELDBUS_DEVICE_VERSIONINFO,
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	.packagecount_correct = 0,
 	.packagecount_buffer_overflow = 0,
 	.packagecount_lost = 0,
 	.packagecount_chksum_mismatch = 0,
-#endif
 #if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>0) && (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<=65535)
 	.uptime_counter = 0
 #endif
 };
 
 
-void turag_feldbus_slave_init() {
+void turag_feldbus_slave_init(uint32_t uuid) {
 #if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
 	turag_feldbus_slave_uart.txbuf[0] = TURAG_FELDBUS_MASTER_ADDR|MY_ADDR;
 #elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
@@ -44,6 +43,12 @@ void turag_feldbus_slave_init() {
 	turag_feldbus_slave_uart.txbuf[1] = (TURAG_FELDBUS_MASTER_ADDR_2|MY_ADDR) >> 8;
 #endif
 	
+	turag_feldbus_slave_uart.uuid[0] = uuid & 0xFF;
+	turag_feldbus_slave_uart.uuid[1] = (uuid >> 8) & 0xFF;
+	turag_feldbus_slave_uart.uuid[2] = (uuid >> 16) & 0xFF;
+	turag_feldbus_slave_uart.uuid[3] = (uuid >> 24) & 0xFF;
+
+
 	turag_feldbus_hardware_init();
 	
 	turag_feldbus_slave_rts_off();
@@ -53,6 +58,10 @@ void turag_feldbus_slave_init() {
 }
 
 
+uint32_t turag_feldbus_slave_hash_uuid(const uint8_t* key, int length) {
+	uint32_t default_seed = 0x55555555;
+	return murmurhash3_x86_32(key, length, default_seed);
+}
 
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED

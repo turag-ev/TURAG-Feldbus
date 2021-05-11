@@ -1,6 +1,11 @@
 #ifndef FELDBUS_CONFIG_CHECK_AVR_H_
 #define FELDBUS_CONFIG_CHECK_AVR_H_
 
+#ifdef __cplusplus
+# include <cstdint>
+#else
+# include <stdint.h>
+#endif
 
 // hide some uninteresting stuff from documentation
 #if (!defined(__DOXYGEN__))
@@ -40,9 +45,6 @@
 #  warning TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED = 1
 # endif
 #endif
-#ifndef TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-# error TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE must be defined
-#endif
 #ifndef TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY
 # error TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY must be defined
 #else
@@ -59,9 +61,6 @@
 #   warning TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1, but TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY == 0. Led flashing feature depends on uptime feature.
 #  endif
 # endif
-#endif
-#ifndef TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
-# error TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE must be defined
 #endif
 
 
@@ -87,7 +86,16 @@
 # endif
 #endif
 
+#if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+    typedef uint8_t FeldbusAddress_t;
+#elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+   typedef uint16_t FeldbusAddress_t;
+#else
+# error no option for address size
 #endif
+
+
+#endif // (!defined(__DOXYGEN__))
 
 
 #endif // FELDBUS_CONFIG_CHECK_AVR_H_

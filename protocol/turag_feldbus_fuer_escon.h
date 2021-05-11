@@ -10,12 +10,12 @@
 struct TuragEsconSetRPM_t {
     int16_t value[2];
 };
-// } _packed;
+// } __attribute__ ((packed));
 
 struct TuragEsconSetCurrent_t {
     int16_t value[2];
 };
-//} _packed;
+//} __attribute__ ((packed));
 
 //response structures
 struct TuragEsconStatus_t {
@@ -23,7 +23,7 @@ struct TuragEsconStatus_t {
     int16_t currentRPM[2];
     int16_t measuredCurrent[2];
 };
-// } _packed;
+// } __attribute__ ((packed));
 
 //status bytes
 #define TURAG_FELDBUS_ESCON_READY 0

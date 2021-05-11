@@ -238,7 +238,6 @@
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_AVR_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_AVR_H_
 
-#include <tina/tina.h>
 #include <tina/helper/static_assert.h>
 #include <tina/crc/xor_checksum.h>
 #include <tina/crc/crc_checksum.h>
@@ -354,6 +353,17 @@ extern void turag_feldbus_slave_toggle_led(void);
  * @param byte Data to send
  */
 extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
+
+/**
+ * Enables the switchable part of the bus.
+ */
+extern void turag_feldbus_slave_enable_bus_neighbours();
+
+/**
+ * Disables the switchable part of the bus.
+ */
+extern void turag_feldbus_slave_disable_bus_neighbours();
+
 ///@}
 
 /** @name Zu benutzende Hardware-Funktionen
@@ -367,21 +377,21 @@ extern void turag_feldbus_slave_transmit_byte(uint8_t byte);
  * Call this function from the Receive-Complete-Interrupt on your system.
  * @param byte Received byte
  */
-TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t byte);
+static inline void turag_feldbus_slave_byte_received(uint8_t byte);
 
 /**
  * Data-Register-Empty-Interrupt-Interface.
  *
  * Call this function from the Data-Register-Empty-Interrupt on your system.
  */
-TURAG_INLINE void turag_feldbus_slave_ready_to_transmit(void);
+static inline void turag_feldbus_slave_ready_to_transmit(void);
 
 /**
  * Transmit-Complete-Interrupt-Interface.
  *
  * Call this function from the Transmit-Complete-Interrupt on your system.
  */
-TURAG_INLINE void turag_feldbus_slave_transmission_complete(void);
+static inline void turag_feldbus_slave_transmission_complete(void);
 
 /** 
  * Timeout occured.
@@ -391,7 +401,7 @@ TURAG_INLINE void turag_feldbus_slave_transmission_complete(void);
  * If a timer is used to provide this functionality don't forget to deactivate it
  * before calling this function to avoid additional interrupts because of an overflowing timer.
  */
-TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured(void);
+static inline void turag_feldbus_slave_receive_timeout_occured(void);
 
 /**
  * Inkrementiert den Uptime-Counter.
@@ -488,14 +498,17 @@ extern void turag_feldbus_slave_process_broadcast(const uint8_t* message, Feldbu
  * If your device does not have a bootloader, you should call this function
  * only after making sure that no device is being programmed.
  */
-void turag_feldbus_slave_init(void);
+void turag_feldbus_slave_init(uint32_t uuid);
+
+
+uint32_t turag_feldbus_slave_hash_uuid(const uint8_t* key, int length);
 
 /**
  * This function needs to be called continuously from the device's
  * main loop. It handles all advanced communication logic.
  * 
  */
-TURAG_INLINE void turag_feldbus_do_processing(void);
+static inline void turag_feldbus_do_processing(void);
 
 
 ///@}
@@ -581,12 +594,10 @@ typedef struct {
 	uint8_t overflow;
 	// holds the calculated checksum
 	uint8_t chksum;
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	// package loss detected and counter must be increased
 	uint8_t package_lost_flag;
 	// overflow detected and counter must be increased
 	uint8_t buffer_overflow_flag;
-#endif
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 	volatile uint8_t transmission_active;
 	uint8_t chksum_required;
@@ -594,17 +605,19 @@ typedef struct {
 #if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
 	volatile uint8_t toggleLedBlocked;
 #endif
+	// bus address of the device
+	FeldbusAddress_t my_address;
+	// uuid of the device
+	uint8_t uuid[4];
 } turag_feldbus_slave_uart_t;
 
 typedef struct {
 	char* name;
 	char* versioninfo;
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	uint32_t packagecount_correct;
 	uint32_t packagecount_buffer_overflow;
 	uint32_t packagecount_lost;
 	uint32_t packagecount_chksum_mismatch;
-#endif
 #if (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY>0) && (TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY<=65535)
 	uint32_t uptime_counter;
 #endif
@@ -618,8 +631,25 @@ extern turag_feldbus_slave_info_t turag_feldbus_slave_info;
 extern "C" {
 #endif
 
-TURAG_INLINE void start_transmission(void) {
+static inline void turag_feldbus_slave_start_transmission(FeldbusAddress_t origin) {
+	// set correct return address
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+	turag_feldbus_slave_uart.txbuf[0] = TURAG_FELDBUS_MASTER_ADDR | origin;
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+	turag_feldbus_slave_uart.txbuf[0] = (TURAG_FELDBUS_MASTER_ADDR_2| origin) & 0xff;
+	turag_feldbus_slave_uart.txbuf[1] = (TURAG_FELDBUS_MASTER_ADDR_2| origin) >> 8;
+# endif
+
+		// calculate correct checksum and initiate transmission
+#if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
+		turag_feldbus_slave_uart.chksum = xor_checksum_calculate(turag_feldbus_slave_uart.txbuf, turag_feldbus_slave_uart.transmitLength);
+#elif TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
+		turag_feldbus_slave_uart.chksum = turag_crc8_calculate(turag_feldbus_slave_uart.txbuf, turag_feldbus_slave_uart.transmitLength);
+#endif
+
+
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
+		turag_feldbus_slave_uart.chksum_required = 1;
 		turag_feldbus_slave_uart.transmission_active = 1;
 #endif
 		
@@ -640,7 +670,7 @@ TURAG_INLINE void start_transmission(void) {
 extern "C" {
 #endif
 
-TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
+static inline void turag_feldbus_slave_byte_received(uint8_t data) {
 	// if at this point rx_length is not 0, obviously the last 
 	// received package was not processed yet. This package
 	// will be overwritten now and is lost.
@@ -648,9 +678,7 @@ TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
 	// try to copy packages from the in-buffer.
 	if (turag_feldbus_slave_uart.rx_length) {
 		turag_feldbus_slave_uart.rx_length = 0;
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 		turag_feldbus_slave_uart.package_lost_flag = 1;
-#endif
 	}
 
 	// We need to check for overflow before actually storing the received
@@ -659,34 +687,22 @@ TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
 	if (turag_feldbus_slave_uart.rxOffset >= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
 		turag_feldbus_slave_uart.rxOffset = 0;
 		
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 		// We have a buffer overflow. If this happens for the 
 		// first time for this package, we check the address.
 		// If the package was for us, we increase the counter for 
 		// package overflow.
 		if (turag_feldbus_slave_uart.overflow == 0) {
 # if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1	
-#  if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-			if ((turag_feldbus_slave_uart.rxbuf[0] == MY_ADDR || turag_feldbus_slave_uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR))
-#  else
-			if (turag_feldbus_slave_uart.rxbuf[0] == MY_ADDR)
-#  endif
+			if ((turag_feldbus_slave_uart.rxbuf[0] == turag_feldbus_slave_uart.my_address || turag_feldbus_slave_uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR))
 # elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
-#  if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-			if (((turag_feldbus_slave_uart.rxbuf[0] == (MY_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (MY_ADDR >> 8)) || 
+			if (((turag_feldbus_slave_uart.rxbuf[0] == (turag_feldbus_slave_uart.my_address & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (turag_feldbus_slave_uart.my_address >> 8)) ||
 				(turag_feldbus_slave_uart.rxbuf[0] == (TURAG_FELDBUS_BROADCAST_ADDR_2 & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (TURAG_FELDBUS_BROADCAST_ADDR_2 >> 8))))
-#  else
-			if ((turag_feldbus_slave_uart.rxbuf[0] == (MY_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (MY_ADDR >> 8)))
-#  endif
 # endif		
 			{
 				turag_feldbus_slave_uart.buffer_overflow_flag = 1;
 			}
 			turag_feldbus_slave_uart.overflow = 1;
 		}
-#else
-		turag_feldbus_slave_uart.overflow = 1;
-#endif
 	}
 
 	// accessing the buffer as an array is more effective than using a pointer
@@ -698,8 +714,7 @@ TURAG_INLINE void turag_feldbus_slave_byte_received(uint8_t data) {
 	turag_feldbus_slave_start_receive_timeout();
 }
 
-
-TURAG_INLINE void turag_feldbus_slave_ready_to_transmit() {
+static inline void turag_feldbus_slave_ready_to_transmit() {
 	if (turag_feldbus_slave_uart.txOffset == turag_feldbus_slave_uart.transmitLength) {
 #if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
 		if (turag_feldbus_slave_uart.chksum_required)
@@ -717,7 +732,7 @@ TURAG_INLINE void turag_feldbus_slave_ready_to_transmit() {
 	}
 }
 
-TURAG_INLINE void turag_feldbus_slave_transmission_complete() {
+static inline void turag_feldbus_slave_transmission_complete() {
 	// turn off transmitter and release bus, turn on receiver
 	turag_feldbus_slave_rts_off();
 	turag_feldbus_slave_deactivate_tx_interrupt();
@@ -729,8 +744,7 @@ TURAG_INLINE void turag_feldbus_slave_transmission_complete() {
 }
 
 
-TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
+static inline void turag_feldbus_slave_receive_timeout_occured() {
 	if (turag_feldbus_slave_uart.package_lost_flag) {
 		++turag_feldbus_slave_info.packagecount_lost;
 		turag_feldbus_slave_uart.package_lost_flag = 0;
@@ -740,29 +754,16 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 		++turag_feldbus_slave_info.packagecount_buffer_overflow;
 		turag_feldbus_slave_uart.buffer_overflow_flag = 0;
 	}
-#endif
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1	
-# if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-	if ((turag_feldbus_slave_uart.rxbuf[0] == MY_ADDR || turag_feldbus_slave_uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR) &&
+	if ((turag_feldbus_slave_uart.rxbuf[0] == turag_feldbus_slave_uart.my_address || turag_feldbus_slave_uart.rxbuf[0] == TURAG_FELDBUS_BROADCAST_ADDR) &&
 			!turag_feldbus_slave_uart.overflow && 
 			turag_feldbus_slave_uart.rxOffset > 1)
-# else
-	if (turag_feldbus_slave_uart.rxbuf[0] == MY_ADDR  &&
-			!turag_feldbus_slave_uart.overflow && 
-			turag_feldbus_slave_uart.rxOffset > 1)
-# endif
 #elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
-# if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
-	if (((turag_feldbus_slave_uart.rxbuf[0] == (MY_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (MY_ADDR >> 8)) || 
+	if (((turag_feldbus_slave_uart.rxbuf[0] == (turag_feldbus_slave_uart.my_address & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (turag_feldbus_slave_uart.my_address >> 8)) ||
 		(turag_feldbus_slave_uart.rxbuf[0] == (TURAG_FELDBUS_BROADCAST_ADDR_2 & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (TURAG_FELDBUS_BROADCAST_ADDR_2 >> 8))) &&
 			!turag_feldbus_slave_uart.overflow && 
 			turag_feldbus_slave_uart.rxOffset > 1)
-# else
-	if ((turag_feldbus_slave_uart.rxbuf[0] == (MY_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (MY_ADDR >> 8))  &&
-			!turag_feldbus_slave_uart.overflow && 
-			turag_feldbus_slave_uart.rxOffset > 1)
-# endif
 #endif		
 	{
 		// package ok -> signal main loop that we have package ready
@@ -782,7 +783,7 @@ TURAG_INLINE void turag_feldbus_slave_receive_timeout_occured() {
 }
 
 #if TURAG_FELDBUS_SLAVE_CONFIG_UPTIME_FREQUENCY != 0 || defined(__DOXYGEN__)
-TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void) {
+static inline void turag_feldbus_slave_increase_uptime_counter(void) {
 	++turag_feldbus_slave_info.uptime_counter;
 
 # if TURAG_FELDBUS_SLAVE_CONFIG_USE_LED_CALLBACK == 1
@@ -828,7 +829,16 @@ TURAG_INLINE void turag_feldbus_slave_increase_uptime_counter(void) {
 # define turag_feldbus_slave_increase_uptime_counter()
 #endif
 
-TURAG_INLINE void turag_feldbus_do_processing(void) {
+
+static inline bool turag_feldbus_slave_uuid_check(uint8_t* compare) {
+	return
+			turag_feldbus_slave_uart.uuid[0] == compare[0] &&
+			turag_feldbus_slave_uart.uuid[1] == compare[1] &&
+			turag_feldbus_slave_uart.uuid[2] == compare[2] &&
+			turag_feldbus_slave_uart.uuid[3] == compare[3];
+}
+
+static inline void turag_feldbus_do_processing(void) {
 	// One might think it is unnecessary to disable interrupts just for
 	// reading rx_length. But because rx_length is volatile the following
 	// scenario is quite possible: we copy the the value of rx_length from memory
@@ -862,7 +872,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 #endif
 	turag_feldbus_slave_end_interrupt_protect();
 
-	// if we are here, we have a package (with length>1 that is adressed to us) safe in our buffer
+	// if we are here, we have a package (with length > 1 that is addressed to us) safe in our buffer
 	// and we can start working on it
 	
 
@@ -873,28 +883,22 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 	if (!turag_crc8_check(turag_feldbus_slave_uart.rxbuf, length - 1, turag_feldbus_slave_uart.rxbuf[length - 1]))
 #endif
 	{
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 		++turag_feldbus_slave_info.packagecount_chksum_mismatch;
-#endif
 		turag_feldbus_slave_activate_rx_interrupt();
 		return;
 	}
 	
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 	++turag_feldbus_slave_info.packagecount_correct;
-#endif
 
 	// The address is already checked in turag_feldbus_slave_receive_timeout_occured(). 
 	// Thus the second check is only necessary
 	// to distinguish broadcasts from regular packages.
-#if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
 	// message addressed to me?
 # if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1	
-	if (turag_feldbus_slave_uart.rxbuf[0] == MY_ADDR) {
+	if (turag_feldbus_slave_uart.rxbuf[0] != TURAG_FELDBUS_BROADCAST_ADDR) {
 # elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
-	if (turag_feldbus_slave_uart.rxbuf[0] == (MY_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] == (MY_ADDR >> 8)) {	
+	if (turag_feldbus_slave_uart.rxbuf[0] != (TURAG_FELDBUS_BROADCAST_ADDR & 0xff) && turag_feldbus_slave_uart.rxbuf[1] != (TURAG_FELDBUS_BROADCAST_ADDR >> 8)) {
 # endif	
-#endif
 		if (length == 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
 			// we received a ping request -> respond with empty packet (address + checksum)
 			turag_feldbus_slave_uart.transmitLength = TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
@@ -905,11 +909,7 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 				_Static_assert(8 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
 				turag_feldbus_slave_uart.txbuf[0 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_DEVICE_PROTOCOL;
 				turag_feldbus_slave_uart.txbuf[1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_DEVICE_TYPE_ID;
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 				turag_feldbus_slave_uart.txbuf[2 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE | 0x80;
-#else
-				turag_feldbus_slave_uart.txbuf[2 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE;
-#endif
 				turag_feldbus_slave_uart.txbuf[3 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE & 0xff;
 #if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE > 255				
 				turag_feldbus_slave_uart.txbuf[4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = (TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE >> 8) & 0xff;
@@ -950,7 +950,6 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 					turag_feldbus_slave_uart.transmitLength = sizeof(TURAG_FELDBUS_DEVICE_VERSIONINFO) - 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
 					break;
 				}	
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CORRECT: {
 					_Static_assert(sizeof(turag_feldbus_slave_info.packagecount_correct) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
 					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.packagecount_correct, sizeof(turag_feldbus_slave_info.packagecount_correct));
@@ -975,35 +974,25 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 					turag_feldbus_slave_uart.transmitLength = sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
 					break;
 				}	
-#else
-				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CORRECT:
-				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_BUFFEROVERFLOW:
-				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_LOST:
-				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_CHKSUM_MISMATCH: {
-					_Static_assert(sizeof(uint32_t) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
-					turag_feldbus_slave_uart.transmitLength = sizeof(uint32_t) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
-				}
-#endif
 				case TURAG_FELDBUS_SLAVE_COMMAND_PACKAGE_COUNT_ALL: {
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 					_Static_assert(sizeof(turag_feldbus_slave_info.packagecount_correct) + sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + sizeof(turag_feldbus_slave_info.packagecount_lost) + sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
 					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, &turag_feldbus_slave_info.packagecount_correct, sizeof(turag_feldbus_slave_info.packagecount_correct) + sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + sizeof(turag_feldbus_slave_info.packagecount_lost) + sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch));
 					turag_feldbus_slave_uart.transmitLength = sizeof(turag_feldbus_slave_info.packagecount_correct) + sizeof(turag_feldbus_slave_info.packagecount_buffer_overflow) + sizeof(turag_feldbus_slave_info.packagecount_lost) + sizeof(turag_feldbus_slave_info.packagecount_chksum_mismatch) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
-#else
-					_Static_assert(sizeof(uint32_t) * 4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
-					turag_feldbus_slave_uart.transmitLength = sizeof(uint32_t) * 4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
-#endif
 					break;
 				}	
 				case TURAG_FELDBUS_SLAVE_COMMAND_RESET_PACKAGE_COUNT: {
 					_Static_assert(TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
-#if TURAG_FELDBUS_SLAVE_CONFIG_PACKAGE_STATISTICS_AVAILABLE
 					turag_feldbus_slave_info.packagecount_correct = 0;
 					turag_feldbus_slave_info.packagecount_buffer_overflow = 0;
 					turag_feldbus_slave_info.packagecount_lost = 0;
 					turag_feldbus_slave_info.packagecount_chksum_mismatch = 0;
-#endif
 					turag_feldbus_slave_uart.transmitLength = TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+					break;
+				}
+				case TURAG_FELDBUS_SLAVE_COMMAND_GET_UUID: {
+					_Static_assert(4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, turag_feldbus_slave_uart.uuid, 4);
+					turag_feldbus_slave_uart.transmitLength = 4 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
 					break;
 				}
 				default:
@@ -1029,44 +1018,123 @@ TURAG_INLINE void turag_feldbus_do_processing(void) {
 				return;
 			}
 		}
-		
+		turag_feldbus_slave_start_transmission(turag_feldbus_slave_uart.my_address);
 
-#if TURAG_FELDBUS_SLAVE_CONFIG_DEBUG_ENABLED
-	turag_feldbus_slave_uart.chksum_required = 1;
-# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
-	turag_feldbus_slave_uart.txbuf[0] = TURAG_FELDBUS_MASTER_ADDR|MY_ADDR;
-# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
-	turag_feldbus_slave_uart.txbuf[0] = (TURAG_FELDBUS_MASTER_ADDR_2|MY_ADDR) & 0xff;
-	turag_feldbus_slave_uart.txbuf[1] = (TURAG_FELDBUS_MASTER_ADDR_2|MY_ADDR) >> 8;
-# endif
-#endif
-		
-		// calculate correct checksum and initiate transmission
-#if TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_XOR
-		turag_feldbus_slave_uart.chksum = xor_checksum_calculate(turag_feldbus_slave_uart.txbuf, turag_feldbus_slave_uart.transmitLength);
-#elif TURAG_FELDBUS_SLAVE_CONFIG_CRC_TYPE == TURAG_FELDBUS_CHECKSUM_CRC8_ICODE
-		turag_feldbus_slave_uart.chksum = turag_crc8_calculate(turag_feldbus_slave_uart.txbuf, turag_feldbus_slave_uart.transmitLength);
-#endif
-		
-		start_transmission();
-
-	// not every device protocol requires broadcasts, so we can save a few bytes here
-#if TURAG_FELDBUS_SLAVE_BROADCASTS_AVAILABLE
+	// broadcasts
 	} else {
 		if (length == 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH) {
 			// compatibility mode to support deprecated Broadcasts without protocol-ID
 			turag_feldbus_slave_process_broadcast(0, 0, TURAG_FELDBUS_DEVICE_PROTOCOL_LOKALISIERUNGSSENSOREN);
-		} else if (turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] == TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES || 
-				turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] == TURAG_FELDBUS_DEVICE_PROTOCOL) {
-			// otherwise process only the correct broadcasts
+		} else if (turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] == TURAG_FELDBUS_DEVICE_PROTOCOL) {
+			// defer processing of device protocol broadcasts
 			turag_feldbus_slave_process_broadcast(
 				turag_feldbus_slave_uart.rxbuf + 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, 
 				length - (2 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH), 
 				turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH]);
+		} else if (turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] == TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES) {
+			// basic protocol broadcasts
+			switch (turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1]) {
+			case TURAG_FELDBUS_SLAVE_BROADCAST_UUID: {
+				if (length == 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 2 && turag_feldbus_slave_uart.my_address == 0) {
+					// ping request for all devices without valid bus address -> return UUID
+					_Static_assert(sizeof(turag_feldbus_slave_uart.uuid) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+					memcpy(turag_feldbus_slave_uart.txbuf + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH, turag_feldbus_slave_uart.uuid, sizeof(turag_feldbus_slave_uart.uuid));
+					turag_feldbus_slave_uart.transmitLength = sizeof(turag_feldbus_slave_uart.uuid) + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+				} else if (length >= 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 6 &&
+						turag_feldbus_slave_uuid_check(turag_feldbus_slave_uart.rxbuf  + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 2)) {
+					// packets directed at devices with a specific UUID
+					switch (length) {
+					case 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 6: {
+						// ping request -> respond with empty packet (address + checksum)
+						turag_feldbus_slave_uart.transmitLength = TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+						break;
+					}
+					case 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 7: {
+						switch (turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 6]) {
+						case TURAG_FELDBUS_SLAVE_BROADCAST_UUID_ADDRESS: {
+							// return Bus address
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+							turag_feldbus_slave_uart.txbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = turag_feldbus_slave_uart.my_address;
+							turag_feldbus_slave_uart.transmitLength = TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1;
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+							turag_feldbus_slave_uart.txbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = turag_feldbus_slave_uart.my_address & 0xFF;
+							turag_feldbus_slave_uart.txbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1] = (turag_feldbus_slave_uart.my_address >> 8) & 0xFF;
+							turag_feldbus_slave_uart.transmitLength = TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 2;
+# endif
+							break;
+						}
+						case TURAG_FELDBUS_SLAVE_BROADCAST_UUID_RESET_ADDRESS: {
+							// reset bus address
+							turag_feldbus_slave_uart.my_address = 0;
+							turag_feldbus_slave_uart.transmitLength = TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+							break;
+						}
+						default:
+							turag_feldbus_slave_activate_rx_interrupt();
+							return;
+						}
+						break;
+					}
+					case 1 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 7 + sizeof(FeldbusAddress_t): {
+						switch (turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 6]) {
+						case TURAG_FELDBUS_SLAVE_BROADCAST_UUID_ADDRESS: {
+							// set Bus address
+# if TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 1
+							FeldbusAddress_t new_address = turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 6 + sizeof(FeldbusAddress_t)];
+							if (new_address > 0 && new_address < TURAG_FELDBUS_MASTER_ADDR) {
+								turag_feldbus_slave_uart.my_address = new_address;
+								turag_feldbus_slave_uart.txbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 1;
+							}
+# elif TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH == 2
+							FeldbusAddress_t new_address = (uint16_t)turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 6 + sizeof(FeldbusAddress_t)] +
+									((uint16_t)turag_feldbus_slave_uart.rxbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 6 + sizeof(FeldbusAddress_t) + 1] << 8);
+							if (new_address > 0 && new_address < TURAG_FELDBUS_MASTER_ADDR2) {
+								turag_feldbus_slave_uart.my_address = new_address;
+								turag_feldbus_slave_uart.txbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 1;
+							}
+# endif
+							else {
+								turag_feldbus_slave_uart.txbuf[TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH] = 0;
+							}
+							turag_feldbus_slave_uart.transmitLength = TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1;
+							break;
+						}
+						default:
+							turag_feldbus_slave_activate_rx_interrupt();
+							return;
+						}
+						break;
+					}
+
+					default:
+						turag_feldbus_slave_activate_rx_interrupt();
+						return;
+					}
+				} else {
+					// no answer in this case
+					turag_feldbus_slave_activate_rx_interrupt();
+					return;
+				}
+
+				turag_feldbus_slave_start_transmission(TURAG_FELDBUS_BROADCAST_ADDR);
+				return;
+			}
+			case TURAG_FELDBUS_SLAVE_BROADCAST_ENABLE_NEIGHBOURS: {
+				turag_feldbus_slave_enable_bus_neighbours();
+				break;
+			}
+			case TURAG_FELDBUS_SLAVE_BROADCAST_DISABLE_NEIGHBOURS: {
+				turag_feldbus_slave_disable_bus_neighbours();
+				break;
+			}
+			case TURAG_FELDBUS_SLAVE_BROADCAST_RESET_ADDRESSES: {
+				turag_feldbus_slave_uart.my_address = 0;
+				break;
+			}
+			}
 		}
 		turag_feldbus_slave_activate_rx_interrupt();
 	}
-#endif
 }
 
 #ifdef __cplusplus
