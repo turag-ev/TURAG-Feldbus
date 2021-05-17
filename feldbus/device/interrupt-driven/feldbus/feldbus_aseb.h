@@ -46,7 +46,6 @@
 #include <tina/feldbus/slave/feldbus_config_check.h>
 
 
-#if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_ASEB) || defined(__DOXYGEN__)
 
 /**
  * \brief Typ zur Definition digitaler Ein-/Ausgänge.
@@ -110,7 +109,6 @@ void turag_feldbus_aseb_init(
 	const uint8_t analog_resolution);
 
 
-
-#endif
+FeldbusSize_t turag_feldbus_aseb_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response);
 
 #endif /* TINA_FELDBUS_SLAVE_FELDBUS_ASEB_H_ */

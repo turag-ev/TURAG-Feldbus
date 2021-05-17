@@ -6,11 +6,26 @@
 #define _MURMURHASH3_H_
 
 
-#include <stdint.h>
+#ifdef __cplusplus
+# include <cstdint>
+#else
+# include <stdint.h>
+#endif
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 
 uint32_t murmurhash3_x86_32  (const void * key, int len, uint32_t seed);
+
+
+#ifdef __cplusplus
+}           /* closing brace for extern "C" */
+#endif
 
 
 #endif // _MURMURHASH3_H_

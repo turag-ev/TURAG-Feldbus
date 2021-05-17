@@ -3,20 +3,11 @@
 #include "feldbus_stellantriebe.h"
 #include <string.h>
 
-#if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_STELLANTRIEBE) || defined(__DOXYGEN__)
 
 
 #ifndef TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE
 # error TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE must be defined
 #endif
-#ifndef TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
-# error TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM must be defined
-#endif
-
-
-#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
-# include <avr/pgmspace.h>
-#endif		
 
 
 
@@ -30,15 +21,18 @@ static uint8_t structured_output_table_length = 0;
 
 feldbus_stellantriebe_value_buffer_t feldbus_stellantriebe_old_value;
 
+static TuragFeldbusPacketProcessor package_processor;
 
-void turag_feldbus_stellantriebe_init(feldbus_stellantriebe_command_t* command_set_, const char** command_names_, uint8_t command_set_length_) {
+
+void turag_feldbus_stellantriebe_init(feldbus_stellantriebe_command_t* command_set_, const char** command_names_, uint8_t command_set_length_, TuragFeldbusPacketProcessor package_processor_) {
     commmand_set = command_set_;
     command_names = command_names_;
     command_set_length = command_set_length_;
+    package_processor = package_processor_;
 }
 
 
-FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
+FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
     // the feldbus base implementation guarantees message_length >= 1 and message[0] >= 1 
 	// so we don't need to check that
 
@@ -71,7 +65,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
                 break;
             case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE:
             default:
-                return TURAG_FELDBUS_IGNORE_PACKAGE;
+                return TURAG_FELDBUS_NO_ANSWER;
                 break;
             }
         } else if (message_length != 4) {
@@ -79,7 +73,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
             feldbus_stellantriebe_command_t* command = commmand_set + index;
 
             if (command->write_access != TURAG_FELDBUS_STELLANTRIEBE_COMMAND_ACCESS_WRITE_ACCESS) {
-                return TURAG_FELDBUS_IGNORE_PACKAGE;
+                return TURAG_FELDBUS_NO_ANSWER;
             }
 
             // buffer received data to handle situations
@@ -101,7 +95,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
                 buffer[3] = message[4];
                 break;
             default:
-                return TURAG_FELDBUS_IGNORE_PACKAGE;
+                return TURAG_FELDBUS_NO_ANSWER;
                 break;
             }
 
@@ -135,7 +129,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 				return 0;
 				break;
 			default: 
-				return TURAG_FELDBUS_IGNORE_PACKAGE;
+				return TURAG_FELDBUS_NO_ANSWER;
 				break;
 			}
 
@@ -147,7 +141,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 
             } else if (message[1] == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_INFO_GET) {
                 // command info request
-				_Static_assert(6 + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE, "Buffer overflow");
+				_Static_assert(6 + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH <= TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE, "Buffer overflow");
                 feldbus_stellantriebe_command_t* command = commmand_set + index;
                 memcpy(response, &command->write_access, 6);
                 return 6;
@@ -157,11 +151,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
                 if (!command_names) {
                     response[0] = 0;
                 } else {
-#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
-                    response[0] = strlen_PF((uint_farptr_t)((uint16_t)command_names[index]));
-#else
                     response[0] = strlen(command_names[index]);
-#endif
                 }
                 return 1;
 
@@ -171,26 +161,18 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
                     return 0;
                 }
 
-                uint8_t length = 0;
+                FeldbusSize_t length = 0;
 
-#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
-                length = strlen_PF((uint_farptr_t)((uint16_t)command_names[index]));
-#else
                 length = strlen(command_names[index]);
-#endif				
-				if (length + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
-					length = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+				if (length + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE) {
+					length = TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH;
 				}
 				
-#if TURAG_FELDBUS_STELLANTRIEBE_COMMAND_NAMES_USING_AVR_PROGMEM
-                memcpy_PF(response, (uint_farptr_t)((uint16_t)command_names[index]), length);
-#else
                 memcpy(response, command_names[index], length);
-#endif
                 return length;
 
             } else {
-                return TURAG_FELDBUS_IGNORE_PACKAGE;
+                return TURAG_FELDBUS_NO_ANSWER;
             }
         }
     } else if (message[0] == TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_GET) {
@@ -265,7 +247,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
                     size_sum += command->length;
 
                     // cancel if whole package would not fit into buffer
-                    if (size_sum >= TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
+                    if (size_sum >= TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE) {
                         error = 1;
                         break;
                     }
@@ -285,13 +267,15 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
                 response[0] = TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE;
                 return 1;
             } else {
-                return TURAG_FELDBUS_IGNORE_PACKAGE;
+                return TURAG_FELDBUS_NO_ANSWER;
             }
         }
     } else {
-        return turag_feldbus_stellantriebe_process_package(message, message_length, response);
+    	if (package_processor) {
+    		return package_processor(message, message_length, response);
+    	} else {
+            return TURAG_FELDBUS_NO_ANSWER;
+    	}
     }
 }
 
-
-#endif

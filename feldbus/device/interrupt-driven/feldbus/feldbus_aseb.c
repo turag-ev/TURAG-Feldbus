@@ -1,28 +1,21 @@
 
+#include <tina/feldbus/protocol/turag_feldbus_fuer_aseb.h>
 #include "feldbus_aseb.h"
 
-#if (TURAG_FELDBUS_DEVICE_PROTOCOL==TURAG_FELDBUS_DEVICE_PROTOCOL_ASEB) || defined(__DOXYGEN__)
 
 
-#ifndef TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
-# error TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM must be defined
-#endif
 
 // Unfortunately we can not use the size information in the
 // init function for static_asserts. So we have to require enough
 // buffer to can handle the largest possible package: sync with
 // all digital and analog inputs with 2-byte address.
 // The output of the labels are capped to what we can handle.
-#if TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 36
-# error Buffer overflow. TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE < 36, must be bigger.
+#if TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE < 36
+# error Buffer overflow. TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE < 36, must be bigger.
 #endif
 
 
-#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
-# include <avr/pgmspace.h>
-#else
-# include <string.h>
-#endif		
+#include <string.h>
 
 static feldbus_aseb_digital_io_t* digital_inputs;
 static uint8_t digital_inputs_size;
@@ -40,7 +33,8 @@ void turag_feldbus_aseb_init(
     feldbus_aseb_digital_io_t* digital_inputs_, const uint8_t digital_inputs_size_,
     feldbus_aseb_digital_io_t* digital_outputs_, const uint8_t digital_outputs_size_,
     feldbus_aseb_analog_t* analog_inputs_, const uint8_t analog_inputs_size_,
-	feldbus_aseb_pwm_t* pwm_outputs_, const uint8_t pwm_outputs_size_, const uint8_t analog_resolution_) {
+	feldbus_aseb_pwm_t* pwm_outputs_, const uint8_t pwm_outputs_size_, const uint8_t analog_resolution_)
+{
 	
 	digital_inputs = digital_inputs_;
 	digital_inputs_size = digital_inputs_size_;
@@ -54,7 +48,7 @@ void turag_feldbus_aseb_init(
 }
 
 
-FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
+FeldbusSize_t turag_feldbus_aseb_process_package(const uint8_t* message, FeldbusSize_t message_length, uint8_t* response) {
     // the feldbus base implementation guarantees message_length >= 1 and message[0] >= 1 
 	// so we don't need to check that
 	
@@ -143,7 +137,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 				return 1;
 			}
 		} else {
-			return TURAG_FELDBUS_IGNORE_PACKAGE;
+			return TURAG_FELDBUS_NO_ANSWER;
 		}
 		
 	} else if (	message[0] >= TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT && 
@@ -164,7 +158,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 				return 2;
 			}
 		} else {
-			return TURAG_FELDBUS_IGNORE_PACKAGE;
+			return TURAG_FELDBUS_NO_ANSWER;
 		}
     }else if(message[0] == TURAG_FELDBUS_ASEB_PWM_SPEED){
         uint8_t pwm_output_index = message[1] - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
@@ -181,7 +175,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
                 return 2;
             }
         } else {
-            return TURAG_FELDBUS_IGNORE_PACKAGE;
+            return TURAG_FELDBUS_NO_ANSWER;
         }
 	} else if (message[0] == TURAG_FELDBUS_ASEB_NUMBER_OF_DIGITAL_INPUTS) {
 		response[0] = digital_inputs_size;
@@ -206,7 +200,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 			response[3] = value[3];
 			return 4;
 		} else {
-			return TURAG_FELDBUS_IGNORE_PACKAGE;
+			return TURAG_FELDBUS_NO_ANSWER;
 		}
 	} else if (message[0] == TURAG_FELDBUS_ASEB_NUMBER_OF_PWM_OUTPUTS) {
 		response[0] = pwm_outputs_size;
@@ -222,7 +216,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 			response[3] = value[3];
 			return 4;
 		} else {
-			return TURAG_FELDBUS_IGNORE_PACKAGE;
+			return TURAG_FELDBUS_NO_ANSWER;
 		}
 	} else if (message[0] == TURAG_FELDBUS_ASEB_PWM_OUTPUT_MAX_VALUE) {
 		uint8_t pwm_index = message[1] - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
@@ -233,7 +227,7 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 			response[1] = value[1];
 			return 2;
 		} else {
-			return TURAG_FELDBUS_IGNORE_PACKAGE;
+			return TURAG_FELDBUS_NO_ANSWER;
 		}
 	} else if (message[0] == TURAG_FELDBUS_ASEB_CHANNEL_NAME) {
 		const char* name = 0;
@@ -252,24 +246,16 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 			index = message[1] - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
 			if (index < pwm_outputs_size) name = pwm_outputs[index].name;
 		}
-		if (!name) return TURAG_FELDBUS_IGNORE_PACKAGE;
+		if (!name) return TURAG_FELDBUS_NO_ANSWER;
 		
-        uint8_t length = 0;
+        FeldbusSize_t length = 0;
 
-#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
-        length = strlen_PF((uint_farptr_t)((uint16_t)name));
-#else
         length = strlen(name);
-#endif		
-		if (length + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
-			length = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+		if (length + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE) {
+			length = TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH;
 		}
 		
-#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
-        memcpy_PF(response, (uint_farptr_t)((uint16_t)name), length);
-#else
         memcpy(response, name, length);
-#endif
         return length;
 		
 	} else if (message[0] == TURAG_FELDBUS_ASEB_CHANNEL_NAME_LENGTH) {
@@ -289,15 +275,11 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 			index = message[1] - TURAG_FELDBUS_ASEB_INDEX_START_PWM_OUTPUT;
 			if (index < pwm_outputs_size) name = pwm_outputs[index].name;
 		}
-		if (!name) return TURAG_FELDBUS_IGNORE_PACKAGE;
+		if (!name) return TURAG_FELDBUS_NO_ANSWER;
 		
-#if TURAG_FELDBUS_ASEB_COMMAND_NAMES_USING_AVR_PROGMEM
-        uint8_t length = strlen_PF((uint_farptr_t)((uint16_t)name));
-#else
-        uint8_t length = strlen(name);
-#endif
-		if (length + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE) {
-			length = TURAG_FELDBUS_SLAVE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH;
+		FeldbusSize_t length = strlen(name);
+		if (length + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH > TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE) {
+			length = TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE - TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH;
 		}
 		
 		response[0] = length;
@@ -311,12 +293,9 @@ FeldbusSize_t turag_feldbus_slave_process_package(const uint8_t* message, Feldbu
 		if (analog_inputs && analog_inputs_size > 0) {
 			size += analog_inputs_size * 2;
 		}
-		response[0] = size + TURAG_FELDBUS_SLAVE_CONFIG_ADDRESS_LENGTH + 1;
+		response[0] = size + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH + 1;
 		return 1;
 	}
-	return TURAG_FELDBUS_IGNORE_PACKAGE;
+	return TURAG_FELDBUS_NO_ANSWER;
 }
 
-
-
-#endif
