@@ -6,7 +6,8 @@
 // derived from https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp
 
 
-#include <tina/crc/murmurhash3.h>
+#include <stdint.h>
+
 
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros

@@ -234,8 +234,8 @@
 #define TINA_FELDBUS_SLAVE_FELDBUS_H_
 
 
-#include <tina/crc/xor_checksum.h>
-#include <tina/crc/crc_checksum.h>
+#include <feldbus/util/xor_checksum.h>
+#include <feldbus/util/crc_checksum.h>
 
 #include "feldbus_config_check.h"
 

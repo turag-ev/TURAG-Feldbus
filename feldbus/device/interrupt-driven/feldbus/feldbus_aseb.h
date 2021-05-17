@@ -43,7 +43,7 @@
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_ASEB_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_ASEB_H_
 
-#include <tina/feldbus/slave/feldbus_config_check.h>
+#include <feldbus/feldbus_config_check.h>
 
 
 

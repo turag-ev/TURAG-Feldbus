@@ -59,8 +59,8 @@
 #ifndef TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
 #define TINA_FELDBUS_SLAVE_FELDBUS_STELLANTRIEBE_H_
 
-#include <tina/feldbus/slave/feldbus_base.h>
-#include <tina/feldbus/slave/feldbus_config_check.h>
+#include <feldbus/feldbus_base.h>
+#include <feldbus/feldbus_config_check.h>
 
 
 #ifdef __cplusplus

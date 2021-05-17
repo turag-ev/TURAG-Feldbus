@@ -31,7 +31,7 @@
 #define FELDBUS_CONFIG_H_
 
 
-#include <tina/feldbus/protocol/turag_feldbus_bus_protokoll.h>
+#include <feldbus/protocol/turag_feldbus_bus_protokoll.h>
 
 
 

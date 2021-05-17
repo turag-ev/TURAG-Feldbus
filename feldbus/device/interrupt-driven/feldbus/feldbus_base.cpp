@@ -1,6 +1,6 @@
 
 #include "feldbus_base.h"
-#include <tina/crc/murmurhash3.h>
+#include <feldbus/util/murmurhash3.h>
 
 #include <algorithm>
 

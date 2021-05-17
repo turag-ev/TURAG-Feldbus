@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include <tina++/tina.h>
-#include <tina/crc/crc_checksum.h>
+//#include <tina++/tina.h>
+//#include <tina/crc/crc_checksum.h>
 
 namespace TURAG {
 	

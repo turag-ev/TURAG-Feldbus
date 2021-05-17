@@ -1,5 +1,7 @@
 
-#include <tina/feldbus/protocol/turag_feldbus_fuer_aseb.h>
+#include <string.h>
+
+#include <feldbus/protocol/turag_feldbus_fuer_aseb.h>
 #include "feldbus_aseb.h"
 
 
@@ -14,8 +16,6 @@
 # error Buffer overflow. TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE < 36, must be bigger.
 #endif
 
-
-#include <string.h>
 
 static feldbus_aseb_digital_io_t* digital_inputs;
 static uint8_t digital_inputs_size;
