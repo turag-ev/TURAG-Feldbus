@@ -158,7 +158,15 @@ extern "C" void turag_feldbus_do_processing(void) {
 
 extern "C" uint32_t turag_feldbus_device_hash_uuid(const uint8_t* key, size_t length) {
 	uint32_t default_seed = 0x55555555;
-	return murmurhash3_x86_32(key, length, default_seed);
+	uint32_t uuid = murmurhash3_x86_32(key, length, default_seed);
+
+	// prevent the unlikely case of getting 0, because we use this as an indicator for an old device
+	// not supporting UUIDs
+	if (uuid == 0) {
+		uuid = murmurhash3_x86_32(key, length, default_seed + 1);
+	}
+
+	return uuid;
 }
 
 
