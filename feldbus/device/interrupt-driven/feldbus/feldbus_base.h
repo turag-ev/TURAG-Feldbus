@@ -365,6 +365,10 @@ extern void turag_feldbus_device_enable_bus_neighbours();
  */
 extern void turag_feldbus_device_disable_bus_neighbours();
 
+/**
+ * Pull bus low for 15 symbol times up to 1 ms.
+ */
+extern void turag_feldbus_slave_assert_low();
 ///@}
 
 

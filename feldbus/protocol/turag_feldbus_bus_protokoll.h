@@ -132,6 +132,9 @@
 /// @brief disable bus neighbors
 #define TURAG_FELDBUS_DEVICE_BROADCAST_RESET_ADDRESSES			0x03
 
+/// @brief disable bus neighbors
+#define TURAG_FELDBUS_DEVICE_BROADCAST_REQUEST_BUS_ASSERTION	0x04
+
 
 
 ///@}

@@ -9,7 +9,7 @@
 
 
 static FeldbusSize_t process_request(const uint8_t* message, FeldbusSize_t length, uint8_t* response);
-static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t length, uint8_t* response);
+static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t length, uint8_t* response, bool* assert_bus_low);
 static void turag_feldbus_device_start_transmission(FeldbusAddress_t origin);
 static inline bool turag_feldbus_device_uuid_check(const uint8_t* compare);
 
@@ -140,11 +140,18 @@ extern "C" void turag_feldbus_do_processing(void) {
 			turag_feldbus_device_start_transmission(turag_feldbus_device.my_address);
 		}
 	} else {
+		bool assert_bus_low = false;
+
 		// broadcasts
 		turag_feldbus_device.transmitLength = process_broadcast(
 			turag_feldbus_device.rxbuf + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH,
 			length - (1 + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH),
-			turag_feldbus_device.txbuf + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH) + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH;
+			turag_feldbus_device.txbuf + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH,
+			&assert_bus_low) + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH;
+
+		if (assert_bus_low) {
+			turag_feldbus_slave_assert_low();
+		}
 
 		// this happens if the device protocol or the user code returned TURAG_FELDBUS_NO_ANSWER.
 		if (turag_feldbus_device.transmitLength == 0) {
@@ -325,7 +332,7 @@ static FeldbusSize_t process_request(const uint8_t* message, FeldbusSize_t lengt
 }
 
 
-static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t length, uint8_t* response) {
+static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t length, uint8_t* response, bool* assert_bus_low) {
 	// estimate for buffer requirements
 	BUFFER_CHECK(20);
 
@@ -341,7 +348,7 @@ static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t len
 			turag_feldbus_device.broadcast_processor(message + 1, length - 1, message[0]);
 		}
 		return TURAG_FELDBUS_NO_ANSWER;
-	} else if (message[0] == TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES) {
+	} else if (message[0] == TURAG_FELDBUS_BROADCAST_TO_ALL_DEVICES && length > 1) {
 		// basic protocol broadcasts
 		switch (message[1]) {
 		case TURAG_FELDBUS_DEVICE_BROADCAST_UUID: {
@@ -411,6 +418,40 @@ static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t len
 		case TURAG_FELDBUS_DEVICE_BROADCAST_RESET_ADDRESSES:
 			turag_feldbus_device.my_address = 0;
 			return TURAG_FELDBUS_NO_ANSWER;
+
+		case TURAG_FELDBUS_DEVICE_BROADCAST_REQUEST_BUS_ASSERTION:
+			if (length > 2) {
+				uint8_t mask_length = message[2];
+				if (mask_length < 1 || mask_length > 32) {
+					return TURAG_FELDBUS_NO_ANSWER;
+				}
+
+				uint32_t search_mask = 0;
+				for (int i = 0; i < mask_length; ++i) {
+					search_mask |= (1 << i);
+				}
+
+				uint32_t search_address = 0;
+				if (length > 3) {
+					search_address |= message[3];
+
+					if (length > 4) {
+						search_address |= (uint32_t)message[4] << 8;
+
+						if (length > 5) {
+							search_address |= (uint32_t)message[5] << 16;
+
+							if (length > 6) {
+								search_address |= (uint32_t)message[6] << 24;
+							}
+						}
+					}
+				}
+
+				if ((*(uint32_t*)turag_feldbus_device.uuid & search_mask) == search_address) {
+					*assert_bus_low = true;
+				}
+			}
 		}
 	}
 	return TURAG_FELDBUS_NO_ANSWER;
