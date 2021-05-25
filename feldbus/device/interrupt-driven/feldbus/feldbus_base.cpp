@@ -422,7 +422,7 @@ static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t len
 		case TURAG_FELDBUS_DEVICE_BROADCAST_REQUEST_BUS_ASSERTION:
 			if (length > 2) {
 				uint8_t mask_length = message[2];
-				if (mask_length < 1 || mask_length > 32) {
+				if (mask_length > 32) {
 					return TURAG_FELDBUS_NO_ANSWER;
 				}
 
