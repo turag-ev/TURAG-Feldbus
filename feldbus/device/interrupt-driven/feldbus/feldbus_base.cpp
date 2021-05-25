@@ -10,6 +10,7 @@
 
 static FeldbusSize_t process_request(const uint8_t* message, FeldbusSize_t length, uint8_t* response);
 static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t length, uint8_t* response, bool* assert_bus_low);
+static bool check_assert_bus(const uint8_t* message, FeldbusSize_t length);
 static void turag_feldbus_device_start_transmission(FeldbusAddress_t origin);
 static inline bool turag_feldbus_device_uuid_check(const uint8_t* compare);
 
@@ -420,41 +421,58 @@ static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t len
 			return TURAG_FELDBUS_NO_ANSWER;
 
 		case TURAG_FELDBUS_DEVICE_BROADCAST_REQUEST_BUS_ASSERTION:
-			if (length > 2) {
-				uint8_t mask_length = message[2];
-				if (mask_length > 32) {
-					return TURAG_FELDBUS_NO_ANSWER;
-				}
+			*assert_bus_low = check_assert_bus(message, length);
+			return TURAG_FELDBUS_NO_ANSWER;
 
-				uint32_t search_mask = 0;
-				for (int i = 0; i < mask_length; ++i) {
-					search_mask |= (1 << i);
-				}
-
-				uint32_t search_address = 0;
-				if (length > 3) {
-					search_address |= message[3];
-
-					if (length > 4) {
-						search_address |= (uint32_t)message[4] << 8;
-
-						if (length > 5) {
-							search_address |= (uint32_t)message[5] << 16;
-
-							if (length > 6) {
-								search_address |= (uint32_t)message[6] << 24;
-							}
-						}
-					}
-				}
-
-				if ((*(uint32_t*)turag_feldbus_device.uuid & search_mask) == search_address) {
-					*assert_bus_low = true;
-				}
+		case TURAG_FELDBUS_DEVICE_BROADCAST_REQUEST_BUS_ASSERTION_IF_NO_ADRRESS:
+			if (turag_feldbus_device.my_address == 0) {
+				*assert_bus_low = check_assert_bus(message, length);
 			}
+			return TURAG_FELDBUS_NO_ANSWER;
+
+		case TURAG_FELDBUS_DEVICE_BROADCAST_GO_TO_SLEEP:
+			// TODO
+			return TURAG_FELDBUS_NO_ANSWER;
 		}
 	}
 	return TURAG_FELDBUS_NO_ANSWER;
+}
+
+static bool check_assert_bus(const uint8_t* message, FeldbusSize_t length) {
+	if (length > 2) {
+		uint8_t mask_length = message[2];
+		if (mask_length > 32) {
+			return false;
+		}
+
+		uint32_t search_mask = 0;
+		for (int i = 0; i < mask_length; ++i) {
+			search_mask |= (1 << i);
+		}
+
+		uint32_t search_address = 0;
+		if (length > 3) {
+			search_address |= message[3];
+
+			if (length > 4) {
+				search_address |= (uint32_t)message[4] << 8;
+
+				if (length > 5) {
+					search_address |= (uint32_t)message[5] << 16;
+
+					if (length > 6) {
+						search_address |= (uint32_t)message[6] << 24;
+					}
+				}
+			}
+		}
+
+		if ((*(uint32_t*)turag_feldbus_device.uuid & search_mask) == search_address) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 extern "C" void __attribute__((weak)) turag_feldbus_device_toggle_led(void) {

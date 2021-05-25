@@ -135,6 +135,12 @@
 /// @brief disable bus neighbors
 #define TURAG_FELDBUS_DEVICE_BROADCAST_REQUEST_BUS_ASSERTION	0x04
 
+/// @brief disable bus neighbors if no valid bus address
+#define TURAG_FELDBUS_DEVICE_BROADCAST_REQUEST_BUS_ASSERTION_IF_NO_ADRRESS	0x05
+
+/// @brief disable bus neighbors if no valid bus address
+#define TURAG_FELDBUS_DEVICE_BROADCAST_GO_TO_SLEEP				0x06
+
 
 
 ///@}
