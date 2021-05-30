@@ -596,6 +596,8 @@ void turag_feldbus_do_processing(void);
 // hide some uninteresting stuff from documentation
 #if (!defined(__DOXYGEN__))
 		
+#define TURAG_FELDBUS_DEVICE_ACTUAL_BUFFER_SIZE  (TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH + TURAG_FELDBUS_DEVICE_CRC_SIZE)
+
 typedef struct {
 	// holds the number of bytes in txbuf
 	FeldbusSize_t transmitLength;
@@ -632,8 +634,8 @@ typedef struct {
 	uint32_t uptime_counter;
 	// uuid of the device
 	uint8_t uuid[4] __attribute__((aligned(4)));
-	uint8_t txbuf[TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH + TURAG_FELDBUS_DEVICE_CRC_SIZE] __attribute__((aligned(4)));
-	uint8_t rxbuf[TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH + TURAG_FELDBUS_DEVICE_CRC_SIZE] __attribute__((aligned(4)));
+	uint8_t txbuf[TURAG_FELDBUS_DEVICE_ACTUAL_BUFFER_SIZE] __attribute__((aligned(4)));
+	uint8_t rxbuf[TURAG_FELDBUS_DEVICE_ACTUAL_BUFFER_SIZE] __attribute__((aligned(4)));
 } turag_feldbus_device_t;
 
 
@@ -663,7 +665,7 @@ static inline void turag_feldbus_device_byte_received(uint8_t data) {
 	// We need to check for overflow before actually storing the received
 	// byte. Otherwise we always get an overflow when the last byte in the
 	// buffer gets filled.
-	if (turag_feldbus_device.rxOffset >= TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE) {
+	if (turag_feldbus_device.rxOffset >= TURAG_FELDBUS_DEVICE_ACTUAL_BUFFER_SIZE) {
 		turag_feldbus_device.rxOffset = 0;
 		
 		// We have a buffer overflow. If this happens for the 
