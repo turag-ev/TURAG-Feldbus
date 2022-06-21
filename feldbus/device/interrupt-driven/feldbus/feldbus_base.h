@@ -368,7 +368,12 @@ extern void turag_feldbus_device_disable_bus_neighbours();
 /**
  * Pull bus low for 15 symbol times up to 1 ms.
  */
-extern void turag_feldbus_slave_assert_low();
+extern void turag_feldbus_device_assert_low();
+
+/**
+ * Enter light sleep mode, which deactivates itself upon the next interrupt request.
+ */
+extern void turag_feldbus_device_goto_sleep();
 ///@}
 
 

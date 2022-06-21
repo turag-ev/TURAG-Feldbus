@@ -85,6 +85,7 @@ extern "C" void turag_feldbus_do_processing(void) {
 	turag_feldbus_device_begin_interrupt_protect();
 
 	if (turag_feldbus_device.rx_length == 0) {
+		turag_feldbus_device_goto_sleep();
 		turag_feldbus_device_end_interrupt_protect();
 		return;
 	}
@@ -151,7 +152,7 @@ extern "C" void turag_feldbus_do_processing(void) {
 			&assert_bus_low) + TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH;
 
 		if (assert_bus_low) {
-			turag_feldbus_slave_assert_low();
+			turag_feldbus_device_assert_low();
 		}
 
 		// this happens if the device protocol or the user code returned TURAG_FELDBUS_NO_ANSWER.
