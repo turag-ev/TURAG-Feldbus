@@ -432,7 +432,7 @@ static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t len
 			return TURAG_FELDBUS_NO_ANSWER;
 
 		case TURAG_FELDBUS_DEVICE_BROADCAST_GO_TO_SLEEP:
-			// TODO
+			turag_feldbus_device_goto_deep_sleep();
 			return TURAG_FELDBUS_NO_ANSWER;
 		}
 	}

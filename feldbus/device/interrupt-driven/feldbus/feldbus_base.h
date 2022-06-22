@@ -372,8 +372,18 @@ extern void turag_feldbus_device_assert_low();
 
 /**
  * Enter light sleep mode, which deactivates itself upon the next interrupt request.
+ * This function is always called from within turag_feldbus_do_processing() when
+ * there is no packet to be processed.
  */
 extern void turag_feldbus_device_goto_sleep();
+
+/**
+ * Enter deep sleep mode. This function is called as a reaction to the
+ * TURAG_FELDBUS_DEVICE_BROADCAST_GO_TO_SLEEP broadcast request. It is
+ * up to the device implementation to make sure the device can be woken
+ * up again.
+ */
+extern void turag_feldbus_device_goto_deep_sleep();
 ///@}
 
 
