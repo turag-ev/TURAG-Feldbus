@@ -105,30 +105,43 @@
 // special command. When the bootloader
 // needs to start the program it reads these addresses from this flash position.
 // This approach is easy to implement but requires an additional erasable flash segment which
-// may be wasteful on some F4 devices whoe flash sectors are very large at the end of the flash.
+// may be wasteful on some F4 devices whose flash sectors are very large at the end of the flash.
 #define TURAG_FELDBUS_BOOTLOADER_STM32V2_APP_ADDRESS_MODE_DEDICATED_PAGE	0x00
-
-// In this mode the host application must
-// - generate code which writes the stack address and the address of the reset handler
-//   at a specific address in RAM
-// - and only then jumps to the bootloader
-// This code is placed after the user program and flashed together with the rest. Instead of jumping
-// directly to the bootloader the address of this copy code is placed in the reset vector of the user
-// app. This saves the dedicated flash page but may conflict with user app if it employs some kind of
-// behaviour which manipulates the contents of the flash.
-#define TURAG_FELDBUS_BOOTLOADER_STM32V2_APP_ADDRESS_MODE_AFTER_USERAPP		0x01
 
 // This method makes use of reserved positions within the vector table itself. This is the
 // preferred option for any device which has suitable unused space within its vector table.
-#define TURAG_FELDBUS_BOOTLOADER_STM32V2_APP_ADDRESS_MODE_HIDDEN_IN_VECTOR_TABLE	0x02
+#define TURAG_FELDBUS_BOOTLOADER_STM32V2_APP_ADDRESS_MODE_HIDDEN_IN_VECTOR_TABLE	0x01
 
 
-#define TURAG_FELDBUS_BOOTLOADER_STM32V2_GET_BOOTLOADER_RESET_VECTOR			0x16
-#define TURAG_FELDBUS_BOOTLOADER_STM32V2_STORE_APP_RESET_VECTORS 	0x17  // only defined in APP_ADDRESS_MODE_DEDICATED_PAGE
-#define TURAG_FELDBUS_BOOTLOADER_STM32V2_GET_APP_RESET_VECTOR_STORAGE_ADDRESS	0x18	// only defined in APP_ADDRESS_MODE_HIDDEN_IN_VECTOR_TABLE
-																						// and APP_ADDRESS_MODE_AFTER_USERAPP
+//#define TURAG_FELDBUS_BOOTLOADER_STM32V2_GET_BOOTLOADER_RESET_VECTOR			0x16
+//#define TURAG_FELDBUS_BOOTLOADER_STM32V2_STORE_APP_RESET_VECTORS 	0x17  // only defined in APP_ADDRESS_MODE_DEDICATED_PAGE
+//#define TURAG_FELDBUS_BOOTLOADER_STM32V2_GET_APP_RESET_VECTOR_STORAGE_ADDRESS	0x18	// only defined in APP_ADDRESS_MODE_HIDDEN_IN_VECTOR_TABLE
+
+// Transmits the content of the reset vector of the user application to the bootloader.
+// This command must be called before transmitting any of the user application code if the address mode
+// is hidden vector.
+#define TURAG_FELDBUS_BOOTLOADER_STM32V2_TRANSMIT_APP_RESET_VECTOR	0x16
+
+// This function schould be called after the whole user application has been
+// transmitted. Depending on the used address mode this function either
+// - writes the user application reset vector to the dedicated flash page
+// - checks whether the supplied reset vector can be found at the expected
+//   position in the vector table.
+//
+// Returns an error code.
+#define TURAG_FELDBUS_BOOTLOADER_STM32V2_COMMIT_APP_RESET_VECTOR  0x17
+
+// Returns the location of the user app reset vector. This can be used
+// by the host when verifying the flash contents by reading it and comparing it
+// with the written data. If the reset vector is stored in the vector table, the first
+// flash page will be modified at this position and the read data will be different than the written data.
+#define TURAG_FELDBUS_BOOTLOADER_STM32V2_GET_APP_RESET_VECTOR_STORAGE_ADDRESS	0x18
+
+// and APP_ADDRESS_MODE_AFTER_USERAPP
 #define TURAG_FELDBUS_BOOTLOADER_STM32V2_PAGE_WRITE				0xAA
 #define TURAG_FELDBUS_BOOTLOADER_STM32V2_DATA_READ				0xAB
+
+
 
 
 #define TURAG_FELDBUS_BOOTLOADER_STM32V2_RESPONSE_SUCCESS            0x00
