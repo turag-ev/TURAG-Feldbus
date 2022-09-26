@@ -490,6 +490,17 @@ static uint8_t digit_to_hex(uint8_t dig) {
 	return dig;
 }
 
+static void turag_feldbus_device_start_debug_transmission() {
+	turag_feldbus_device.transmission_active = 1;
+
+	turag_feldbus_device.txOffset = 0;
+
+	turag_feldbus_device_deactivate_rx_interrupt();
+	turag_feldbus_device_rts_on();
+	turag_feldbus_device_activate_dre_interrupt();
+}
+
+
 
 // public debug functions
 void print_text(const char *buf) {
@@ -508,7 +519,7 @@ void print_text(const char *buf) {
 		}
 	}
 	turag_feldbus_device.transmitLength = i;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 
 void print_char(uint8_t x) {
@@ -520,7 +531,7 @@ void print_char(uint8_t x) {
 	turag_feldbus_device.txbuf[3] = digit_to_hex(x);
 
 	turag_feldbus_device.transmitLength = 4;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 
 void print_short(uint16_t x) {
@@ -536,7 +547,7 @@ void print_short(uint16_t x) {
 	turag_feldbus_device.txbuf[7] = '\n';
 
 	turag_feldbus_device.transmitLength = 8;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 void print_short_nn(uint16_t x) {
 	while (turag_feldbus_device.transmission_active);
@@ -550,7 +561,7 @@ void print_short_nn(uint16_t x) {
 
 	turag_feldbus_device.transmitLength = 6;
 	turag_feldbus_device.transmission_active = 1;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 
 void print_sshort(int16_t x) {
@@ -571,7 +582,7 @@ void print_sshort(int16_t x) {
 	turag_feldbus_device.txbuf[8] = '\n';
 
 	turag_feldbus_device.transmitLength = 9;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 void print_sshort_nn(int16_t x) {
 	while (turag_feldbus_device.transmission_active);
@@ -589,7 +600,7 @@ void print_sshort_nn(int16_t x) {
 	turag_feldbus_device.txbuf[6] = digit_to_hex(x);
 
 	turag_feldbus_device.transmitLength = 7;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 
 void print_long(uint32_t x) {
@@ -610,7 +621,7 @@ void print_long(uint32_t x) {
 
 
 	turag_feldbus_device.transmitLength = 12;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 
 void print_short_d(int16_t x) {
@@ -627,7 +638,7 @@ void print_short_d(int16_t x) {
 	itoa(x, (char*)turag_feldbus_device.txbuf, 10);
 
 	turag_feldbus_device.transmitLength = 8;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 
 void print_slong(int32_t x) {
@@ -652,7 +663,7 @@ void print_slong(int32_t x) {
 	turag_feldbus_device.txbuf[12] = '\n';
 
 	turag_feldbus_device.transmitLength = 13;
-	start_transmission();
+	turag_feldbus_device_start_debug_transmission();
 }
 #endif
 
