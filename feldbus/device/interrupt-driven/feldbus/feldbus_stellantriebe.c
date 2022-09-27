@@ -56,6 +56,7 @@ FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message
                 return 2;
                 break;
             case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG:
+            case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_FLOAT:
                 pValue = (uint8_t*)command->value;
                 response[0] = pValue[0];
                 response[1] = pValue[1];
@@ -64,6 +65,7 @@ FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message
                 return 4;
                 break;
             case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE:
+            case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE_TEXT:
             default:
                 return TURAG_FELDBUS_NO_ANSWER;
                 break;
@@ -72,12 +74,12 @@ FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message
             // write request
             feldbus_stellantriebe_command_t* command = commmand_set + index;
 
-            if (command->write_access != TURAG_FELDBUS_STELLANTRIEBE_COMMAND_ACCESS_WRITE_ACCESS) {
+            if (command->write_access == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_ACCESS_READ_ONLY_ACCESS) {
                 return TURAG_FELDBUS_NO_ANSWER;
             }
 
             // buffer received data to handle situations
-            // where there is to little data 
+            // where there is too little data
             uint8_t buffer[4] = {0};
 			
             switch (message_length) {
@@ -117,6 +119,7 @@ FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message
 				return 0;
 				break;
 			case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG:
+			case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_FLOAT:
 				feldbus_stellantriebe_old_value.raw_buffer[0] = pValue[0];
 				pValue[0] = buffer[0];
 				feldbus_stellantriebe_old_value.raw_buffer[1] = pValue[1];
@@ -202,6 +205,7 @@ FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message
                     out += 2;
                     break;
                 case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG:
+                case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_FLOAT:
                     pValue = (uint8_t*)command->value;
                     out[0] = pValue[0];
                     out[1] = pValue[1];
@@ -237,14 +241,22 @@ FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message
 
                     command = commmand_set + value_index;
 
+					switch (command->length) {
+						case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_CHAR: size_sum += 1; break;
+						case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_SHORT: size_sum += 2; break;
+						case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_LONG: size_sum += 4; break;
+						case TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_FLOAT: size_sum += 4; break;
+						default:
+							error = 1;
+							break;
+					}
                     // cancel if the host demands a non-supported key
-                    if (command->length == TURAG_FELDBUS_STELLANTRIEBE_COMMAND_LENGTH_NONE) {
-                        error = 1;
+                    if (error) {
                         break;
                     }
 
+
                     structured_output_table[i-2] = command;
-                    size_sum += command->length;
 
                     // cancel if whole package would not fit into buffer
                     if (size_sum >= TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE) {
