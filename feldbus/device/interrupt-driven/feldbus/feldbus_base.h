@@ -346,6 +346,8 @@ extern void turag_feldbus_device_end_interrupt_protect(void);
  * einem charakteristischen Frequenzmuster aufgerufen, welches
  * vom Wert von \ref TURAG_FELDBUS_DEVICE_CONFIG_UPTIME_FREQUENCY
  * abhängt.
+ *  This function is defined as a weak symbol
+ * with empty body and may be overwritten if device supports switching the bus.
  */
 extern void turag_feldbus_device_toggle_led(void);
 
@@ -356,12 +358,14 @@ extern void turag_feldbus_device_toggle_led(void);
 extern void turag_feldbus_device_transmit_byte(uint8_t byte);
 
 /**
- * Enables the switchable part of the bus.
+ * Enables the switchable part of the bus. This function is defined as a weak symbol
+ * with empty body and may be overwritten if device supports switching the bus.
  */
 extern void turag_feldbus_device_enable_bus_neighbours();
 
 /**
- * Disables the switchable part of the bus.
+ * Disables the switchable part of the bus. This function is defined as a weak symbol
+ * with empty body and may be overwritten if device supports switching the bus.
  */
 extern void turag_feldbus_device_disable_bus_neighbours();
 
@@ -374,6 +378,8 @@ extern void turag_feldbus_device_assert_low();
  * Enter light sleep mode, which deactivates itself upon the next interrupt request.
  * This function is always called from within turag_feldbus_do_processing() when
  * there is no packet to be processed.
+ *  This function is defined as a weak symbol
+ * with empty body and may be overwritten if device supports switching the bus.
  */
 extern void turag_feldbus_device_goto_sleep();
 
@@ -382,8 +388,47 @@ extern void turag_feldbus_device_goto_sleep();
  * TURAG_FELDBUS_DEVICE_BROADCAST_GO_TO_SLEEP broadcast request. It is
  * up to the device implementation to make sure the device can be woken
  * up again.
+ *  This function is defined as a weak symbol
+ * with empty body and may be overwritten if device supports switching the bus.
  */
 extern void turag_feldbus_device_goto_deep_sleep();
+
+/**
+ * Returns the capacity of the device's static storage.
+ * This function is defined as a weak symbol returning zero
+ * and may be overwritten if device supports switching the bus.
+ */
+extern uint32_t turag_feldbus_device_get_static_storage_capacity();
+
+/**
+ * Returns the page size of the device's static storage.
+ * This function is defined as a weak symbol returning zero
+ * and may be overwritten if device supports switching the bus.
+ */
+extern uint16_t turag_feldbus_device_get_static_storage_page_size();
+
+/**
+ * Reads data from the device's static storage into the specified buffer.
+ * Possible return values:
+ * - 0: success
+ * - 1: offset/size error
+ * - 2: error on write
+ * This function is defined as a weak symbol
+ * always returning 1 and may be overwritten if device supports switching the bus.
+ */
+extern uint8_t turag_feldbus_device_read_from_static_storage(uint32_t offset, uint16_t size, uint8_t* buffer);
+
+/**
+ * Writes data to the device's static storage from the specified buffer.
+ * Possible return values:
+ * - 0: success
+ * - 1: offset/size error
+ * - 2: error on write
+ * This function is defined as a weak symbol
+ * always returning 1 and may be overwritten if device supports switching the bus.
+ */
+extern uint8_t turag_feldbus_device_write_to_static_storage(uint32_t offset, const uint8_t* data, uint16_t size);
+
 ///@}
 
 
@@ -400,7 +445,7 @@ extern void turag_feldbus_device_goto_deep_sleep();
  * Call this function from the Receive-Complete-Interrupt on your system.
  * @param byte Received byte
  */
-static inline void turag_feldbus_device_byte_received(uint8_t byte);
+static inline void turag_feldbus_device_byte_received(uint8_t data);
 
 /**
  * Data-Register-Empty-Interrupt-Interface.

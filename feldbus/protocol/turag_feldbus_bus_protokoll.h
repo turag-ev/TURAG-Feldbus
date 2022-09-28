@@ -107,6 +107,16 @@
 /// @brief Return the extended device info packet. Not available when the device returns a legacy style device info packet.
 #define TURAG_FELDBUS_DEVICE_COMMAND_GET_EXTENDED_INFO				0x0A
 
+/// @brief Return the capacity of the static data storage and its page size. For write operations
+/// valid values of the address offset are limited to multiples of the page size.
+#define TURAG_FELDBUS_DEVICE_COMMAND_GET_STATIC_STORAGE_CAPACITY	0x0B
+
+/// @brief Read data from the static data storage from the specified address with the specified length.
+#define TURAG_FELDBUS_DEVICE_COMMAND_READ_FROM_STATIC_STORAGE		0x0C
+
+/// @brief Write data to the static data storage at the specified address. Returns 0 on success, an error code on error.
+#define TURAG_FELDBUS_DEVICE_COMMAND_WRITE_TO_STATIC_STORAGE		0x0D
+
 
 ///@}
 /**

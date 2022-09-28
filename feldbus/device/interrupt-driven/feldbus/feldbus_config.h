@@ -59,7 +59,7 @@
 
 /**
  * Defines the size of the I/O-buffers. The base implementation
- * allocates 2 buffers of the specified size.
+ * allocates roughly 2 buffers of the specified size.
  */
 #define TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE		80
 

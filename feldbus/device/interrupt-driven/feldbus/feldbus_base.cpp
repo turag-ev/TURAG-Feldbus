@@ -316,13 +316,53 @@ static FeldbusSize_t process_request(const uint8_t* message, FeldbusSize_t lengt
 				return 5 + name_length + version_info_length;
 			}
 
+			case TURAG_FELDBUS_DEVICE_COMMAND_GET_STATIC_STORAGE_CAPACITY: {
+				uint32_t storage_capacity = turag_feldbus_device_get_static_storage_capacity();
+				uint16_t page_size = turag_feldbus_device_get_static_storage_page_size();
+				memcpy(response, &storage_capacity, sizeof(storage_capacity));
+				memcpy(response + sizeof(storage_capacity), &page_size, sizeof(page_size));
+				return sizeof(storage_capacity) + sizeof(page_size);
+			}
+
 			default:
-				// unhandled reserved packet with length == 3
+				// unhandled reserved packet with length == 2
 				return TURAG_FELDBUS_NO_ANSWER;
 			}
 		} else {
-			// unhandled reserved packet with length > 3
-			return TURAG_FELDBUS_NO_ANSWER;
+			// packets with length > 2
+			if (message[1] == TURAG_FELDBUS_DEVICE_COMMAND_READ_FROM_STATIC_STORAGE && length == 8) {
+				uint32_t storage_capacity = turag_feldbus_device_get_static_storage_capacity();
+				uint32_t offset;
+				uint16_t size;
+				memcpy(&offset, message + 2, sizeof(offset));
+				memcpy(&size, message + 2 + sizeof(offset), sizeof(size));
+
+				if (size + 1 > TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE) {
+					return TURAG_FELDBUS_NO_ANSWER;
+				} else if (offset + size > storage_capacity) {
+					response[0] = 1;
+				} else {
+					response[0] = turag_feldbus_device_read_from_static_storage(offset, size, response + 1);
+				}
+				return size + 1;
+			} else if (message[1] == TURAG_FELDBUS_DEVICE_COMMAND_WRITE_TO_STATIC_STORAGE && length > 6) {
+				uint32_t storage_capacity = turag_feldbus_device_get_static_storage_capacity();
+				uint16_t page_size = turag_feldbus_device_get_static_storage_page_size();
+				uint32_t offset;
+				uint32_t data_offset = 2 + sizeof(offset);
+				uint16_t size = length - data_offset;
+				memcpy(&offset, message + 2, sizeof(offset));
+
+				if (offset + size > storage_capacity || (page_size > 1 && offset % page_size != 0)) {
+					response[0] = 1;
+				} else {
+					response[0] = turag_feldbus_device_write_to_static_storage(offset, message + data_offset, size);
+				}
+				return 1;
+			} else {
+				// unhandled reserved packet with length > 2
+				return TURAG_FELDBUS_NO_ANSWER;
+			}
 		}
 	} else {
 		// received some other packet --> let somebody else process it
@@ -476,8 +516,39 @@ static bool check_assert_bus(const uint8_t* message, FeldbusSize_t length) {
 	return false;
 }
 
-extern "C" void __attribute__((weak)) turag_feldbus_device_toggle_led(void) {
 
+/*
+ * default implementations
+ */
+extern "C" void __attribute__((weak)) turag_feldbus_device_toggle_led(void) {
+}
+
+extern "C" void __attribute__((weak)) turag_feldbus_device_enable_bus_neighbours() {
+}
+
+extern "C" void __attribute__((weak)) turag_feldbus_device_disable_bus_neighbours() {
+}
+
+extern "C" void __attribute__((weak)) turag_feldbus_device_goto_sleep() {
+}
+
+extern "C" void __attribute__((weak)) turag_feldbus_device_goto_deep_sleep() {
+}
+
+extern "C" uint32_t __attribute__((weak)) turag_feldbus_device_get_static_storage_capacity() {
+	return 0;
+}
+
+extern "C" uint16_t __attribute__((weak)) turag_feldbus_device_get_static_storage_page_size() {
+	return 0;
+}
+
+extern "C" uint8_t __attribute__((weak)) turag_feldbus_device_read_from_static_storage(uint32_t offset, uint16_t size, uint8_t* buffer) {
+	return 1;
+}
+
+extern "C" uint8_t __attribute__((weak)) turag_feldbus_device_write_to_static_storage(uint32_t offset, const uint8_t* data, uint16_t size) {
+	return 1;
 }
 
 
