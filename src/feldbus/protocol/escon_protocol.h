@@ -1,7 +1,7 @@
 #ifndef TURAG_FELDBUS_FUER_ESCON_H_
 #define TURAG_FELDBUS_FUER_ESCON_H_
 
-#include "turag_feldbus_bus_protokoll.h"
+#include "base_protocol.h"
 
 //command bytes
 #define TURAG_FELDBUS_ESCON_SET_RPM     0x01

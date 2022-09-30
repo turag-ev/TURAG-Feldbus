@@ -13,13 +13,6 @@
 #if (!defined(__DOXYGEN__))
     
 
-#ifndef TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH
-# error TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH must be defined
-#else
-# if (TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH != 1 ) && (TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH != 2)
-#  error TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH must be 1 or 2
-# endif
-#endif
 
 #ifndef TURAG_FELDBUS_DEVICE_CONFIG_CRC_TYPE
 # error TURAG_FELDBUS_DEVICE_CONFIG_CRC_TYPE must be defined
@@ -56,31 +49,13 @@
 # error buffer sizes greater than 65535 are no longer supported.
 #elif TURAG_FELDBUS_DEVICE_CONFIG_BUFFER_SIZE > 255
     typedef uint16_t FeldbusSize_t;
-# if TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 1
-#  define TURAG_FELDBUS_NO_ANSWER 0xffff
-# elif TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 2
-#  define TURAG_FELDBUS_NO_ANSWER 0xfffe
-# else
-#  error no option for address size
-# endif
+# define TURAG_FELDBUS_NO_ANSWER 0xffff
 #else
     typedef uint8_t FeldbusSize_t;
-# if TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 1
-#  define TURAG_FELDBUS_NO_ANSWER 0xff
-# elif TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 2
-#  define TURAG_FELDBUS_NO_ANSWER 0xfe
-# else
-#  error no option for address size
-# endif
+# define TURAG_FELDBUS_NO_ANSWER 0xff
 #endif
 
-#if TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 1
     typedef uint8_t FeldbusAddress_t;
-#elif TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 2
-   typedef uint16_t FeldbusAddress_t;
-#else
-# error no option for address size
-#endif
 
 
 #endif // (!defined(__DOXYGEN__))

@@ -11,7 +11,7 @@
 #define TURAG_FELDBUS_FUER_BOOTLOADER_H_
 
 
-#include "turag_feldbus_bus_protokoll.h"
+#include "base_protocol.h"
 
 /**
  * @name Gerätetypen/Architekturen

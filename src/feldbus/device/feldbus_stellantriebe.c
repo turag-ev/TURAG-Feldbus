@@ -1,5 +1,5 @@
 
-#include <feldbus/protocol/turag_feldbus_fuer_stellantriebe.h>
+#include <feldbus/protocol/flexible_io_protocol.h>
 #include "feldbus_stellantriebe.h"
 #include <string.h>
 

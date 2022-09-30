@@ -1,7 +1,7 @@
 
 #include <string.h>
 
-#include <feldbus/protocol/turag_feldbus_fuer_aseb.h>
+#include <feldbus/protocol/simple_io_protocol.h>
 #include "feldbus_aseb.h"
 
 

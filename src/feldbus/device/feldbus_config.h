@@ -25,34 +25,22 @@
  * 
  * 
  */
-#error THIS FILE IS INTENDED FOR DOCUMENTATIONAL PURPOSES ONLY.
+#error THIS FILE IS INTENDED FOR DOCUMENTATIONAL PURPOSES ONLY. COPY IT TO SOMEPLACE ELSE BEFORE ADJUSTING IT.
 
 #ifndef FELDBUS_CONFIG_H_
 #define FELDBUS_CONFIG_H_
 
 
-#include <feldbus/protocol/turag_feldbus_bus_protokoll.h>
+#include <feldbus/protocol/base_protocol.h>
 
-
-
-/**
- * Defines the length of the address used in 
- * each package.
- * 
- * Possible values:
- * - 1
- * - 2
- */
-#define TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH 1
 
 
 /**
  * Defines the crc algorithm to use for the device. 
  * 
  * Mögliche Werte:
- * - \ref TURAG_FELDBUS_CHECKSUM_XOR
  * - \ref TURAG_FELDBUS_CHECKSUM_CRC8
- * - \ref TURAG_FELDBUS_CHECKSUM_CRC8_16_MIXED
+ * - \ref TURAG_FELDBUS_CHECKSUM_CRC8_16_MIXED  (not yet implemented)
  */
 #define TURAG_FELDBUS_DEVICE_CONFIG_CRC_TYPE 	TURAG_FELDBUS_CHECKSUM_CRC8
 

@@ -499,6 +499,9 @@ static inline void turag_feldbus_device_increase_uptime_counter(void);
 typedef int FeldbusSize_t;
 #endif
 
+/// \brief Typ, der für die Device Adresse benutzt wird.
+typedef uint8_t FeldbusAddress_t;
+
 
 
 
