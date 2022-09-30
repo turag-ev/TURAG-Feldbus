@@ -55,7 +55,7 @@
 # define TURAG_FELDBUS_NO_ANSWER 0xff
 #endif
 
-    typedef uint8_t FeldbusAddress_t;
+#define TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH 1
 
 
 #endif // (!defined(__DOXYGEN__))
