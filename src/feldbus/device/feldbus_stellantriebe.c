@@ -6,7 +6,7 @@
 
 
 #ifndef TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE
-# error TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE must be defined
+# define TURAG_FELDBUS_STELLANTRIEBE_STRUCTURED_OUTPUT_BUFFER_SIZE 32
 #endif
 
 
@@ -290,4 +290,5 @@ FeldbusSize_t turag_feldbus_stellantriebe_process_package(const uint8_t* message
     	}
     }
 }
+
 

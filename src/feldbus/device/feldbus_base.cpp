@@ -410,9 +410,6 @@ static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t len
 					case TURAG_FELDBUS_DEVICE_BROADCAST_UUID_ADDRESS:
 						// return Bus address
 						response[0] = turag_feldbus_device.my_address & 0xFF;
-#if TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 2
-						response[1] = (turag_feldbus_device.my_address >> 8) & 0xFF;
-#endif
 						return TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH;
 
 					case TURAG_FELDBUS_DEVICE_BROADCAST_UUID_RESET_ADDRESS:
@@ -426,19 +423,11 @@ static FeldbusSize_t process_broadcast(const uint8_t* message, FeldbusSize_t len
 					switch (message[6]) {
 					case TURAG_FELDBUS_DEVICE_BROADCAST_UUID_ADDRESS: {
 						// set Bus address
-# if TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 1
 						FeldbusAddress_t new_address = message[7];
 						if (new_address > 0 && new_address < TURAG_FELDBUS_MASTER_ADDR) {
 							turag_feldbus_device.my_address = new_address;
 							response[0] = 1;
 						}
-# elif TURAG_FELDBUS_DEVICE_CONFIG_ADDRESS_LENGTH == 2
-						FeldbusAddress_t new_address = (uint16_t)message[7] + ((uint16_t)message[8] << 8);
-						if (new_address > 0 && new_address < TURAG_FELDBUS_MASTER_ADDR2) {
-							turag_feldbus_device.my_address = new_address;
-							response[0] = 1;
-						}
-# endif
 						else {
 							response[0] = 0;
 						}
