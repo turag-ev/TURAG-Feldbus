@@ -7,6 +7,10 @@ The protocol specification can be found in the [wiki](https://github.com/turag-e
 
 Code reference: https://turag-ev.github.io/TURAG-Feldbus/modules.html
 
+Currently, host implementations can be found within the [Tina library](https://github.com/turag-ev/Tina). 
+
+The [TURAG-Console](https://github.com/turag-ev/TURAG-Console) makes use of the host implementations and allows it to communicate with bus devices through a serial port.
+
 ## Usage
 To enable your project to act as a TURAG-Feldbus device, you need
 * clone the repository or add it to your project as a git submodule
